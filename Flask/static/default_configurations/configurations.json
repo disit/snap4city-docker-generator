@@ -1,0 +1,190 @@
+{
+"C0":{
+  "elements":[
+     {
+        "data":{
+           "id":"ES-K",
+           "parent":"Main system",
+           "type":"ES"
+        }
+     },
+     {
+        "data":{
+           "id":"Dashboard",
+           "parent":"Main system",
+           "type":"Dash"
+        }
+     },
+     {
+        "data":{
+           "id":"Dashboard-Backend",
+           "parent":"Main system",
+           "type":"DashB"
+        }
+     },
+     {
+        "data":{
+           "id":"MyDataManager",
+           "parent":"Main system",
+           "type":"MDM"
+        }
+     },
+     {
+        "data":{
+           "id":"AuthenticationAuthorization",
+           "parent":"Main system",
+           "type":"AA"
+        }
+     },
+     {
+        "data":{
+           "id":"NiFI",
+           "parent":"Main system",
+           "type":"NF"
+        }
+     },
+     {
+        "data":{
+           "id":"KB",
+           "parent":"Main system",
+           "type":"KB"
+        }
+     },
+     {
+        "data":{
+           "id":"IOT OB",
+           "parent":"Main system",
+           "type":"IOTOB"
+        }
+     },
+     {
+        "data":{
+           "id":"IOT APP",
+           "parent":"Main system",
+           "type":"IOTAPP"
+        }
+     },
+     {
+        "data":{
+           "id":"Balancer and Proxy",
+           "parent":"Main system",
+           "type":"BAP"
+        }
+     },
+     {
+        "data":{
+           "id":"Main system",
+           "type":"System"
+        }
+     }
+  ]
+},
+"C1":{
+  "elements":[
+     {
+        "data":{
+           "id":"ES-K",
+           "parent":"Main system",
+           "type":"ES"
+        }
+     },
+     {
+        "data":{
+           "id":"Dashboard",
+           "parent":"Main system",
+           "type":"Dash"
+        }
+     },
+     {
+        "data":{
+           "id":"Dashboard-Backend",
+           "parent":"Main system",
+           "type":"DashB"
+        }
+     },
+     {
+        "data":{
+           "id":"MyDataManager",
+           "parent":"Main system",
+           "type":"MDM"
+        }
+     },
+     {
+        "data":{
+           "id":"AuthenticationAuthorization",
+           "parent":"Main system",
+           "type":"AA"
+        }
+     },
+     {
+        "data":{
+           "id":"NiFI",
+           "parent":"Main system",
+           "type":"NF"
+        }
+     },
+     {
+        "data":{
+           "id":"KB",
+           "parent":"Main system",
+           "type":"KB"
+        }
+     },
+     {
+        "data":{
+           "id":"IOT OB",
+           "parent":"Main system",
+           "type":"IOTOB"
+        }
+     },
+     {
+        "data":{
+           "id":"IOT APP",
+           "parent":"Main system",
+           "type":"IOTAPP"
+        }
+     },
+     {
+        "data":{
+           "id":"IOT APP-2",
+           "parent":"Main system",
+           "type":"IOTAPP"
+        }
+     },
+     {
+        "data":{
+           "id":"IOT APP-3",
+           "parent":"Main system",
+           "type":"IOTAPP"
+        }
+     },
+     {
+        "data":{
+           "id":"IOT APP-4",
+           "parent":"Main system",
+           "type":"IOTAPP"
+        }
+     },
+     {
+        "data":{
+           "id":"IOT APP-5",
+           "parent":"Main system",
+           "type":"IOTAPP"
+        }
+     },
+     {
+        "data":{
+           "id":"Balancer and Proxy",
+           "parent":"Main system",
+           "type":"BAP"
+        }
+     },
+     {
+        "data":{
+           "id":"Main system",
+           "type":"System"
+        }
+     }
+  ]
+}
+}

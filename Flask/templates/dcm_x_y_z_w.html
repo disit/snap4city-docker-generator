@@ -1,0 +1,586 @@
+{% extends "main.html" %}
+{% block title %}DCM_X_Y_Z_M{% endblock %}
+{% block head %}
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.6.0/umd/popper.min.js" integrity="sha512-BmM0/BQlqh02wuK5Gz9yrbe7VyIVwOzD1o40yi1IsTjriX/NGF37NyXHfmFzIlMmoSIBXgqDiG1VNU6kB5dBbA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- Include jQuery and the Connections plugin -->
+<script src="https://code.jquery.com/jquery-latest.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leader-line-new@1.1.9/leader-line.min.js" integrity="sha256-rrbG35jgbcQm/bNRhX2z6sianA80kyS3GqeTjFRpCkU=" crossorigin="anonymous"></script>
+{% endblock %}
+{% block content %}
+<head>
+<style>
+.item1 { grid-area: iotapp; }
+.item2 { grid-area: wsserver; }
+.item3 { grid-area: servicemap; }
+.item4 { grid-area: virtuoso; }
+.item5 { grid-area: kafka; }
+.item6 { grid-area: iotbroker; }
+.item7 { grid-area: zookeeper; }
+.item8 { grid-area: backend; }
+.item9 { grid-area: synoptics; }
+.item10 { grid-area: mongo; }
+.item11 { grid-area: database; }
+.item12 { grid-area: personaldata; }
+.item13 { grid-area: proxy;
+          background: red !important;
+          border: solid purple 5px;}
+.item14 { grid-area: dashboard; }
+.item15 { grid-area: nifi; }
+.item16 { grid-area: kibana; }
+.item17 { grid-area: ldapserver; }
+.item18 { grid-area: dashboardcron; }
+.item19 { grid-area: elastic; }
+.item20 { grid-area: keycloak; }
+.item21 { grid-area: myldap; }
+.item22 { grid-area: orion-filter;}
+.item24 { grid-area: iotapp-2;}
+.item25 { grid-area: broker-2;}
+.item26 { grid-area: mongo-2;}
+.item27 { grid-area: filter-2;}
+.item28 { grid-area: servicemap-2;}
+.item29 { grid-area: virtuoso-2;}
+.item30 { grid-area: geoserver;}
+.item31 { grid-area: nifi-2;}
+.item32 { grid-area: opensearch-2;}
+.item33 { grid-area: geoserver-db;}
+.item34 { grid-area: heatmap2geosrv;}
+.item35 { grid-area: heatmap-api;}
+.item100 { grid-area: od-insert-api; }
+.item101 { grid-area: od-get-api; }
+.item102 { grid-area: od-build-api;}
+.item103 { grid-area: od-postgis;}
+.item104 { grid-area: iot-fiware-api;}
+.item105 { grid-area: iot-fiware-harvester;}
+.item106 { grid-area: varnish;}
+
+div.item22:hover + div.tooltip_cp {
+  display: block;
+}
+div.tooltip_cp {
+  background-color: beige;
+  padding: 10px;
+  display: none;
+  border: solid black 1px;
+  z-index: 10;
+}
+div.tooltip_cp_2 {
+  background-color: beige;
+  padding: 10px;
+  display: none;
+  border: solid black 1px;
+  z-index: 10;
+}
+div.tooltip_cp_3 {
+  background-color: beige;
+  padding: 10px;
+  display: none;
+  border: solid black 1px;
+  z-index: 10;
+}
+div.tooltip_cp_4 {
+  background-color: beige;
+  padding: 10px;
+  display: none;
+  border: solid black 1px;
+  z-index: 10;
+}
+
+div.tooltip_cp_5 {
+  background-color: beige;
+  padding: 10px;
+  display: none;
+  border: solid black 1px;
+  z-index: 10;
+}
+
+div.tooltip_cp_6 {
+  background-color: beige;
+  padding: 10px;
+  display: none;
+  border: solid black 1px;
+  z-index: 10;
+}
+div.tooltip_cp_7 {
+  background-color: beige;
+  padding: 10px;
+  display: none;
+  border: solid black 1px;
+  z-index: 10;
+}
+div.tooltip_cp_8 {
+  background-color: beige;
+  padding: 10px;
+  display: none;
+  border: solid black 1px;
+  z-index: 10;
+}
+.has-proxy {
+  border: solid red 3px;
+}
+
+.can-be-multiple {
+  border: black double 10px
+}
+
+.grid-container {
+  width: -webkit-fill-available;
+  display: grid;
+  grid-template-areas:
+    'kafka zookeeper backend dashboard proxy'
+    '. database . wsserver proxy'
+    '. . . personaldata proxy'
+    'dashboardcron iot-fiware-api iot-fiware-harvester synoptics proxy'
+    'od-insert-api od-get-api od-build-api od-postgis proxy';
+  grid-gap: 60px;
+  background-color: blue;
+  padding: 20px;
+  z-index: -1;
+}
+.grid-container-2 {
+  width: -webkit-fill-available;
+  display: grid;
+  grid-template-areas:
+    'ldapserver myldap keycloak';
+  grid-gap: 60px;
+  background-color: violet;
+  padding: 20px;
+  z-index: -1;
+}
+.grid-container-3 {
+  width: -webkit-fill-available;
+  display: grid;
+  grid-template-areas:
+    'varnish nifi elastic kibana';
+  grid-gap: 60px;
+  background-color: brown;
+  padding: 20px;
+  z-index: -1;
+}
+.grid-container-4 {
+  width: -webkit-fill-available;
+  display: grid;
+  grid-template-areas:
+    'mongo iotbroker orion-filter'
+    'mongo-2 broker-2 filter-2';
+  grid-gap: 60px;
+  background-color: orange;
+  padding: 20px;
+  z-index: -1;
+}
+.grid-container-5 {
+  width: -webkit-fill-available;
+  display: grid;
+  grid-template-areas:
+    'virtuoso servicemap'
+    'virtuoso-2 servicemap-2';
+  grid-gap: 60px;
+  background-color: darkgray;
+  padding: 20px;
+  z-index: -1;
+}
+.grid-container-6 {
+  width: -webkit-fill-available;
+  display: grid;
+  grid-template-areas:
+    'iotapp . iotapp-2 ';
+  grid-gap: 60px;
+  background-color: aquamarine;
+  padding: 20px;
+  z-index: -1;
+}
+.grid-container-7 {
+  width: -webkit-fill-available;
+  display: grid;
+  grid-template-areas:
+    'heatmap-api geoserver'
+    'heatmap2geosrv geoserver-db';
+  grid-gap: 60px;
+  background-color: palegreen;
+  padding: 20px;
+  z-index: -1;
+}
+.grid-container-8 {
+  width: -webkit-fill-available;
+  display: grid;
+  grid-template-areas:
+    'nifi-2 opensearch-2 varish-2';
+  grid-gap: 60px;
+  background-color: darksalmon;
+  padding: 20px;
+  z-index: -1;
+}
+.grid-container > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 5px 5px 5px 5px;
+  font-size: 30px;
+  border-radius: 10px;
+}
+.grid-container-2 > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 5px 5px 5px 5px;
+  font-size: 30px;
+  border-radius: 10px;
+}
+.grid-container-3 > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 5px 5px 5px 5px;
+  font-size: 30px;
+  border-radius: 10px;
+}
+.grid-container-4 > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 5px 5px 5px 5px;
+  font-size: 30px;
+  border-radius: 10px;
+}
+.grid-container-5 > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 5px 5px 5px 5px;
+  font-size: 30px;
+  border-radius: 10px;
+}
+.grid-container-6 > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 5px 5px 5px 5px;
+  font-size: 30px;
+  border-radius: 10px;
+}
+.grid-container-7 > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 5px 5px 5px 5px;
+  font-size: 30px;
+  border-radius: 10px;
+}
+.grid-container-8 > div {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  padding: 5px 5px 5px 5px;
+  font-size: 30px;
+  border-radius: 10px;
+}
+
+.tooltip_cp {
+  background: #f9f9f9;
+  color: black;
+  padding: 8px 16px;
+  font-size: 20px;
+  border-radius: 7px;
+  display: none;
+  opacity: 0.98;
+}
+.tooltip_cp_2 {
+  background: #f9f9f9;
+  color: black;
+  padding: 8px 16px;
+  font-size: 20px;
+  border-radius: 7px;
+  display: none;
+  opacity: 0.98;
+}
+
+.tooltip_cp_3 {
+  background: #f9f9f9;
+  color: black;
+  padding: 8px 16px;
+  font-size: 20px;
+  border-radius: 7px;
+  display: none;
+  opacity: 0.98;
+}
+
+.tooltip_cp_4 {
+  background: #f9f9f9;
+  color: black;
+  padding: 8px 16px;
+  font-size: 20px;
+  border-radius: 7px;
+  display: none;
+  opacity: 0.98;
+}
+
+.tooltip_cp_5 {
+  background: #f9f9f9;
+  color: black;
+  padding: 8px 16px;
+  font-size: 20px;
+  border-radius: 7px;
+  display: none;
+  opacity: 0.98;
+}
+
+.tooltip_cp_6 {
+  background: #f9f9f9;
+  color: black;
+  padding: 8px 16px;
+  font-size: 20px;
+  border-radius: 7px;
+  display: none;
+  opacity: 0.98;
+}
+.tooltip_cp_7 {
+  background: #f9f9f9;
+  color: black;
+  padding: 8px 16px;
+  font-size: 20px;
+  border-radius: 7px;
+  display: none;
+  opacity: 0.98;
+}
+.tooltip_cp_8 {
+  background: #f9f9f9;
+  color: black;
+  padding: 8px 16px;
+  font-size: 20px;
+  border-radius: 7px;
+  display: none;
+  opacity: 0.98;
+}
+
+.tooltip_cp[data-show] {
+  display: block;
+}
+.tooltip_cp_2[data-show] {
+  display: block;
+}
+.tooltip_cp_3[data-show] {
+  display: block;
+}
+.tooltip_cp_4[data-show] {
+  display: block;
+}
+.tooltip_cp_5[data-show] {
+  display: block;
+}
+.tooltip_cp_6[data-show] {
+  display: block;
+}
+.tooltip_cp_7[data-show] {
+  display: block;
+}
+.tooltip_cp_8[data-show] {
+  display: block;
+}
+</style>
+</head>
+<body>
+<div class="grid-container-m">
+  <div class="grid-container">
+    <div class="component item2 has-proxy" id="item2">WSServer</div>
+    <div class="component item5" id="item5">Kafka</div>
+    <div class="component item7" id="item7">Zookeeper</div>
+    <div class="component item8" id="item8">Dashboard Backend</div>
+    <div class="component item9 has-proxy" id="item9">Synoptics</div>
+    <div class="component item11" id="item11">Database</div>
+    <div class="component item12 has-proxy" id="item12">Personaldata</div>
+    <div class="component item13" id="item13">Proxy</div>
+    <div class="component item14 has-proxy" id="item14">Dashboard Frontend</div>
+    <div class="component item18" id="item18">Dashboardcron</div>
+    <div class="component item100 has-proxy" id="item100">OD insert API</div>
+    <div class="component item101 has-proxy" id="item101">OD get API</div>
+    <div class="component item102 has-proxy" id="item102">OD build API</div>
+    <div class="component item103" id="item103">OD Postgis</div>
+    <div class="component item104 has-proxy" id="item104">IoT Fiware Api</div>
+    <div class="component item105" id="item105">IoT Fiware Harvester</div>
+
+  </div>
+  <div class="grid-container-2">
+
+    <div class="component_2 item20 has-proxy" id="item20">Keycloak</div>
+    <div class="component_2 item21" id="item21">MyLDAP</div>
+    <div class="component_2 item17" id="item17">LDAP Server</div>
+  </div>
+  <div class="grid-container-3">
+    <div class="component_3 item15" id="item15">Nifi</div>
+    <div class="component_3 item16 has-proxy" id="item16">Opensearch Dashboard</div>
+    <div class="component_3 item19" id="item19">Opensearch</div>
+    <div class="component_3 item106" id="item106">Varnish</div>
+  </div>
+
+  <div class="grid-container-8">
+    <div class="component_8 item31" id="item31">Nifi 2</div>
+    <div class="component_8 item32 has-proxy" id="item16">Opensearch-2</div>
+    <div class="component_8 item107" id="item107">Varnish-2</div>
+  </div>
+
+
+  <div class="grid-container-4 can-be-multiple">
+      <div class="component_4 item6" id="item6">IoT Broker</div>
+      <div class="component_4 item10" id="item10">Mongo</div>
+      <div class="component_4 item22" id="item22">Orion Filter</div>
+      <div class="component_4 item25" id="item25">IoT Broker 2</div>
+      <div class="component_4 item26" id="item26">Mongo 2</div>
+      <div class="component_4 item27" id="item27">Orion Filter 2</div>
+  </div>
+  <div class="grid-container-5 can-be-multiple">
+    <div class="component_5 item3 has-proxy" id="item3">ServiceMap</div>
+    <div class="component_5 item4" id="item4">Virtuoso</div>
+    <div class="component_5 item28 has-proxy" id="item28">ServiceMap 2</div>
+    <div class="component_5 item29" id="item29">Virtuoso 2</div>
+  </div>
+  <div class="grid-container-6 can-be-multiple">
+    <div class="component_6 item1 has-proxy" id="item1">IoT App 1</div>
+    <div class="component_6 item24 has-proxy" id="item24">IoT App 2</div>
+  </div>
+  <div class="grid-container-7">
+    <div class="component_7 item30" id="item30">Geoserver</div>
+    <div class="component_7 item33" id="item33">Geoserver DB</div>
+    <div class="component_7 item34" id="item34">Heatmap2geosrv</div>
+    <div class="component_7 item35 has-proxy" id="item35">Heatmap API</div>
+  </div>
+</div>
+
+
+<div>
+  <div id="tooltip 2" role="tooltip" class="tooltip_cp"><b>WSserver</b><br>
+  <b>9000:9000</b></div>
+  <div id="tooltip 5" role="tooltip" class="tooltip_cp"><b>Kafka</b><br>
+  <b>9092:9092<br>
+  9093:9093</b></div>
+  <div id="tooltip 7" role="tooltip" class="tooltip_cp"><b>Zookeeper</b><br>
+  <b>2181:2181</b></div>
+  <div id="tooltip 8" role="tooltip" class="tooltip_cp">Dashboard Backend</div>
+  <div id="tooltip 9" role="tooltip" class="tooltip_cp"><b>Synoptics</b>
+  <br><b>3000:3000</b>
+  <br><b>3001:3001</b></div>
+  <div id="tooltip 11" role="tooltip" class="tooltip_cp">
+    <b>Database</b><br>
+    This component runs a MySQL service. Many components require setting up by pulling data from the database.<br>
+    The default port for accessing Database is <b>3306:3306</b>.
+  </div>
+  <div id="tooltip 12" role="tooltip" class="tooltip_cp">
+    <b>Personaldata</b><br>
+    <b>8080:8080</b></div>
+  <div id="tooltip 13" role="tooltip" class="tooltip_cp"><b>Proxy</b><br>
+  /ServiceMap/api/v1/iot/  ->  http://servicemap:8080/iot/<br>
+  /ServiceMap/  ->  http://servicemap:8080/ServiceMap/<br>
+  /wsserver  ->  http://wsserver/wsserver<br>
+  /superservicemap/  ->  http://servicemap:8080/superservicemap/rest/<br>
+  /auth/  ->  http://keycloak:8088/auth/<br>
+  /datamanager/  ->  http://personaldata:8080/datamanager/<br>
+  /kibana/  ->  http://kibana:5601/kibana/<br>
+  /synoptics/  ->  http://synoptics:3002/<br>
+  /synoptics/socket.io/  ->  https://synoptics:3001/socket.io/<br>
+  /  ->  http://dashboard-builder/<br>
+  /iotapp/iotapp-001/  ->  http://iotapp-001:1880/iotapp/iotapp-001/<br>
+  /iotapp/iotapp-002/  ->  http://iotapp-002:1881/iotapp/iotapp-002/<br></div>
+  <div id="tooltip 14" role="tooltip" class="tooltip_cp">Dashboard Frontend</div>
+  <div id="tooltip 18" role="tooltip" class="tooltip_cp">Dashboardcron</div>
+  <div id="tooltip 100" role="tooltip" class="tooltip_cp"><b>OD insert API<br>
+  3100:3100</b></div>
+  <div id="tooltip 101" role="tooltip" class="tooltip_cp"><b>OD get API<br>
+  3200:3200</b></div>
+  <div id="tooltip 102" role="tooltip" class="tooltip_cp"><b>OD build API<br>
+  3000:3000</b></div>
+  <div id="tooltip 103" role="tooltip" class="tooltip_cp"><b>OD Postgis<br>
+  5432:5432</b></div>
+
+  <div id="tooltip 104" role="tooltip" class="tooltip_cp"><b>IoT-Fiware-Api<br></b></div>
+  <div id="tooltip 105" role="tooltip" class="tooltip_cp"><b>IoT-Fiware-Harvester<br></b></div>
+</div>
+<div>
+  <div id="tooltip 20" role="tooltip" class="tooltip_cp_2">
+    <b>Keycloak</b><br>
+    Keycloak is in charge of authentication and authorization with credentials.<br>
+    It is <b>Proxied</b>.<br>
+    The default port for accessing Keycloak is <b>8088:8088</b>
+  </div>
+  <div id="tooltip 21" role="tooltip" class="tooltip_cp_2"><b>MyLDAP<br>
+    6443:443</b>
+  </div>
+  <div id="tooltip 17" role="tooltip" class="tooltip_cp_2"><b>LDAP Server<br>
+    389:389<br>
+    636:636</b>
+  </div>
+
+</div>
+
+<div>
+  <div id="tooltip 15" role="tooltip" class="tooltip_cp_3"><b>Nifi<br>
+  9090:9090</b>
+  </div>
+  <div id="tooltip 16" role="tooltip" class="tooltip_cp_3"><b>Opensearch Dashboard<br>
+  5601:5601</b>
+  </div>
+  <div id="tooltip 19" role="tooltip" class="tooltip_cp_3"><b>Opensearch<br>
+  9200:9200</b>
+  <div id="tooltip 106" role="tooltip" class="tooltip_cp_3"><b>Varnish<br>6081:6081</b></div>
+
+  </div>
+</div>
+
+<div>
+  <div id="tooltip 31" role="tooltip" class="tooltip_cp_8"><b>Nifi-2<br>
+  9090:9090</b>
+  </div>
+  <div id="tooltip 32" role="tooltip" class="tooltip_cp_8"><b>Opensearch-2<br>
+  9200:9200</b>
+  </div>
+  <div id="tooltip 107" role="tooltip" class="tooltip_cp_8"><b>Varnish-2<br>6081:6081</b></div>
+</div>
+<div>
+  <div id="tooltip 6" role="tooltip" class="tooltip_cp_4"><b>IoT Broker<br>
+  1026:1026</b></div>
+  <div id="tooltip 10" role="tooltip" class="tooltip_cp_4">
+    <b>Mongo</b><br>
+    This component naturally communicates only with IoT Broker.<br>
+    The default port for accessing Mongo is <b>27017:27017</b>.</div>
+  <div id="tooltip 22" role="tooltip" class="tooltip_cp_4"><b>Orion Filter<br>
+  8443:8443</b></div>
+
+  <div id="tooltip 25" role="tooltip" class="tooltip_cp_4"><b>IoT Broker 2<br>
+  1027:1026</b></div>
+  <div id="tooltip 26" role="tooltip" class="tooltip_cp_4">
+    <b>Mongo 2</b><br>
+    This component naturally communicates only with IoT Broker 2.<br>
+    The default port for accessing this Mongo is <b>27018:27017</b>.</div>
+  <div id="tooltip 27" role="tooltip" class="tooltip_cp_4"><b>Orion Filter 2<br>
+  8444:8443</b></div>
+<div>
+  <div id="tooltip 3" role="tooltip" class="tooltip_cp_5"><b>ServiceMap<br>
+  8090:8080</b></div>
+  <div id="tooltip 4" role="tooltip" class="tooltip_cp_5"><b>Virtuoso<br>
+  8890:8890<br>
+  1111:1111</b></div>
+  <div id="tooltip 28" role="tooltip" class="tooltip_cp_5"><b>ServiceMap 2<br>
+  8091:8080</b></div>
+  <div id="tooltip 29" role="tooltip" class="tooltip_cp_5"><b>Virtuoso 2<br>
+  8891:8890<br>
+  1112:1111</b></div>
+</div>
+
+
+<div>
+  <div id="tooltip 1" role="tooltip" class="tooltip_cp_6"><b>IoT-App 1</b><br>
+  <b>1880:1880</b></div>
+
+  <div id="tooltip 24" role="tooltip" class="tooltip_cp_6"><b>IoT-App 2</b><br>
+  <b>1881:1880</b><br>
+  3rd, 4th, 5th (etc.) have the first port increased by one for each previous IoT-App.</div>
+</div>
+<div>
+  <div id="tooltip 30" role="tooltip" class="tooltip_cp_7"><b>Geoserver</b><br>
+  <b>8600:8080</b></div>
+  <div id="tooltip 33" role="tooltip" class="tooltip_cp_7"><b>Geoserver DB</b><br>
+  <b>5434:5432</b></div>
+  <div id="tooltip 34" role="tooltip" class="tooltip_cp_7"><b>Heatmap2geosrv</b><br>
+  <b>No port specified</b></div>
+  <div id="tooltip 35" role="tooltip" class="tooltip_cp_7"><b>Heatmap Api</b><br>
+  <b>8001:8080</b></div>
+</div>
+<div>
+  <strong>Red border means component is proxied.
+    <br>Double black border means the vm might exists multiple times.
+    <br>Hovering on a component will highlight the connections from that component to the others.
+  </strong>
+</div>
+    <script type=text/javascript src="static/javascript_components/dcm_arrows.js"></script>
+</body>
+{%endblock%}

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Group Items</title>
+	<style type="text/css">
+		#cy {
+  width: 900px;
+  height: 400px;
+  display: block;
+}</style>
+</head>
+<body>
+<script src="https://pagecdn.io/lib/cytoscape/3.15.2/cytoscape.umd.js" crossorigin="anonymous"  ></script>
+<script src="https://cytoscape.org/cytoscape.js-compound-drag-and-drop/cytoscape-compound-drag-and-drop.js" crossorigin="anonymous"></script>
+<script src="https://cytoscape.org/cytoscape.js-cxtmenu/cytoscape-cxtmenu.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" style="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+<!-- Other iVis-at-Bilkent libraries -->
+		<script src="https://unpkg.com/layout-base@1.0.2/layout-base.js"></script>
+		<script src="https://unpkg.com/avsdf-base/avsdf-base.js"></script>
+		<script src="https://unpkg.com/cose-base@1.0.3/cose-base.js"></script>
+		<script src="https://unpkg.com/cytoscape-graphml/cytoscape-graphml.js"></script>
+		<script src="https://raw.githack.com/iVis-at-Bilkent/cytoscape.js-layvo/unstable/cytoscape-layvo.js"></script>
+		<script type=text/javascript src="{{url_for('static', filename='cytoscape-cise.js') }}"></script>
+<h1>TODO:
+import data from step 1 OR merge step 1 with step 2<br>
+deal with naming of items<br>
+use local libraries<br>
+generate containers for nodes without parents<br>
+generate edges between parents<br></h1>
+<div id="cy" style="border:3px"></div>
+<script type="text/javascript">
+	fetch("{{url_for('static', filename='default_configurations/configurations.json')}}").then(function(resp){return resp.json();}).then(function(data){df_data = data});
+	var cy = cytoscape({
+		container: document.getElementById('cy'), // container to render in
+		style: [
+			{
+				selector: 'node',
+				style: {
+					'label': 'data(id)',
+					'background-color': 'yellow'
+				}
+			},
+
+			{
+				selector: 'node:parent',
+				style: {
+					'background-color': 'red',
+					'border-color': 'orange'
+				}
+			},
+
+			{
+				selector: 'edge',
+				style: {
+					'curve-style': 'bezier',
+					'target-arrow-shape': 'triangle'
+				}
+			},
+
+			{
+				selector: '.cdnd-grabbed-node',
+				style: {
+					'background-color': 'blue'
+				}
+			},
+
+			{
+				selector: '.cdnd-drop-sibling',
+				style: {
+					'background-color': 'red'
+				}
+			},
+
+			{
+				selector: '.cdnd-drop-target',
+				style: {
+					'border-color': 'red',
+					'border-style': 'dashed'
+				}
+			}
+		],
+		elements: [ // list of graph elements to start with
+			{
+			data: { id: 'ES-K', parent: 'Main system', type: 'ES' },
+			},
+			{
+			data: { id: 'Dashboard', parent: 'Main system', type: 'Dash' },
+			},
+			{
+			data: { id: 'Dashboard-Backend', parent: 'Main system', type: 'DashB' },
+			},
+			{
+			data: { id: 'MyDataManager', parent: 'Main system', type: 'MDM' },
+			},
+			{
+			data: { id: 'AuthenticationAuthorization ', parent: 'Main system', type: 'AA' },
+			},
+			{
+			data: { id: 'NiFI', parent: 'Main system', type: 'NF' },
+			},
+			{
+			data: { id: 'KB', parent: 'Main system', type: 'KB' },
+			},
+			{
+			data: { id: 'IOT OB', parent: 'Main system', type: 'IOTOB' },
+			},
+			{
+			data: { id: 'IOT APP', parent: 'Main system', type: 'IOTAPP' },
+			},
+			{
+			data: { id: 'Balancer and Proxy', parent: 'Main system', type: 'BAP' },
+			},
+			{
+			data: { id: 'Main system', type: 'System'}
+		  },
+		],
+
+	layout: {
+		name: 'grid'
+	}
+	});
+	var cdnd = cy.compoundDragAndDrop();
+    var removeEmptyParents = false;
+
+    var isParentOfOneChild = function(node){
+    	return node.isParent() && node.children().length === 1;
+    };
+
+    var removeParent = function(parent){
+		parent.children().move({ parent: null });
+		parent.remove();
+    };
+
+    var removeParentsOfOneChild = function(){
+		cy.nodes().filter(isParentOfOneChild).forEach(removeParent);
+    };
+
+    // custom handler to remove parents with only 1 child on drop
+    cy.on('cdndout', function(event, dropTarget){
+		if( removeEmptyParents && isParentOfOneChild(dropTarget) ){
+			removeParent(dropTarget);
+		}
+    });
+
+    // custom handler to remove parents with only 1 child (on remove of drop target or drop sibling)
+    cy.on('remove', function(event){
+		if( removeEmptyParents ){
+			removeParentsOfOneChild();
+		}
+    });
+		let defaults = {
+  menuRadius: function(ele){ return 100; }, // the outer radius (node center to the end of the menu) in pixels. It is added to the rendered size of the node. Can either be a number or function as in the example.
+  selector: 'node', // elements matching this Cytoscape.js selector will trigger cxtmenus
+  commands: [ { //TODO make them do something useful, right now they suck
+							content: 'Make parent',
+							select: function(ele){
+								if (!ele.isParent() && !ele.isChild()){
+									if (cy.elements('node[id="Main system"]').size() === 0){
+										cy.add({ group: 'nodes', data: { id: 'Main system', type: 'System', position: ele.position()}});
+										ele.move({parent: 'Main system'});
+									}
+									else{
+										var amount_of_sys='System-'+cy.elements('node[type="System"]').size();
+										cy.add({ group: 'nodes', data: { id: amount_of_sys, type: 'System', position: ele.position() }});
+										ele.move({parent: amount_of_sys});
+									}
+								}
+							}
+						},
+
+						{
+							content: 'Delete',
+							select: function(ele){
+								cy.remove(ele);
+							}
+						},
+
+						{
+							content: 'Text',
+							select: function(ele){
+								console.log( ele.position() );
+							}
+						}
+					], // function( ele ){ return [ /*...*/ ] }, // a function that returns commands or a promise of commands
+  fillColor: 'rgba(0, 0, 0, 0.75)', // the background colour of the menu
+  activeFillColor: 'rgba(1, 105, 217, 0.75)', // the colour used to indicate the selected command
+  activePadding: 20, // additional size in pixels for the active command
+  indicatorSize: 24, // the size in pixels of the pointer to the active command, will default to the node size if the node size is smaller than the indicator size,
+  separatorWidth: 3, // the empty spacing in pixels between successive commands
+  spotlightPadding: 4, // extra spacing in pixels between the element and the spotlight
+  adaptativeNodeSpotlightRadius: false, // specify whether the spotlight radius should adapt to the node size
+  minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight (ignored for the node if adaptativeNodeSpotlightRadius is enabled but still used for the edge & background)
+  maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight (ignored for the node if adaptativeNodeSpotlightRadius is enabled but still used for the edge & background)
+  openMenuEvents: 'cxttapstart taphold', // space-separated cytoscape events that will open the menu; only `cxttapstart` and/or `taphold` work here
+  itemColor: 'white', // the colour of text in the command's content
+  itemTextShadowColor: 'transparent', // the text shadow colour of the command's content
+  zIndex: 9999, // the z-index of the ui div
+  atMouse: false, // draw menu at mouse position
+  outsideMenuCancel: false // if set to a number, this will cancel the command if the pointer is released outside of the spotlight, padded by the number given
+};
+
+let menu = cy.cxtmenu( defaults );
+cy.cxtmenu({
+					selector: 'core',
+
+					commands: [
+						{
+							content: 'bg1',
+							select: function(){
+								console.log( 'bg1' );
+							}
+						},
+
+						{
+							content: 'add random node to next click',
+							select: function(){
+								cy.one('tap', function(event){
+									console.log(event['position']);
+									number = Math.floor(Math.random() * 10000) + 1; //dummy for tests
+								  cy.add({ group: 'nodes', data: { id: number, type: 'newNode' }, position: {x: event['position']['x'], y: event['position']['y']}});
+								});
+							}
+						}
+					]
+				});
+</script>
+<style>button {
+  background-color: Green; /* Green */
+  border: none;
+  color: white;
+  padding: 6px 6px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}</style>
+<script type="text/javascript">
+function originalView(){
+	cy.fit();
+};
+function addES(){
+	if (cy.elements('node[id="ES-K"]').size() === 0){
+		cy.add({ group: 'nodes', data: { id: 'ES-K', type: 'ES', parent: 'Unassigned' }});
+	}
+	else{
+		var amount_of_ES='ES-'+cy.elements('node[type="ES"]').size();
+		cy.add({ group: 'nodes', data: { id: amount_of_ES, type: 'ES', parent: 'Unassigned' }});
+	}
+	var layout = cy.layout({name: 'grid'});
+	layout.run();
+};
+function loadSmallest(){
+	cy.$('').remove();
+	console.log(df_data['C0']);
+	cy.add(df_data['C0']['elements']);
+	var layout = cy.layout({name: 'grid'});
+	layout.run();
+};
+function loadC1(){
+	cy.$('').remove();
+	console.log(df_data['C1']);
+	cy.add(df_data['C1']['elements']);
+	var layout = cy.layout({name: 'grid'});
+	layout.run();
+};
+function fillPlaceholders(){
+	var br = document.createElement("br");
+	document.getElementById("Placeholder solver").replaceChildren();
+	var form = document.createElement("form");
+
+	cy.nodes().forEach(function( ele ){
+		var item = document.createElement("input");
+		item.setAttribute("type", "text");
+		item.setAttribute("class", ele['_private']['data']['type']);
+		item.setAttribute("placeholder", ele.id());
+		item.setAttribute("pattern", "^((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$");
+		form.appendChild(item);
+		form.appendChild(br.cloneNode());
+  	console.log( ele.id() + ' - ' + ele['_private']['data']['type']);
+	});
+	var submit = document.createElement("input");
+	submit.setAttribute("type", 'submit');
+	submit.setAttribute("value", 'done');
+	form.appendChild(submit);
+  document.getElementById("Placeholder solver").appendChild(form);
+};
+function type_of_systems(){
+	cy.nodes().forEach(function( ele ){
+  	console.log( ele.id() + ' - ' + ele['_private']['data']['type']);
+});
+};
+function cise_test(){
+	var cluster = [];
+	cy.nodes().forEach(function( ele ){
+		if (ele.isParent()) {
+			var arr_of_nodes = [];
+			ele.children().forEach(function ( second_ele )){
+				arr_of_nodes.push(second_ele.id());
+			}
+			cluster.push(arr_of_nodes);
+		}
+	});
+	var layout = window.cy.layout({
+			name: 'cise',
+			clusters: cluster
+		});
+
+		layout.run();
+};
+</script>
+<button type="button" onclick="originalView()" class='button'>Reset view</button>
+<button type="button" onclick="addES()" class='button'>Add ES+K</button>
+<button type="button" onclick="console.log( cy.json().elements );" class='button'>Output dummy</button>
+<button type="button" onclick="loadSmallest()" class='button'>Load smallest configuration</button>
+<button type="button" onclick="loadC1()" class='button'>Load C1</button>
+<button type="button" onclick="fillPlaceholders()" class='button'>Fill placeholders</button>
+<button type="button" onclick="type_of_systems()" class='button'>Extract items</button>
+<button type="button" onclick="cise_test()" class='button'>Run CiSE</button>
+<button type="button" onclick="" class='button'>Something</button>
+<button type="button" onclick="" class='button'>Something</button>
+<div id="Placeholder solver"></div>
+</body>
+</html>

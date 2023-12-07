@@ -1,0 +1,319 @@
+{% extends "main.html" %}
+{% block title %}Build Configuration - Docker{% endblock %}
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+  integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+  crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+    integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+    crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js" integrity="sha512-nOQuvD9nKirvxDdvQ9OMqe2dgapbPB7vYAMrzJihw5m+aNcf0dX53m6YxM4LgA9u8e9eg9QX+/+mPu8kCNpV2A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+</script>
+{% endblock %}
+{% block content %}
+<form name='Required' id='form' action="deal_with_placeholders" class="form-group" method="post">
+  <div class="row align-items-start">
+    <div class="col border-end">
+      <div class='container'>
+
+        {%for element in required%}
+        <div class="mb-3">
+          <label for="{{element[0]}}" class="form-label">{{element[2]}}</label><br>
+          <small id="{{element[0]}}-help" class="form-text text-muted">{{element[0]}} - {{element[1]}}</small>
+          {%if element[1]=='path'%}
+          <input type="{{element[1]}}" autocomplete="off" pattern="^(.+)\/([^\/]+)$" class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
+          {%elif element[1]=='password'%}
+          <div class="input-group mb-3">
+            <input type="{{element[1]}}" autocomplete="off" class="form-control" name="{{element[0]}}" id="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
+            <button class="btn btn-outline-dark" type="button" id="button-r-{{element[0]}}" onclick="random_value(this, {{element[6]}})">Randomize</button>
+            <button class="btn btn-outline-dark" type="button" id="button-{{element[0]}}" onclick="psw_show(this)">Show</button>
+          </div>
+          {%elif element[1]=='url'%}
+          <input type="{{element[1]}}" autocomplete="off" class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
+          {%elif element[1]=='port'%}
+          <input type="number" autocomplete="off" max=65535 min=0 class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
+          {%elif element[1]=='email'%}
+          <input type="{{element[1]}}" autocomplete="off" class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
+          {%elif element[1]=='number'%}
+          <input type="number" autocomplete="off" class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}">
+          {%elif element[1]=='random'%}
+          <div class="input-group mb-3">
+            <input type="text" class="form-control" autocomplete="off" title='{{element[5]|safe}}' aria-describedby="button-addon2" id="{{element[0]}}" name="{{element[0]}}" id="random-{{element[0]}}">
+            <button class="btn btn-outline-dark" type="button" id="button-{{element[0]}}" onclick="random_value(this, {{element[6]}})">Randomize</button>
+          </div>
+          {%elif element[1]=='select'%}
+          <select class="form-select" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
+            {%for select_value in element[6].split(',')%}
+            <option value="{{select_value}}">{{select_value}}</option>
+            {%endfor%}
+          </select>
+          {%else%}
+          <input type="{{element[1]}}" id="{{element[0]}}" autocomplete="off" class="form-control" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
+          {%endif%}
+          <br>
+        </div>
+        {%endfor%}
+        <div name="has_default" style="display: none;">
+          <hr>
+          These are the default values for the current configuration. You are strongly suggested not to edit anything unless you know what you are doing as we take no responsability; this is your formal warning.
+          <hr>
+          {%for element in has_default%}
+          <div class="mb-3">
+            <label for="{{element[0]}}" class="form-label">{{element[2]|safe}}</label><br>
+            <small id="{{element[0]}}-help" class="form-text text-muted">{{element[0]}} - {{element[1]}}</small>
+            {%if element[1]=='path'%}
+            <input type="{{element[1]}}" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" value="{{element[4]}}" class="form-control" required>
+            {%elif element[1]=='password'%}
+            <div class="input-group mb-3">
+              <input type="{{element[1]}}" class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" value="{{element[4]}}" required>
+              <button class="btn btn-outline-dark" type="button" id="button-r-{{element[0]}}" onclick="random_value(this, {{element[6]}})">Randomize</button>
+              <button class="btn btn-outline-dark" type="button" id="button-{{element[0]}}" onclick="psw_show(this)">Show</button>
+            </div>
+            {%elif element[1]=='port'%}
+            <input type="number" max=65535 min=0 class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" value="{{element[4]}}" required>
+            {%elif element[1]=='number'%}
+            <input type="number" class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" value="{{element[4]}}" required>
+            {%elif element[1]=='url'%}
+            <input type="{{element[1]}}"  class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" value="{{element[4]}}" required>
+            {%elif element[1]=='email'%}
+            <input type="{{element[1]}}" class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
+            {%elif element[1]=='random'%}
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" title='{{element[5]|safe}}' id="{{element[0]}}" aria-describedby="button-addon2" value="{{element[4]}}" name="{{element[0]}}" id="random-{{element[0]}}" required>
+              <button class="btn btn-outline-dark" type="button" id="button-{{element[0]}}" onclick="random_value(this, {{element[6]}})">Randomize</button>
+            </div>
+            {%elif element[1]=='select'%}
+            <select class="form-select" name="{{element[0]}}" id="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
+              {%for select_value in element[6].split(',')%}
+              <option value="{{select_value}}">{{select_value}}</option>
+              {%endfor%}
+            </select>
+            {%else%}
+            <input type="string" name="{{element[0]}}" id="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" value="{{element[4]}}" class="form-control" required>
+            {%endif%}
+          </div>
+          {% endfor %}
+          <div name="references">
+            {%for element in references%}
+            <div class="mb-3" style="display: none;">
+              <label for="{{element[0]}}">{{element[6]}}</label>
+              <input type="string" name="{{element[0]}}" id="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" value="{{element[4]}}" hidden>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <hr>
+        Remember to execute the .sh files when deploying the applications; setup.sh must be ran before execution, post-setup.sh must be ran during execution. Multiple executions are safe. Some folders may contain no such files; in that case, there is nothing you need to do.<br>
+        In order to access Nifi securely, we had to use a Certificate, which is actually generated during the setup. You'll need to allow the certificate, or else you will receive an insecure connection warning.
+        <hr>
+        You can't download a configuration until you save it.<br>
+        <input name="makeToken" type="button" value="Save configuration" id='make_token_button' class="btn btn-primary" onclick="makeToken_function()">
+        <input name="show_optional" type="button" value="Show default fields" class="btn btn-primary" onclick="optional()">
+        <input type="submit" value="Download configuration" id="button_for_generating_configuration" class="btn btn-primary" disabled>
+
+      </div>
+    </div>
+    <div class="col">
+      <div class='container'>
+        <div class="mb-3">
+        {%for element, value in initial_values.items()%}
+
+          <label for="{{element}}" class="form-label">{{element}}</label>
+          <br>
+          <input type="text" name="{{element}}" id="{{element}}" class="form-control" readonly value='{{value}}'>
+          {%if element in ['# of Iot-Brokers', '# of Iot-Broker servers']%}
+          <hr>
+            {%for i in range(value|int)%}
+            <div id='map_{{i}}' style='height:400px'></div>
+            <div class="row g-2">
+            <div class="col-md-6"><label for="$#lat-ib-{{i}}#$" class="form-label">Latitude broker-{{i}}</label><input type="text" name="$#lat-ib-{{i}}#$" id="$#lat-ib-{{i}}#$" class="form-control" required></div>
+            <div class="col-md-6"><label for="$#lng-ib-{{i}}#$" class="form-label">Longitude broker-{{i}}</label><input type="text" name="$#lng-ib-{{i}}#$" id="$#lng-ib-{{i}}#$" class="form-control" required></div>
+            <div class="col-md-6"><input type="text" name="$#zoom-{{i}}#$" id="$#zoom-{{i}}#$" class="form-control" hidden></div>
+            </div><hr><br>
+            {%endfor%}
+          {%elif element == '# of ServiceMaps'%}
+          <hr>
+          These values will assign the domain for the Servicemap(s). They must be all different.
+          You will need to add those values to the hosts file where you wish to connect to the main webpage of your Snap4City distribution.
+          <br>
+          <br>
+            {%for i in range(value|int)%}
+            <div class="col-md"><label for="servicemap-{{(i|string).zfill(3)}}" class="form-label">Servicemap-{{i}} name</label><input type="text" name="$#servicemap-{{(i|string).zfill(3)}}#$" id="$#servicemap-{{(i|string).zfill(3)}}#$" class="form-control" required value="servicemap-{{(i|string).zfill(3)}}.local" data-bs-toggle="tooltip" data-bs-html="true" title="The domain"></div>
+            <hr><br>
+            {%endfor%}
+        </div>
+          {%endif%}
+        {%endfor%}
+      </div>
+    </div>
+    <div class='container' style='padding-right: 2%;  padding-left: 2%;'>
+      <div class="mb-3">
+        <br>
+        <div id='token_place'>
+          <label for="token_output" class="form-label">Save this token to load the current configuration in the future.</label><input class="form-control" id="token_output" name="token_place" type="text" readonly>
+        </div>
+        <br>
+        <label for="time_of_configuration" class="form-label">Time of configuration's last saving</label>
+        <input type="text" name="Time" id="time_of_configuration" class="form-control" readonly>
+      </div>
+    </div>
+    </div>
+</form>
+
+<div aria-live="polite" aria-atomic="true" class="position-relative bd-example-toasts">
+  <div class="toast-container position-fixed p-3 bottom-0 end-0" id="toastPlacement">
+    <div class="toast" id="noticeToast">
+      <div class="toast-header">
+        <strong class="me-auto">Snap4City</strong>
+        <small>Attention!</small>
+      </div>
+      <div class="toast-body" id="toast_text">
+
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  var form = document.querySelector('#form');
+  form.addEventListener("change", function (e) {
+    document.getElementById("button_for_generating_configuration").disabled = true;
+    document.getElementById("make_token_button").disabled = false;
+  });
+  //note; generation is
+  //it is supposed to be a quick way to get a password which isn't default
+  function random_value(caller, length_string) {
+    var i, rnd = "", characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    a = window.crypto.getRandomValues(new Uint32Array(length_string))
+    a.forEach(function(e) {rnd+=characters[e%characters.length];})
+
+    caller.parentNode.firstElementChild.value=rnd;
+  };
+  function psw_show(caller) {
+    if (caller.parentNode.firstElementChild.type=='password') {
+      caller.innerText='Hide';
+      caller.parentNode.firstElementChild.type='string';
+    }
+    else {
+      caller.innerText='Show';
+      caller.parentNode.firstElementChild.type='password';
+    }
+  };
+
+  $(document).ready(function() {
+    //popper needs to be manually activated
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    '[name^="bo"]'
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+    //generate random password for each password field
+    var keys = [].slice.call(document.querySelectorAll('input[id^="random"]'));
+    keys.forEach(function(e) {random_value(e,16);})
+    var passwords_hidden = [].slice.call(document.querySelectorAll('input[type=password]'));
+    passwords_hidden.forEach(function(e) {random_value(e,16);})
+    iotbroker_maps();
+  });
+
+  function optional() { //showing or hiding prefilled placeholders
+    var x = document.getElementsByName("has_default")[0];
+    var y = document.getElementsByName("show_optional")[0];
+    if (x.style.display === "none") {
+      x.style.display = "block";
+      y.value = "Hide default fields";
+    } else {
+      x.style.display = "none";
+      y.value = "Show default fields";
+    }
+  };
+
+  async function makeToken_function() { // make a token, save to database (if needed), allow export, notify user
+    document.getElementById("time_of_configuration").value = (new Date()).toISOString();
+    var myform = $('#form');
+    var disabled = myform.find(':input:disabled').removeAttr('disabled');
+    var form_dict = myform.serializeArray().sort();
+    disabled.attr('disabled','disabled');
+    document.getElementById("button_for_generating_configuration").disabled = false;
+    document.getElementById("make_token_button").disabled = true;
+    token_value = String(CryptoJS.SHA1(JSON.stringify(form_dict.slice(0,-2))));
+    form_dict.push({
+      name: "token",
+      value: token_value
+    });
+
+    document.getElementById("token_place").innerHTML = '<br><label for="token_output" class="form-label">Save this token to load the current configuration in the future.</label><input class="form-control" id="token_output" name="token_place" type="text" value="' + token_value +
+      '" readonly>';
+    $.ajax({
+      url: 'saving_conf',
+      data: form_dict,
+      type: 'POST',
+      success: function(response) {
+        document.getElementById("toast_text").innerHTML = response;
+      },
+      error: function(error) {
+        document.getElementById("toast_text").innerHTML = 'Something went wrong, you should contact support.';
+        console.log(error);
+      }
+    });
+    var myAlert = document.getElementById('noticeToast');
+    var bsAlert = new bootstrap.Toast(myAlert);
+    bsAlert.hide();
+    await new Promise(r => setTimeout(r, 2000)); //some time is needed for purely UI reasons
+    bsAlert.show();
+  };
+
+  function iotbroker_maps(){
+    {%for element, value in initial_values.items()%}
+      {%if element in ['# of Iot-Brokers', '# of Iot-Broker servers']%}
+        {%for i in range(value|int)%}
+        var map_{{i}};
+        var pin_{{i}};
+        var tilesURL_{{i}}='https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png';
+        var mapAttrib_{{i}}='Orion broker {{i}}';
+
+        // add map container
+        MapCreate_{{i}}();
+
+        function MapCreate_{{i}}() {
+        // create map instance
+        if (!(typeof map_{{i}} == "object")) {
+          map_{{i}} = L.map('map_{{i}}', {
+            center: [40,0],
+            zoom: 3
+          });
+        }
+        else {
+          map_{{i}}.setZoom(3).panTo([40,0]);
+        }
+        // create the tile layer with correct attribution
+        L.tileLayer(tilesURL_{{i}}, {
+          attribution: mapAttrib_{{i}},
+          maxZoom: 19
+        }).addTo(map_{{i}});
+        }
+
+        map_{{i}}.on('click', function(ev) { //jquery requires escaping for # and $
+        $('#\\$\\#lat-ib-{{i}}\\#\\$').val(ev.latlng.lat);
+        $('#\\$\\#lng-ib-{{i}}\\#\\$').val(ev.latlng.lng);
+        $('#\\$\\#zoom-{{i}}\\#\\$').val(map_{{i}}.getZoom())
+        document.getElementById("button_for_generating_configuration").disabled = true;
+        document.getElementById("make_token_button").disabled = false;
+        if (typeof pin_{{i}} == "object") {
+          pin_{{i}}.setLatLng(ev.latlng);
+        }
+        else {
+          pin_{{i}} = L.marker(ev.latlng,{ riseOnHover:true,draggable:true });
+          pin_{{i}}.addTo(map_{{i}});
+          pin_{{i}}.on('drag',function(ev) {
+            $('#\\$\\#lat-ib-{{i}}\\#\\$').val(ev.latlng.lat);
+            $('#\\$\\#lng-ib-{{i}}\\#\\$').val(ev.latlng.lng);
+
+          });
+        }
+        });
+        {%endfor%}
+      {%endif%}
+    {%endfor%}
+  };
+</script>
+{% endblock %}

@@ -1,0 +1,72 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="https://www.snap4city.org"><img src="static/img/S4C_logo.png" width="30" height="30" alt=""></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="selecting_model" style="border-right: 1px solid;">Make configuration - Docker</a>
+        </li>
+        <!--
+        if you are reading this, know that kubernetes support is on the way
+        following the link is pointless
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="kubernets_configuration" style="border-right: 1px solid;">Make configuration - Kubernetes</a>
+        </li>-->
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href='mailto:{{helpmail}}' style="border-left: 1px solid; border-right: 1px solid;">Problems? Send mail to support</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="https://www.snap4city.org/drupal/node/738" style="border-left: 1px solid; border-right: 1px solid;" target="_blank" rel="noopener noreferrer">Guide and examples</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-left: 1px solid;">
+            Ports and connections in models
+          </a>
+          <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="micro_components_x">Micro_X</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="normal_components_x_y" aria-current="page">Normal_X_Y</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="small_components_x_y" aria-current="page">Small_X_Y</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="dcs_components_x_y_z" aria-current="page">DataCitySmall_X_Y_Z</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="dcm_components_x_y_z_w" aria-current="page">DataCityMedium_X_Y_Z_W</a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-left: 1px solid;">
+            Additional resources
+          </a>
+          <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDarkDropdownMenuLink">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="more_nifi">Duplicate NiFi host</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="more_opensearch">Duplicate OpenSearch</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="updating_information">Update existing configuration</a>
+            </li>
+
+          </ul>
+
+        </li>
+      </ul>
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a class="nav-link disabled" href="#">{{version}}</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

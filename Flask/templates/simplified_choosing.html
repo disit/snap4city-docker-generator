@@ -1,0 +1,848 @@
+{% extends "main.html" %}
+{% block title %}Index{% endblock %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block content %}
+<script type="text/javascript">
+  function doesTokenExist(){//used to detect whenever a wrong token is used
+    var myform = $('#Start_from_token');
+    var token_dict = myform.serializeArray();
+    try {
+      $.ajax({
+      url: '/conf_exists',
+      data: token_dict,
+      type: 'POST',
+      done: function(response) {
+        return (response === 'true');
+      },
+      error: function(error) {
+        console.log(error);
+      }
+      });
+    }
+    catch (exception_var) {
+        console.log(exception_var);
+    }
+  };
+  function addSubmit(form) {
+    var submit = document.createElement("input");
+    var before_button = document.createElement("div");
+    before_button.setAttribute('id','before_button');
+    submit.setAttribute("type", 'submit');
+    submit.setAttribute("value", 'Fill placeholders');
+    submit.setAttribute("class", "btn btn-primary");
+    form.appendChild(before_button);
+    form.appendChild(submit);
+    return form;
+  };
+
+  function onEdit() { //this is where the form is built once a model is picked.
+                      //note that the names of the input fields will pop out in the next form.
+    var x = document.getElementById("configs").value;
+    var form = document.createElement("div");
+    document.getElementById("Installation model").replaceChildren(); //empty it
+    if (x == 'Micro') {
+      var inputX = document.createElement("input");
+      inputX.setAttribute("type", "number");
+      inputX.setAttribute("placeholder", "# of IoT-Apps (1-10)");
+      inputX.setAttribute("name", "# of IoT-Apps");
+      inputX.setAttribute("min", 1);
+      inputX.setAttribute("max", 10);
+      inputX.setAttribute("class", "form-control");
+      inputX.required = true;
+
+      var label_for_X = document.createElement("label");
+      var label_text_X = document.createTextNode("# of IoT-Apps");
+      inputX.setAttribute("id", 'X');
+      label_for_X.setAttribute("for", "X");
+      label_for_X.appendChild(label_text_X);
+      form.appendChild(label_for_X);
+
+      form.appendChild(inputX);
+      form.appendChild(document.createElement("br"));
+
+      var inputY = document.createElement("input");
+      inputY.setAttribute('hidden', "");
+      inputY.setAttribute("type", "number");
+      inputY.setAttribute("name", "# of Iot-Brokers");
+      inputY.setAttribute("value", 1);
+      form.append(inputY);
+
+      add_ip_explanation(form)
+      add_ip_field(1,form);
+      form = addSubmit(form);
+      document.getElementById("Installation model").appendChild(form);
+    } else if (x == 'Kubernetes') {
+      //if you are looking here without seeing the kuber option, know that we
+      //aren't done, but you can hack it in and see the wip
+      //no promises on results
+      var inputX = document.createElement("input");
+      inputX.setAttribute("type", "number");
+      inputX.setAttribute("placeholder", "# of IoT-Apps (1-1050)");
+      inputX.setAttribute("name", "# of IoT-Apps");
+      inputX.setAttribute("min", 1);
+      inputX.setAttribute("max", 1050);
+      inputX.setAttribute("class", "form-control");
+      inputX.required = true;
+
+      var label_for_X = document.createElement("label");
+      var label_text_X = document.createTextNode("# of IoT-Apps");
+      inputX.setAttribute("id", 'X');
+      label_for_X.setAttribute("for", "X");
+      label_for_X.appendChild(label_text_X);
+      form.appendChild(label_for_X);
+
+      form.appendChild(inputX);
+      form.appendChild(document.createElement("br"));
+
+      var inputY = document.createElement("input");
+      inputY.setAttribute('hidden', "");
+      inputY.setAttribute("type", "number");
+      inputY.setAttribute("name", "# of Iot-Brokers");
+      inputY.setAttribute("value", 1);
+      form.append(inputY);
+
+      //add_ip_explanation(form)
+      add_ip_field(1,form,'fixed-ip-k8s',"127.0.0.1");
+
+      //document.getElementById("configs").value;
+      form = addSubmit(form);
+
+      document.getElementById("Installation model").appendChild(form);
+      //document.getElementById("ip_field-1").setAttribute("value","127.0.0.1");
+    } else if (x == 'Normal') {
+      var inputX = document.createElement("input");
+      inputX.setAttribute("type", "number");
+      inputX.setAttribute("placeholder", "# of IoT-Apps (1-50)");
+      inputX.setAttribute("name", "# of IoT-Apps");
+      inputX.setAttribute("min", 1);
+      inputX.setAttribute("max", 50);
+      inputX.setAttribute("class", "form-control");
+      inputX.required = true;
+
+      var label_for_X = document.createElement("label");
+      var label_text_X = document.createTextNode("# of IoT-Apps");
+      inputX.setAttribute("id", 'X');
+      label_for_X.setAttribute("for", "X");
+      label_for_X.appendChild(label_text_X);
+      form.appendChild(label_for_X);
+
+      form.appendChild(inputX);
+      form.appendChild(document.createElement("br"));
+      var inputY = document.createElement("select");
+      inputY.setAttribute('class', "form-select");
+      inputY.setAttribute("name", "# of Iot-Brokers");
+      var option1 = document.createElement("option");
+      option1.text = "1";
+      option1.value = "1";
+      inputY.add(option1);
+      var option2 = document.createElement("option");
+      option2.text = "2";
+      option2.value = "2";
+      inputY.add(option2);
+
+      var label_for_Y = document.createElement("label");
+      var label_text_Y = document.createTextNode("# of IoT brokers");
+      inputY.setAttribute("id", 'Y');
+      label_for_Y.setAttribute("for", "Y");
+      label_for_Y.appendChild(label_text_Y);
+      form.appendChild(label_for_Y);
+      /*
+      var inputZ = document.createElement("input");
+      inputZ.setAttribute('hidden', "");
+      inputZ.setAttribute("type", "number");
+      inputZ.setAttribute("name", "# of ServiceMaps");
+      inputZ.setAttribute("value", 1);
+      form.append(inputZ);
+      */
+      form.append(inputY);
+      form.appendChild(document.createElement("br"));
+      add_ip_explanation(form)
+      for (let i = 1; i < 3; i++) {
+        add_ip_field(i,form);
+      }
+
+      form = addSubmit(form);
+      document.getElementById("Installation model").appendChild(form);
+    } else if (x == 'Small') {
+      var inputX = document.createElement("input");
+      inputX.setAttribute("type", "number");
+      inputX.setAttribute("placeholder", "# of IoT-Apps (1-50)");
+      inputX.setAttribute("name", "# of IoT-Apps");
+      inputX.setAttribute("min", 1);
+      inputX.setAttribute("max", 50);
+      inputX.setAttribute("class", "form-control");
+      inputX.required = true;
+
+      var label_for_X = document.createElement("label");
+      var label_text_X = document.createTextNode("# of IoT-App");
+      inputX.setAttribute("id", 'X');
+      label_for_X.setAttribute("for", "X");
+      label_for_X.appendChild(label_text_X);
+      form.appendChild(label_for_X);
+
+      form.appendChild(inputX);
+      form.appendChild(document.createElement("br"));
+      var inputY = document.createElement("select");
+      inputY.setAttribute('class', "form-select");
+      inputY.setAttribute("name", "# of Iot-Brokers");
+      var option1 = document.createElement("option");
+      option1.text = "1";
+      option1.value = "1";
+      inputY.add(option1);
+      var option2 = document.createElement("option");
+      option2.text = "2";
+      option2.value = "2";
+      inputY.add(option2);
+
+      var label_for_Y = document.createElement("label");
+      var label_text_Y = document.createTextNode("# of IoT brokers");
+      inputY.setAttribute("id", 'Y');
+      label_for_Y.setAttribute("for", "Y");
+      label_for_Y.appendChild(label_text_Y);
+      form.appendChild(label_for_Y);
+      /*
+      var inputZ = document.createElement("input");
+      inputZ.setAttribute('hidden', "");
+      inputZ.setAttribute("type", "number");
+      inputZ.setAttribute("name", "# of ServiceMaps");
+      inputZ.setAttribute("value", 1);
+      form.append(inputZ);
+      */
+      form.append(inputY);
+      form.appendChild(document.createElement("br"));
+      add_ip_explanation(form)
+      for (let i = 1; i < 5; i++) {
+        add_ip_field(i,form);
+      }
+
+      form = addSubmit(form);
+      document.getElementById("Installation model").appendChild(form);
+    } else if (x == 'DataCitySmall') {
+      var inputX = document.createElement("input");
+      inputX.setAttribute("type", "number");
+      inputX.setAttribute("placeholder", "# of IoT-App (1-200)");
+      inputX.setAttribute("name", "# of IoT-Apps");
+      inputX.setAttribute("min", 1);
+      inputX.setAttribute("max", 200);
+      inputX.setAttribute("class", "form-control");
+      inputX.required = true;
+
+      var label_for_X = document.createElement("label");
+      var label_text_X = document.createTextNode("# of IoT-App");
+      inputX.setAttribute("id", 'X');
+      label_for_X.setAttribute("for", "X");
+      label_for_X.appendChild(label_text_X);
+      form.appendChild(label_for_X);
+
+      form.appendChild(inputX);
+      form.appendChild(document.createElement("br"));
+      var inputY = document.createElement("select");
+      inputY.setAttribute('class', "form-select");
+      inputY.setAttribute("name", "# of Iot-Brokers");
+      var option1 = document.createElement("option");
+      option1.text = "1";
+      option1.value = "1";
+      inputY.add(option1);
+      var option2 = document.createElement("option");
+      option2.text = "2";
+      option2.value = "2";
+      inputY.add(option2);
+
+      var label_for_Y = document.createElement("label");
+      var label_text_Y = document.createTextNode("# of IoT brokers");
+      inputY.setAttribute("id", 'Y');
+      label_for_Y.setAttribute("for", "Y");
+      label_for_Y.appendChild(label_text_Y);
+      form.appendChild(label_for_Y);
+
+      form.append(inputY);
+      form.appendChild(document.createElement("br"));
+
+      //////////////////////////////////////////
+      var inputZ = document.createElement("select");
+      inputZ.setAttribute('class', "form-select");
+      inputZ.setAttribute("name", "# of ServiceMaps");
+      var option1_sm = document.createElement("option");
+      option1_sm.text = "1";
+      option1_sm.value = "1";
+      inputZ.add(option1_sm);
+      var option2_sm = document.createElement("option");
+      option2_sm.text = "2";
+      option2_sm.value = "2";
+      inputZ.add(option2_sm);
+      var option3_sm = document.createElement("option");
+      option3_sm.text = "3";
+      option3_sm.value = "3";
+      inputZ.add(option3_sm);
+
+      var label_for_Z = document.createElement("label");
+      var label_text_Z = document.createTextNode("# of ServiceMaps");
+      inputZ.setAttribute("id", 'Z');
+      label_for_Z.setAttribute("for", "Z");
+      label_for_Z.appendChild(label_text_Z);
+      form.appendChild(label_for_Z);
+
+      form.append(inputZ);
+      form.appendChild(document.createElement("br"));
+
+      add_ip_explanation(form)
+      for (let i = 1; i < 7; i++) {
+        add_ip_field(i,form);
+      }
+      form = addSubmit(form);
+      document.getElementById("Installation model").appendChild(form);
+    } else if (x == 'DataCityMedium') {
+      var inputX = document.createElement("input");
+      inputX.setAttribute("type", "number");
+      inputX.setAttribute("placeholder", "# of IoT-App (1-1050)");
+      inputX.setAttribute("name", "# of IoT-Apps");
+      inputX.setAttribute("min", 1);
+      inputX.setAttribute("max", 1050);
+      inputX.setAttribute("class", "form-control");
+      inputX.setAttribute("onchange", "variable_iotapps_server(this)")
+      inputX.required = true;
+
+      var label_for_X = document.createElement("label");
+      var label_text_X = document.createTextNode("# of IoT-App - The required servers will be generated with a well distributed amount of iotapps, up to 70 each.");
+      inputX.setAttribute("id", 'X');
+      label_for_X.setAttribute("for", "X");
+      label_for_X.appendChild(label_text_X);
+      form.appendChild(label_for_X);
+
+      form.appendChild(inputX);
+      form.appendChild(document.createElement("br"));
+      var inputY = document.createElement("select");
+      inputY.setAttribute('class', "form-select");
+      inputY.setAttribute("name", "# of Iot-Broker servers");
+      var option1 = document.createElement("option");
+      option1.text = "1";
+      option1.value = "1";
+      inputY.add(option1);
+      var option2 = document.createElement("option");
+      option2.text = "2";
+      option2.value = "2";
+      inputY.add(option2);
+
+      var label_for_Y = document.createElement("label");
+      var label_text_Y = document.createTextNode("# of IoT broker servers");
+      inputY.setAttribute("onchange", "variable_obrokers_server(this)");
+      inputY.setAttribute("id", 'Y');
+      label_for_Y.setAttribute("for", "Y");
+      label_for_Y.appendChild(label_text_Y);
+      form.appendChild(label_for_Y);
+
+      form.append(inputY);
+      form.appendChild(document.createElement("br"));
+
+      //////////////////////////////////////////
+      var inputZ = document.createElement("select");
+      inputZ.setAttribute('class', "form-select");
+      inputZ.setAttribute("name", "# of ServiceMaps");
+      inputZ.setAttribute("onchange", "equalize(this)");
+      var option1_sm = document.createElement("option");
+      option1_sm.text = "1";
+      option1_sm.value = "1";
+      inputZ.add(option1_sm);
+      var option2_sm = document.createElement("option");
+      option2_sm.text = "2";
+      option2_sm.value = "2";
+      inputZ.add(option2_sm);
+      var option3_sm = document.createElement("option");
+      option3_sm.text = "3";
+      option3_sm.value = "3";
+      inputZ.add(option3_sm);
+
+      var label_for_Z = document.createElement("label");
+      var label_text_Z = document.createTextNode("# of ServiceMaps");
+      inputZ.setAttribute("id", 'Z');
+      label_for_Z.setAttribute("for", "Z");
+      label_for_Z.appendChild(label_text_Z);
+      form.appendChild(label_for_Z);
+
+      form.append(inputZ);
+      form.appendChild(document.createElement("br"));
+
+      var inputN = document.createElement("input");
+      inputN.setAttribute("type", "number");
+      inputN.setAttribute("placeholder", "# of Nifi nodes");
+      inputN.setAttribute("name", "# of Nifi nodes");
+      inputN.setAttribute("readonly",'');
+      inputN.setAttribute('value', 2);
+      inputN.setAttribute("class", "form-control");
+      inputN.required = true;
+
+      var label_for_N = document.createElement("label");
+      var label_text_N = document.createTextNode("# of Nifi/Opensearch nodes");
+      inputN.setAttribute("id", 'N');
+      label_for_N.setAttribute("for", "N");
+      label_for_N.appendChild(label_text_N);
+      form.appendChild(label_for_N);
+
+      form.appendChild(inputN);
+      form.appendChild(document.createElement("br"));
+
+      add_ip_explanation(form)
+
+      add_ip_field(1, form, 'custom', 'Authentication-Authorization');
+      add_ip_field(2, form, 'custom', 'Dashboard');
+      add_ip_field(3, form, 'custom', 'Heatmap');
+
+      form = addSubmit(form);
+
+      document.getElementById("Installation model").appendChild(form);
+      variable_nifi(inputN);
+      variable_virtuoso(inputZ);
+      variable_obrokers_server(inputY);
+    } else if (x == 'DataCityLarge') {
+      var inputX = document.createElement("input");
+      inputX.setAttribute("type", "number");
+      inputX.setAttribute("placeholder", "# of IoT-App - The required servers will be generated with a well distributed amount of iotapps, up to 70 each.");
+      inputX.setAttribute("name", "# of IoT-Apps");
+      inputX.setAttribute("min", 1);
+      inputX.setAttribute("max", 1050);
+      inputX.setAttribute("class", "form-control");
+      inputX.setAttribute("onchange", "variable_iotapps_server(this)");
+      inputX.required = true;
+
+      var label_for_X = document.createElement("label");
+      var label_text_X = document.createTextNode("# of IoT-App");
+      inputX.setAttribute("id", 'X');
+      label_for_X.setAttribute("for", "X");
+      label_for_X.appendChild(label_text_X);
+      form.appendChild(label_for_X);
+
+      form.appendChild(inputX);
+      form.appendChild(document.createElement("br"));
+      var inputY = document.createElement("input");
+      inputY.setAttribute("type", "number");
+      inputY.setAttribute("placeholder", "# of Iot-Brokers");
+      inputY.setAttribute("name", "# of Iot-Brokers");
+      inputY.setAttribute("min", 1);
+      inputY.setAttribute("max", 20);
+      inputY.setAttribute("class", "form-control");
+      inputY.setAttribute("onchange", "variable_obrokers_server(this)");
+
+      var label_for_Y = document.createElement("label");
+      var label_text_Y = document.createTextNode("# of IoT brokers");
+      inputY.setAttribute("id", 'Y');
+      label_for_Y.setAttribute("for", "Y");
+      label_for_Y.appendChild(label_text_Y);
+      form.appendChild(label_for_Y);
+
+      form.append(inputY);
+      form.appendChild(document.createElement("br"));
+
+      //////////////////////////////////////////
+      var inputZ = document.createElement("select");
+      inputZ.setAttribute('class', "form-select");
+      inputZ.setAttribute("name", "# of ServiceMaps");
+      inputZ.setAttribute("onchange", "equalize(this)");
+      var option0_sm = document.createElement("option");
+      option0_sm.text = "-";
+      option0_sm.value = "";
+      inputZ.add(option0_sm);
+      var option1_sm = document.createElement("option");
+      option1_sm.text = "1";
+      option1_sm.value = "1";
+      inputZ.add(option1_sm);
+      var option2_sm = document.createElement("option");
+      option2_sm.text = "2";
+      option2_sm.value = "2";
+      inputZ.add(option2_sm);
+      var option3_sm = document.createElement("option");
+      option3_sm.text = "3";
+      option3_sm.value = "3";
+      inputZ.add(option3_sm);
+
+      var label_for_Z = document.createElement("label");
+      var label_text_Z = document.createTextNode("# of ServiceMaps");
+      inputZ.setAttribute("id", 'Z');
+      label_for_Z.setAttribute("for", "Z");
+      label_for_Z.appendChild(label_text_Z);
+      form.appendChild(label_for_Z);
+
+      form.append(inputZ);
+      form.appendChild(document.createElement("br"));
+      //////////////////////////////////////////
+
+      var inputV = document.createElement("input");
+      inputV.setAttribute("type", "number");
+      inputV.setAttribute("placeholder", "# of Opensearch nodes");
+      inputV.setAttribute("name", "# of Opensearch nodes");
+      inputV.setAttribute("min", 1);
+      inputV.setAttribute("max", 10);
+      inputV.setAttribute("class", "form-control");
+      inputV.setAttribute("onchange", "variable_opensearch(this)");
+      inputV.required = true;
+
+      var label_for_V = document.createElement("label");
+      var label_text_V = document.createTextNode("# of Opensearch nodes");
+      inputV.setAttribute("id", 'V');
+      label_for_V.setAttribute("for", "V");
+      label_for_V.appendChild(label_text_V);
+      form.appendChild(label_for_V);
+
+      form.appendChild(inputV);
+      form.appendChild(document.createElement("br"));
+
+      var inputV = document.createElement("input");
+      inputV.setAttribute("type", "number");
+      inputV.setAttribute("placeholder", "# of Opensearch nodes");
+      inputV.setAttribute("name", "# of Opensearch nodes");
+      inputV.setAttribute("min", 1);
+      inputV.setAttribute("max", 10);
+      inputV.setAttribute("class", "form-control");
+      inputV.setAttribute("onchange", "variable_opensearch(this)");
+      inputV.required = true;
+      //////////////////////////////////////////
+      var inputN = document.createElement("input");
+      inputN.setAttribute("type", "number");
+      inputN.setAttribute("placeholder", "# of Nifi nodes");
+      inputN.setAttribute("name", "# of Nifi nodes");
+      inputN.setAttribute("min", 1);
+      inputN.setAttribute("max", 10);
+      inputN.setAttribute("class", "form-control");
+      inputN.setAttribute("onchange", "variable_nifi(this)");
+      inputN.required = true;
+
+      var label_for_N = document.createElement("label");
+      var label_text_N = document.createTextNode("# of Nifi nodes");
+      inputN.setAttribute("id", 'N');
+      label_for_N.setAttribute("for", "N");
+      label_for_N.appendChild(label_text_N);
+      form.appendChild(label_for_N);
+
+      form.appendChild(inputN);
+      form.appendChild(document.createElement("br"));
+//////////////////////////////////////////
+      var inputVI = document.createElement("input");
+      inputVI.setAttribute('hidden', '');
+      inputVI.setAttribute("type", "number");
+      inputVI.setAttribute("placeholder", "# of Virtuoso nodes");
+      inputVI.setAttribute("name", "# of Virtuoso nodes");
+      inputVI.setAttribute("value", 1);
+      inputVI.setAttribute("min", 1);
+      inputVI.setAttribute("max", 10);
+      inputVI.setAttribute("class", "form-control");
+      inputVI.setAttribute("id", "virtuoso");
+      inputVI.setAttribute("onchange", "variable_virtuoso(this)");
+      inputVI.required = true;
+/*
+      var label_for_VI = document.createElement("label");
+      var label_text_VI = document.createTextNode("# of Virtuoso nodes");
+      inputVI.setAttribute("id", 'VI');
+
+      label_for_VI.setAttribute("for", "VI");
+      label_for_VI.appendChild(label_text_VI);
+      form.appendChild(label_for_VI);
+*/
+      form.appendChild(inputVI);
+      form.appendChild(document.createElement("br"));
+
+      add_ip_explanation(form);
+      add_ip_field(1, form, 'custom', 'Proxy balancer');
+      add_ip_field(2, form, 'custom', 'Authentication-Authorization');
+      add_ip_field(3, form, 'custom', 'First Frontend');
+      add_ip_field(4, form, 'custom', 'Second Frontend');
+      add_ip_field(5, form, 'custom', 'Dashboard');
+      add_ip_field(6, form, 'custom', 'Heatmap');
+
+      form = addSubmit(form);
+      document.getElementById("Installation model").appendChild(form);
+    } else if (x == 'def') {
+      return;
+    } else {
+      alert('Invalid input; do not edit the dropdown list');
+    };
+  };
+function equalize(orig){
+  try {
+    var x = document.getElementById("Z");
+    x.value=parseInt(orig.value);
+    variable_virtuoso(x);
+  }
+		catch(err) {
+			console.log("i don't know what happened")
+		}
+};
+function add_ip_field(number, form, type='default', value='') {
+  var ip_field = document.createElement("input");
+  if (type=='default') {
+    ip_field.setAttribute("type", "string");
+    ip_field.setAttribute("pattern", "^([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-zA-Z]+)$");
+    ip_field.setAttribute("name", "ip_field-"+number);
+    ip_field.setAttribute("class", "form-control ip-field");
+    ip_field.required = true;
+    var label_for_X = document.createElement("label");
+    var label_text_X = document.createTextNode("IP address of "+number+nth(number)+" machine");
+    ip_field.setAttribute("id", "ip_field-"+number);
+    label_for_X.setAttribute("for", "ip_field-"+number);
+    label_for_X.appendChild(label_text_X);
+  }
+  else if (type=='iotapp') {
+      ip_field.setAttribute("type", "string");
+      ip_field.setAttribute("pattern", "^([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-zA-Z]+)$");
+      ip_field.setAttribute("name", "ip_field_iotapp-"+number);
+      ip_field.setAttribute("class", "form-control ip-field");
+      ip_field.required = true;
+      var label_for_X = document.createElement("label");
+      var label_text_X = document.createTextNode("IP address of "+number+nth(number)+" IoT-App server");
+      ip_field.setAttribute("id", "ip_field_iotapp-"+number);
+      label_for_X.setAttribute("for", "ip_field_iotapp-"+number);
+      label_for_X.appendChild(label_text_X);
+  }
+  else if (type=='opensearch') {
+    ip_field.setAttribute("type", "string");
+    ip_field.setAttribute("pattern", "^([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-zA-Z]+)$");
+    ip_field.setAttribute("name", "ip_field_opensearch-"+number);
+    ip_field.setAttribute("class", "form-control ip-field");
+    ip_field.required = true;
+    var label_for_X = document.createElement("label");
+    var string_of_field = "IP address of "+number+nth(number)+" Opensearch"
+    if (number==1){
+      string_of_field+=" (master)";
+    }
+    var label_text_X = document.createTextNode(string_of_field);
+    ip_field.setAttribute("id", "ip_field_opensearch-"+number);
+    label_for_X.setAttribute("for", "ip_field_opensearch-"+number);
+    label_for_X.appendChild(label_text_X);
+  }
+  else if (type=='nifi') {
+    ip_field.setAttribute("type", "string");
+    ip_field.setAttribute("pattern", "^([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-zA-Z]+)$");
+    ip_field.setAttribute("name", "ip_field_nifi-"+number);
+    ip_field.setAttribute("class", "form-control ip-field");
+    ip_field.required = true;
+    var label_for_X = document.createElement("label");
+    var string_of_field = "IP address of "+number+nth(number)+" Nifi"
+    var label_text_X = document.createTextNode(string_of_field);
+    ip_field.setAttribute("id", "ip_field_nifi-"+number);
+    label_for_X.setAttribute("for", "ip_field_nifi-"+number);
+    label_for_X.appendChild(label_text_X);
+  } else if (type=='obroker') {
+    ip_field.setAttribute("type", "string");
+    ip_field.setAttribute("pattern", "^([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-zA-Z]+)$");
+    ip_field.setAttribute("name", "ip_field_obroker-"+number);
+    ip_field.setAttribute("class", "form-control ip-field");
+    ip_field.required = true;
+    var label_for_X = document.createElement("label");
+    var string_of_field = "IP address of "+number+nth(number)+" Orion Broker"
+    var label_text_X = document.createTextNode(string_of_field);
+    ip_field.setAttribute("id", "ip_field_obroker-"+number);
+    label_for_X.setAttribute("for", "ip_field_obroker-"+number);
+    label_for_X.appendChild(label_text_X);
+  }
+  else if (type=='virtuoso') {
+    ip_field.setAttribute("type", "string");
+    ip_field.setAttribute("pattern", "^([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-zA-Z]+)$");
+    ip_field.setAttribute("name", "ip_field_virtuoso-"+number);
+    ip_field.setAttribute("class", "form-control ip-field");
+    ip_field.required = true;
+    var label_for_X = document.createElement("label");
+    var string_of_field = "IP address of "+number+nth(number)+" ServiceMap";
+    var label_text_X = document.createTextNode(string_of_field);
+    ip_field.setAttribute("id", "ip_field_virtuoso-"+number);
+    label_for_X.setAttribute("for", "ip_field_virtuoso-"+number);
+    label_for_X.appendChild(label_text_X);
+  }
+
+  else if (type=='custom') {
+    ip_field.setAttribute("type", "string");
+    ip_field.setAttribute("pattern", "^([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-zA-Z]+)$");
+    ip_field.setAttribute("name", "ip_field_"+value);
+    ip_field.setAttribute("class", "form-control ip-field");
+    ip_field.required = true;
+    var label_for_X = document.createElement("label");
+    var string_of_field = "IP address of "+value;
+    var label_text_X = document.createTextNode(string_of_field);
+    ip_field.setAttribute("id", "ip_field_"+value);
+    label_for_X.setAttribute("for", "ip_field_"+value);
+    label_for_X.appendChild(label_text_X);
+  }
+  else if (type=='fixed-ip') {
+      ip_field.setAttribute("type", "string");
+      ip_field.setAttribute("pattern", "^([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-zA-Z]+)$");
+      ip_field.setAttribute("name", "ip_field-"+number);
+      ip_field.setAttribute("class", "form-control ip-field");
+      ip_field.setAttribute("value", value);
+      ip_field.setAttribute("readonly","");
+      ip_field.required = true;
+      var label_for_X = document.createElement("label");
+      var string_of_field = "IP address of "+value;
+      var label_text_X = document.createTextNode(string_of_field);
+      ip_field.setAttribute("id", "ip_field_"+value);
+      label_for_X.setAttribute("for", "ip_field_"+value);
+      label_for_X.appendChild(label_text_X);
+  }
+  else if (type=='fixed-ip-k8s') {
+      ip_field.setAttribute("type", "string");
+      ip_field.setAttribute("pattern", "^([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-zA-Z]+)$");
+      ip_field.setAttribute("name", "ip_field-"+number);
+      ip_field.setAttribute("class", "form-control ip-field");
+      ip_field.setAttribute("value", value);
+      ip_field.setAttribute("readonly","");
+      ip_field.setAttribute("hidden", "true");
+      ip_field.required = true;
+      form.append(ip_field);
+      return;
+  }
+  form.append(label_for_X);
+  form.append(label_text_X);
+  form.append(ip_field);
+  form.append(document.createElement("br"));
+};
+
+function nth(n){return["st","nd","rd"][((n+90)%100-10)%10-1]||"th"}
+
+
+function add_ip_explanation(form){
+  form.append(document.createElement("hr"));
+  form.append("Ip addresses must be in the ipv4 format, and each one must be different from the other. You will not be able to proceed with the configuration otherwise.");
+  form.append(document.createElement("br"));
+  form.append(document.createElement("br"));
+};
+function onlyUnique(value, index, self) {
+  return self.indexOf(value) === index;
+};
+function submitting(e){
+  {%if multi_ip=='True'%}
+  return true;
+  {%else %}
+  var ips = [];
+  $('.ip-field').each(function () {
+    ips.push($(this).val());
+  });
+  var unique = ips.filter(onlyUnique);
+  if (unique.length === ips.length)
+  {
+    return true;
+  }
+
+  e.preventDefault();
+  return false;
+  {%endif%}
+};
+function variable_opensearch(caller) {
+  try {
+    var x = document.getElementById("opensearchsection");
+    x.remove();
+  }
+		catch(err) {
+			console.log('first time setting opensearchs?')
+		}
+  var form = document.createElement("div");
+  form.setAttribute('id','opensearchsection');
+
+  for (let i = 1; i<=caller.value; i++) {
+    add_ip_field(i, form, 'opensearch');
+  }
+  document.getElementById("before_button").appendChild(form);
+};
+
+function variable_obrokers_server(caller) {
+  try {
+    var x = document.getElementById("obrokerssection");
+    x.remove();
+  }
+		catch(err) {
+			console.log('first time setting obrokers?')
+		}
+  var form = document.createElement("div");
+  form.setAttribute('id','obrokerssection');
+
+  for (let i = 1; i<=caller.value; i++) {
+    add_ip_field(i, form, 'obroker');
+  }
+  document.getElementById("before_button").appendChild(form);
+};
+function variable_nifi(caller) {
+  try {
+    var x = document.getElementById("nifisection");
+    x.remove();
+  }
+		catch(err) {
+			console.log('first time setting nifis?')
+		}
+  var form = document.createElement("div");
+  form.setAttribute('id','nifisection');
+
+  for (let i = 1; i<=caller.value; i++) {
+    add_ip_field(i, form, 'nifi');
+  }
+  document.getElementById("before_button").appendChild(form);
+};
+function variable_virtuoso(caller) {
+  try {
+    var x = document.getElementById("virtuososection");
+    x.remove();
+  }
+		catch(err) {
+			console.log('first time setting virtuosos?')
+		}
+  var form = document.createElement("div");
+  form.setAttribute('id','virtuososection');
+
+  for (let i = 1; i<=caller.value; i++) {
+    add_ip_field(i, form, 'virtuoso');
+  }
+  document.getElementById("before_button").appendChild(form);
+};
+function variable_iotapps_server(caller) {
+  try {
+    var x = document.getElementById("iotappsection");
+    x.remove();
+  }
+		catch(err) {
+			console.log('first time setting iotapps?')
+		}
+  var form = document.createElement("div");
+  form.setAttribute('id','iotappsection');
+
+  for (let i = 0, j = 1; i<caller.value; i+=70,j++) {
+    add_ip_field(j, form, 'iotapp');
+  }
+  document.getElementById("before_button").appendChild(form);
+};
+</script>
+
+
+<body>
+  <div name='navbar'>
+  </div>
+  <div class='container'>
+    <div class="row align-items-start">
+      <div class="col border-end">
+        <label for="configs">Select model</label>
+        <form id='select_modello' action="fill_placeholders" method="post" onsubmit="submitting(event)">
+          <select name="Model name" id="configs" class="form-select" onchange="onEdit()">
+
+            <option value="def">-</option>
+            <option value="Micro">Micro X</option>
+            <option value="Normal">Normal X, Y</option>
+            <option value="Small">Small X, Y</option>
+            <option value="DataCitySmall">DataCitySmall X, Y, Z</option>
+            {%if kuber=='True'%}
+            <option value="DataCityMedium">DataCityMid X, K, S, W (draft)</option>
+            <option value="DataCityLarge">DataCityLarge X, R, M, K, S, W (draft)</option>
+            <option value="Kubernetes">Kubernetes from Micro (experimental/draft)</option>
+            {%endif%}
+          </select>
+          <br>
+          <div id='Installation model'></div>
+        </form>
+      </div>
+      <div class="col">
+        Already have a token? Just put it here and resume from where you saved it. If your token is invalid you will not leave this webpage.
+        <form id='Start_from_token' action="fill_placeholders" method="post" onsubmit="return doesTokenExist()">
+          <div class="input-group mb-3">
+            <input class="btn btn-outline-secondary" type="submit" id="button-addon1" value = 'Use token'>
+            <input type="text" class="form-control" name="token_value" placeholder="">
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+  {% endblock %}

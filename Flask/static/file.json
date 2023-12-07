@@ -1,0 +1,76 @@
+{
+  "schema": {
+      "dashboard": 
+      {
+      "type": "integer",
+      "title": "Dashboard",
+      "minimum": 1,
+      "required": true,
+      "default": 1
+      },"mydatamanager": {
+        "type": "integer",
+        "title": "MyDataManager",
+        "minimum": 1,
+        "required": true,
+        "default": 1
+      },"authenticationauthenticator": {
+        "type": "integer",
+        "title": "AuthenticationAuthenticator",
+        "minimum": 1,
+        "required": true,
+        "default": 1
+      },"nifi": {
+        "type": "integer",
+        "title": "Nifi",
+        "minimum": 1,
+        "required": true,
+        "default": 1
+      },"es+k": {
+        "type": "integer",
+        "title": "ES+k",
+        "minimum": 1,
+        "required": true,
+        "default": 1
+      },"iotob": {
+        "type": "integer",
+        "title": "IOT OB",
+        "minimum": 1,
+        "required": true,
+        "default": 1
+      },"kb": {
+        "type": "integer",
+        "title": "KB",
+        "minimum": 1,
+        "required": true,
+        "default": 1
+      },"iotapp": {
+        "type": "integer",
+        "title": "IOT App",
+        "minimum": 1,
+        "required": true,
+        "default": 1
+      },"iotappscalabale": {
+        "type": "integer",
+        "title": "IOT App scalable",
+        "minimum": 0,
+        "required": true,
+        "default": 0
+      },"heatmapserver": {
+        "type": "integer",
+        "title": "HeatmapServer",
+        "required": true,
+        "default": 0
+      },"livinglab": {
+        "type": "integer",
+        "title": "LivingLab",
+        "required": true,
+        "default": 0
+      },"balancerandproxy": {
+        "type": "integer",
+        "title": "Balancer and Proxy",
+        "minimum": 1,
+        "required": true,
+        "default": 1
+      }
+  }
+}

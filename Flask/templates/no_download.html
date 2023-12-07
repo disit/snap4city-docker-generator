@@ -1,0 +1,16 @@
+{% extends "main.html" %}
+{% block title %}Can't download configuration{% endblock %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block content %}
+<div class="container">
+  <br>
+<p class="h1">We can't process your download</p>
+{%if token is none%}
+The token does not refer to any saved configuration. You may wish to <a href="..\selecting_model" class="link">make a new configuration</a> from scratch.
+{%else%}
+<form action="..\fill_placeholders" method="post" id="token_form"><input type="string" name='token_value' value="{{token}}" hidden/>The token refers to an existing configuration, but it needs to be regenerated. <a href="" onclick="$('#token_form').submit(); return false;" class="link">Follow this link to return to that configuration.</a></form>
+{%endif%}
+</div>
+{% endblock %}

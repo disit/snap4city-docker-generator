@@ -1,0 +1,29 @@
+sudo apt-get install kafkacat  # see kafka stuff
+
+curl -I -s http://localhost/dashboardSmartCity/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost/ServiceMap/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost/wsserver/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 400 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost/superservicemap/api/v1/?serviceUri=xxx | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 400 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost/auth/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost/datamanager/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost/synoptics/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost/iot-directory/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+curl -I -s http://virtuoso-kb:8890/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+curl -I -s https://opensearch-n1:9200/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 401 ] && echo "Success" || echo "Failure" )
+curl -I -s https://orionbrokerfilter-001:8443/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+curl -I -s http://orion-001:1026/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 400 ] && echo "Success" || echo "Failure" )
+curl -I -s https://myldap:443/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+curl -I -s http://mongo-001:27017/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost:5601/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 302 ] && echo "Success" || echo "Failure" )
+
+if nc -z localhost 389; then echo "Success"; else echo "Failure"; fi
+if nc -z localhost 2181; then echo "Success"; else echo "Failure"; fi
+if nc -z localhost 5432; then echo "Success"; else echo "Failure"; fi
+
+curl -I -s http://localhost:3000/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 404 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost:3200/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 404 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost:3100/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 404 ] && echo "Success" || echo "Failure" )
+curl -I -s http://localhost:8983/ | awk 'NR==1{print $2}' | ( read code && [ "$code" -eq 200 ] && echo "Success" || echo "Failure" )
+
+string=$(kafkacat -b localhost:9092 -L); if [[ $string == *"baeldung"* ]]; then echo "Success"; else echo "Failure"; fi
+

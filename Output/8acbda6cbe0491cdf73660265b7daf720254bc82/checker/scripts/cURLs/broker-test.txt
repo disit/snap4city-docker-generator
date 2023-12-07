@@ -1,0 +1,15 @@
+curl 'http://zjyzfjjy/iot-directory/api/contextbroker.php' \
+  -H 'Accept: */*' \
+  -H 'Accept-Language: it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7' \
+  -H 'Connection: keep-alive' \
+  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+  -H 'Cookie: PHPSESSID=i6vjmed2nof9e5gpjn1jtdn7vr' \
+  -H 'DNT: 1' \
+  -H 'Origin: http://zjyzfjjy' \
+  -H 'Referer: http://zjyzfjjy/iot-directory/management/contextbroker.php?showFrame=false' \
+  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'sec-gpc: 1' \
+  --data-raw 'token=$#token#$&action=update&name=orion-1&kind=internal&path=&version=v2&visibility=&ip=orion-001&port=1026&protocol=ngsi&login=login&password=login&latitude=41.05947234951186&longitude=15.271045036775076&createdDate=2023-08-22+12%3A19%3A29&accesslink=orionbrokerfilter-001&accessport=8443&apikey=null&sha=&urlnificallback=http%3A%2F%2Fnifi%3A1030%2Fingestngsi&services=%5B%5D&log_orion=0' \
+  --compressed \
+  --insecure

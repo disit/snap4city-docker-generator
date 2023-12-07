@@ -1,0 +1,12 @@
+{% extends "main.html" %}
+{% block title %}Error 404{% endblock %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block content %}
+<div class="container">
+  <br>
+<p class="h1">Oh no! Error 404.</p>
+Your webpage could not be retrieved because it does not exist. Check your URL for any error, go back in your browser history or <a href="selecting_model" class="link">return to the main page</a>.
+</div>
+{% endblock %}

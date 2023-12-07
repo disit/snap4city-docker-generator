@@ -1,0 +1,27 @@
+{% extends "solve_placeholder.html" %}
+{% block title %}Build Configuration - Docker{% endblock %}
+{% block head %}
+{{ super() }}
+
+{% endblock %}
+{% block content %}
+{{ super() }}
+<script type="text/javascript">
+  //there might be 2 .ready functions, but the second one is needed to fill the form in case of the usage of a token
+  document.getElementById("token_place").innerHTML = '<br><label for="token_output" class="form-label">Save this token to load the current configuration in the future.</label><input class="form-control" id="token_output" type="text" name="token_place" value="{{stored_values[0][0]}}" readonly>';
+  $(document).ready(function() {
+    {%for element in stored_values%}
+    try{
+      document.getElementsByName('{{element[1]|safe}}')[0].value = "{{element[2]|safe}}";
+    }
+    catch (error) {
+      console.log("{{element[1]|safe}} with value {{element[2]|safe}} was not properly imported!");
+      console.log(error);
+    }
+    {% endfor %}
+    document.getElementById("token_output").value = "{{token}}";
+    document.getElementById("button_for_generating_configuration").disabled = false;
+    document.getElementById("make_token_button").disabled = true;
+  });
+</script>
+{% endblock %}

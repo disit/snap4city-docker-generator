@@ -1,1 +1,5 @@
 .env
+.vscode
+Flask/__pycache__
+docker-compose.yml.old
+configurations.png

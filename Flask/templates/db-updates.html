@@ -1,0 +1,16 @@
+{% extends "main.html" %}
+{% block title %}Update the DB - Administration{% endblock %}
+{% block head %}
+{{ super() }}
+
+{% endblock %}
+{% block content %}
+<form name='Required' id='form' action="updating_db" class="form-group" method="post">
+  Insert the administration password for the mysql database.
+
+  <input type="password" name="password" value="" required>
+  <br>
+  Overwrite the current database with the latest one.
+  <input type="submit" name="update" value="Update Database">
+</form>
+{% endblock %}

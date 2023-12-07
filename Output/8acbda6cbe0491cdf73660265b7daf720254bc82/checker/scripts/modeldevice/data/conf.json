@@ -1,0 +1,26 @@
+{
+    "token": {
+        "clientID": "php-ownership-api",
+        "clientSecret": "a347fb2d-87f0-4d41-89a9-b746b5273ccd",
+        "username": "userareamanager",
+        "password": "****changeme****",
+        "token_url": "http://zjyzfjjy/auth/realms/master/protocol/openid-connect/token"
+    },
+    "model": {
+        "model_type": "test",
+        "model_kind": "sensor",
+        "model_frequency": "600",
+        "model_kgenerator": "normal",
+        "model_contextbroker": "orion-1",
+        "model_protocol": "ngsi",
+        "model_format": "json",
+        "model_hc": "refresh_rate",
+        "model_hv": "300",
+        "model_subnature": "Air_quality_monitoring_station",
+        "model_url": "http://zjyzfjjy/iot-directory/api/model.php?"
+    },
+    "device": {
+        "device_url": "http://zjyzfjjy/iot-directory/api/device.php?"
+    },
+    "patch": "http://zjyzfjjy/orion-filter/orion-1/v2/entities/"
+}

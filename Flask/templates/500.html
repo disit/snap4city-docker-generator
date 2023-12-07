@@ -1,0 +1,12 @@
+{% extends "main.html" %}
+{% block title %}Error 500{% endblock %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block content %}
+<div class="container">
+  <br>
+<p class="h1">Oh no! Error 500.</p>
+Your webpage could not be retrieved because something bad happened. The error has been logged for reference.
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Pick the elements of the system</title>
+    <link rel="stylesheet" style="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+  </head>
+  <body>
+    <h1>Pick the elements of the system</h1>
+    <form id="form-items" method="POST"></form>
+    <div id="res" class="alert"></div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type=text/javascript src="{{
+  url_for('static', filename='deps/underscore.js') }}"></script>
+  <script type=text/javascript src="{{
+  url_for('static', filename='deps/opt/jsv.js') }}"></script>
+  <script type=text/javascript src="{{
+  url_for('static', filename='lib/jsonform.js') }}"></script>
+    <script type="text/javascript">
+      $('form').jsonForm({{json|safe}});
+      document.getElementById("form-items").addEventListener("submit", myScript);
+      function myScript() {
+  alert('oh god you clicked me')
+}
+    </script>
+  </body>
+</html>

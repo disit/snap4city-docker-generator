@@ -1,0 +1,122 @@
+{% extends "main.html" %}
+{% block title %}Additional NiFi{% endblock %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block content %}
+<form class="" action="make_more_nifi" method="post">
+<div class="row align-items-start">
+  <div class="col">
+<div class="container" id="droparea">
+<p class="h4">In order to add a new NiFi, you'll need to provide some non-sensitive information.</p>
+
+  <div id="nifisection">
+    <label for="$#amount-of-nifi#$">How many Nifi do you want?</label>
+    <input type="number" name="how-many-nifi" class="form-control ip-field" required="" id="$#amount-of-nifi#$" min=2 max=10 onchange="variable_nifi(this)" value=2>
+    <br>
+    <div id="box">
+      <div id = "nifis">
+        <label for="$#ip_field_nifi-1#$">IP address of 1st Nifi</label>
+
+        <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="ip_field_nifi-1" class="form-control ip-field" required="" id="$#ip_field_nifi-1#$">
+        <br>
+        <label for="$#ip_field_nifi-2#$">IP address of 2nd Nifi</label>
+
+        <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="ip_field_nifi-2" class="form-control ip-field" required="" id="$#ip_field_nifi-2#$">
+      </div>
+    </div>
+    <br>
+    <label for="$#kafka#$">IP address of Kafka</label>
+
+    <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="kafka" class="form-control ip-field" required="" id="$#kafka#$">
+    <br>
+    <label for="$#dashboard#$">IP address of the main service (Dashboard)</label>
+
+    <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="dashboard" class="form-control ip-field" required="" id="$#dashboard#$">
+    <br>
+    <label for="$#opensearch#$">IP address of Opensearch</label>
+
+    <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="opensearch" class="form-control ip-field" required="" id="$#opensearch#$">
+    <br>
+    <label for="$#proxy#$">IP address of Proxy</label>
+
+    <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="proxy" class="form-control ip-field" required="" id="$#proxy#$">
+    <br>
+    <label for="$#id_zookeeper#$">IP address of Zookeeper</label>
+
+    <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="zookeeper" class="form-control ip-field" required="" id="$#id_zookeeper#$">
+    <br>
+  </div>
+  <input type="submit" value="Generate new docker-compose files" class="btn btn-primary">
+  <label for="placeholderlist">Load from file</label>
+  <input type="file" name="placeholderlist" id="placeholderlist" class="btn btn-primary" accept=".tsv">
+  <pre id="output" hidden="true"></pre>
+</div>
+</div>
+</div>
+</form>
+<script type="text/javascript">
+  document.getElementById('placeholderlist').addEventListener('change', function() {
+
+          	var fr=new FileReader();
+          	fr.onload=function(){
+              var s = fr.result.split('\n');
+              var b = [];
+              for (i in s) {
+                b.push(s[i].split('\t'));
+              }
+
+              document.getElementById('$#ip_field_nifi-1#$').value=b.find(element => element.includes("$#ip-nifi#$"))[1];
+              document.getElementById('$#kafka#$').value=b.find(element => element.includes("$#ip-0#$"))[1];
+              document.getElementById('$#dashboard#$').value=b.find(element => element.includes("$#ip-0#$"))[1];
+              document.getElementById('$#opensearch#$').value=b.find(element => element.includes("$#ip-nifi#$"))[1];
+              document.getElementById('$#id_zookeeper#$').value=b.find(element => element.includes("$#ip-0#$"))[1];
+              try {
+              document.getElementById('$#proxy#$').value=b.find(element => element.includes("$#ip-proxy#$"))[1];
+              }
+              catch (TypeError){
+                document.getElementById('$#proxy#$').value=b.find(element => element.includes("$#ip-0#$"))[1];
+          	  }
+            }
+          	fr.readAsText(this.files[0]);
+
+
+          });
+  function variable_nifi(caller) {
+    try {
+      var x = document.getElementById("nifis");
+      x.remove();
+    }
+  		catch(err) {
+  			console.log('first time setting nifis?')
+  		}
+    var form = document.createElement("div");
+    form.setAttribute('id','nifis');
+
+    for (let i = 1; i<=caller.value; i++) {
+      add_ip_field(i, form, 'nifi');
+    }
+    document.getElementById("box").appendChild(form);
+  };
+  function add_ip_field(number, form, type='default', value='') {
+    var ip_field = document.createElement("input");
+    ip_field.setAttribute("type", "string");
+    ip_field.setAttribute("pattern", "^([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[a-zA-Z]+)$");
+    ip_field.setAttribute("name", "ip_field_nifi-"+number);
+    ip_field.setAttribute("class", "form-control ip-field");
+    ip_field.required = true;
+    var label_for_X = document.createElement("label");
+    var string_of_field = "IP address of "+number+nth(number)+" Nifi"
+    var label_text_X = document.createTextNode(string_of_field);
+    ip_field.setAttribute("id", "$#ip_field_nifi-"+number+"#$");
+    label_for_X.setAttribute("for", "$#ip_field_nifi-"+number+"#$");
+    label_for_X.appendChild(label_text_X);
+    form.append(label_for_X);
+    form.append(label_text_X);
+    form.append(ip_field);
+    form.append(document.createElement("br"));
+  };
+function nth(n){return["st","nd","rd"][((n+90)%100-10)%10-1]||"th";};
+
+</script>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "main.html" %}
+{% block title %}Updating from a past version{% endblock %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block content %}
+<div class="container">
+  <br>
+<p class="h1">Updating your system</p>
+Here you will learn on how to update your Snap4City distribution from one version to another one.<br>
+<p class="h3">Using an old token for a new distribution</p>
+You might use an already existing token to create a newer distribution. The platform will try to gather all the placeholders from the old token, and should new fields need to be compiled the configurator will guide you in their filling.
+<br>
+This generates a new configuration; said configuration has no instrinsic ability to access preexisting data; it merely regenerates the configurations files.<br>
+<p class="h3">Using a new image for a container</p>
+Sometimes you only need to update a single image in order to benefit from the updates you need. Should that be the case, you can simply replace the version of the image with the one which is currently up to date in the <b>docker-compose.yaml</b> file. You will also have to reboot the container before seeing the update; you might do so with the command <b>docker-compose restart <i>container-name</i></b>.
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+version: "3"
+services:
+  app:
+    container_name: app
+    build: ./Flask
+    image: fabriziomereu/snap4city_installation_generator:dev.1.4.0
+    links:
+      - db
+    ports:
+      - "80:80"
+    environment:
+      - PYTHONUNBUFFERED
+      - help_mail
+      - send_placeholders
+      - kuber
+      - version
+      - allow_compress
+      - add_utils
+      - send-aws-k8s
+      - allow_update
+      - MYSQL_ROOT_PASSWORD
+      - time_wait_update_db
+    command: >
+      bash -c 'waitress-serve --port 80 --call flask_app:create_app'
+    volumes:
+      - ./Mysql/latest.sql:/data/mysql/a.sql
+      - ./Output:/Flask/Output:rw
+  db:
+    container_name: db
+    image: mysql:latest
+    ports:
+      - "32000:3306"
+    command: mysqld --sql_mode=""
+    cap_add:
+      - SYS_NICE  # CAP_SYS_NICE
+    environment:
+      - MYSQL_USER
+      - MYSQL_PASSWORD
+      - MYSQL_ROOT_PASSWORD
+      - MYSQL_ROOT_HOST
+    volumes:
+      - container-volume:/var/lib/mysql
+      - ./Mysql/latest.sql:/docker-entrypoint-initdb.d/a.sql
+      - ./Mysql/users.sql:/docker-entrypoint-initdb.d/b.sql
+volumes:
+  container-volume:
