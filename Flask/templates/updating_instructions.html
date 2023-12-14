@@ -5,14 +5,57 @@
 {% endblock %}
 {% block content %}
 <div class="container">
-  <br>
-<p class="h1">Updating your system</p>
-Here you will learn on how to update your Snap4City distribution from one version to another one.<br>
-<p class="h3">Using an old token for a new distribution</p>
-You might use an already existing token to create a newer distribution. The platform will try to gather all the placeholders from the old token, and should new fields need to be compiled the configurator will guide you in their filling.
 <br>
-This generates a new configuration; said configuration has no instrinsic ability to access preexisting data; it merely regenerates the configurations files.<br>
-<p class="h3">Using a new image for a container</p>
-Sometimes you only need to update a single image in order to benefit from the updates you need. Should that be the case, you can simply replace the version of the image with the one which is currently up to date in the <b>docker-compose.yaml</b> file. You will also have to reboot the container before seeing the update; you might do so with the command <b>docker-compose restart <i>container-name</i></b>.
+<p class="h1">Updating your system</p>
+Here you will learn on how to update your Snap4City distribution from one version to another one. Note that you may only update a MicroX generated with this tool; we cannot guarantee for any other scenario.
+<br>
+
+<p class="h3">Step 1 - Download the tools</p>
+Click <a href="get_updating_tools" target="_blank">here</a> to download the scripts which will aid you in updating your distribution.
+<br>
+<p class="h3">Step 2 - Backup everything</p>
+It never hurts to do so, use the <i>backing-up-volumes/backup.sh</i> script to backup your docker volumes.
+<br>
+<p class="h3">Step 3 - Use your token to regenerate your distribution</p>
+You will still need to provide values for variables which didn't exist at the time you first generated your distribution, be sure to check the values which have default values.
+<br>
+<p class="h3">Step 4 - Unzip the updated new configuration on the host</p>
+Br sue that the directory which contains the configuration files shares the name with the old one; this should be true by default.
+<br>
+<p class="h3">Step 5 - Stop the execution of the containers</p>
+Use <i>docker-compose down</i> to drop the containers; run this command in the old drectory. You might alternatively, if you have access to the docker GUI, stop them from the mentioned GUI.
+<br>
+<p class="h3">Step 6 - Run the script which imports the old data from local volumes</p>
+Nifi, IoTapps and OpenSearch require data from your current installation; running <i>fix-files/adjust_for_updates.sh</i> will import said data. Before running the script, you must edit the paths (source and destination).
+<br>
+<p class="h3">Step 7 - Copy paste the old folder into the new one, without pasting files which already exist</p>
+This will fix the rest of the configuration files.
+<br>
+<p class="h3">Step 8 - Start the old database container</p>
+We need some of the old data.
+<br>
+<p class="h3">Step 9 - Update the database schema</p>
+The script <i>updating/update_db.py</i> detects the current version of the db and trasforms its schema in order to be up to date in regard to the S4C version to which you are updating.
+<br>
+<p class="h3">Step 10 - Dump the tables which need to be preserved</p>
+The script <i>updating/dump_db.py</i> does this automatically.
+<br>
+<p class="h3">Step 11 - Stop the old database container, delete its volume, then run the new database container</p>
+Do not skip the second operation, or else the new container will try to use the old volume. Due to step 2, you will be able to restore your data if the need arises.
+<br>
+<p class="h3">Step 12 - Import the dump from step 10</p>
+Either use the script <i>updating/load_db.py</i> or use tools like MySQL Workbench.
+<br>
+<p class="h3">Step 13 - Start the containers with docker-compose up -d</p>
+The database is already running requires no further operation.
+<br>
+<p class="h3">Step 14 - Run the post-setup.sh script in the new distribution</p>
+This will fix some details in the kb.
+<br>
+<p class="h3">Step 15 - Log in all of your IoT-Apps</p>
+This is required to regenerate the refresh token for authentication purposes 
+<br>
+
+
 </div>
 {% endblock %}

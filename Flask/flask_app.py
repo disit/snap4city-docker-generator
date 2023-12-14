@@ -870,7 +870,8 @@ esac
                 os.remove("./Output/"+token+'./compressed.zip')
             except FileNotFoundError:
                 pass  # not a problem, we are deleting the file
-
+            
+            fine_as_is["Token"]=token
             #we'll be sorting a directory by key (so it's the placeholder) for the sake of reading it better by human eye
             if os.environ['send_placeholders'] == 'True':
                 with open("./Output/"+token+'/placeholder_used.tsv','w') as f:
@@ -882,6 +883,12 @@ esac
             print('Sending',modello+descriptor+token+'-config.zip')
             return send_file('./compressed.zip', download_name=os.environ["version"]+'-'+modello+'-'+descriptor+token+'-config.zip') #send the pack
 
+
+    @app.route("/get_updating_tools", methods=['POST','GET'])
+    def send_update_stuff():
+        shutil.make_archive('updates', 'zip', "./updates")
+        return send_file('./updates.zip', 'update-utilities.zip')
+    
     # saving a configuration in the database
     @app.route("/saving_conf", methods=['POST','GET'])
     def saving_configuration():
