@@ -872,6 +872,7 @@ esac
                 pass  # not a problem, we are deleting the file
             
             fine_as_is["Token"]=token
+            fine_as_is["version"]=os.environ["version"]
             #we'll be sorting a directory by key (so it's the placeholder) for the sake of reading it better by human eye
             if os.environ['send_placeholders'] == 'True':
                 with open("./Output/"+token+'/placeholder_used.tsv','w') as f:
@@ -932,7 +933,7 @@ esac
                 return 'false'
 
     @app.route('/download/<download>')
-    def dowload_file(download=''):
+    def download_file(download=''):
         if os.path.isdir('./Output/'+download):
             # send file
             shutil.make_archive('compressed', 'zip', "./Output/"+download)  #pack the folder
