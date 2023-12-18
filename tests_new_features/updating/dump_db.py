@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import subprocess
 
 # edit according to your dashboarddb configuration
