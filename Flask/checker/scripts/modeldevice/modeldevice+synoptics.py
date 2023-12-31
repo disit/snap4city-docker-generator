@@ -31,9 +31,11 @@ latest_data = None
 broker_name="orion-001"
 username = ""
 password = ""
+check_synoptics = ""
 try:
     username=sys.argv[1]
     password=sys.argv[2]
+    check_synoptics=sys.argv[3]
 except Exception as E:
     print("Operation failed due to",E)
     exit(1)
@@ -110,23 +112,23 @@ def main():
         f.write(device_name)
     createModel(config, access_token)
     createDevice(config, access_token, get_latest_device())
-
-    nData = 3
-    sleep = 2
-    previous_data = latest_data
-    for i in range(0, nData):
-        string_value = str(i)
-        sendData(config, access_token, get_latest_device(), string_value)
-        time.sleep(sleep)
-        sio.connect(url='$#base-url#$/',socketio_path='synoptics/socket.io',transports='websocket')
-        sio.wait()
-        sio.disconnect()
-        if (previous_data==None):
-            pass # first time setting a value
-        elif (previous_data!=latest_data):
-            print("Success: update was read as intended")
-        else:
-            print("Failure: the newest value wasn't read", file=sys.stderr)
+    if check_synoptics == 'true':
+        nData = 3
+        sleep = 2
+        previous_data = latest_data
+        for i in range(0, nData):
+            string_value = str(i)
+            sendData(config, access_token, get_latest_device(), string_value)
+            time.sleep(sleep)
+            sio.connect(url='$#base-url#$/',socketio_path='synoptics/socket.io',transports='websocket')
+            sio.wait()
+            sio.disconnect()
+            if (previous_data==None):
+                pass # first time setting a value
+            elif (previous_data!=latest_data):
+                print("Success: update was read as intended")
+            else:
+                print("Failure: the newest value wasn't read", file=sys.stderr)
     deletedevice(get_latest_device(), broker_name, access_token,config["model"]["model_url"])
 
 def createModel(conf, token):

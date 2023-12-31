@@ -33,6 +33,11 @@ except Exception as E:
     exit(1)
 
 def main():
+    root_path = os.getcwd()
+    params_path = root_path + "/data/conf.json"
+    f = open(params_path)
+    config = json.load(f)
+    print("Configuration file opened")
     try:
         response = requests.head(config['token']['token_url'])
         if response.status_code == 200:
@@ -43,15 +48,9 @@ def main():
     except requests.RequestException as e:
         print(f"An error occurred: {e}", file=sys.stderr)
         exit -1
-    root_path = os.getcwd()
-    params_path = root_path + "/data/conf.json"
-    f = open(params_path)
-    config = json.load(f)
-    print("Configuration file opened")
-    access_token = accessToken(config)
     model_name = datetime.now().strftime("%Y%m%dT%H%M%S")
     device_name = datetime.now().strftime("%Y%m%dT%H%M%S")
-    
+    access_token = accessToken(config)
     with open('latest-model.txt', 'w') as f:
         f.write(model_name)
     with open('latest-device.txt', 'w') as f:
