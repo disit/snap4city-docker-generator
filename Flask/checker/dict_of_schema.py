@@ -13,6 +13,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.'''
 
+
 import json
 
 def parse_mysql_dump(dump_file_path):
@@ -23,7 +24,8 @@ def parse_mysql_dump(dump_file_path):
         lines = file.readlines()
 
         for line in lines:
-            
+            #line = line.strip()
+
             if line.startswith('CREATE TABLE'):
                 table_name = line.split('`')[1]
                 current_table = table_name
@@ -37,7 +39,7 @@ def parse_mysql_dump(dump_file_path):
                     schema[current_table].append({'Field': column_name, 'Type': column_type})
 
     return schema
-# replace 'dump_file.sql' with your MySQL dump file path
+
 dump_file_path = 'out.sql'
 
 result = parse_mysql_dump(dump_file_path)

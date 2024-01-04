@@ -33,6 +33,7 @@ db_conn_info = {
 def create_app():
 
     app = Flask(__name__)
+    app.secret_key = b'\x8a\x17\x93kT\xc0\x0b6;\x93\xfdp\x8bLl\xe6u\xa9\xf5x'
     @app.route("/")
     def main_page():
         try:

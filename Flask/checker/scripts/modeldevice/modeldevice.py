@@ -1,19 +1,3 @@
-'''Copyright (C) 2023 DISIT Lab http://www.disit.org - University of Florence
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.'''
-
-
 from datetime import datetime
 import time
 import json
@@ -33,11 +17,6 @@ except Exception as E:
     exit(1)
 
 def main():
-    root_path = os.getcwd()
-    params_path = root_path + "/data/conf.json"
-    f = open(params_path)
-    config = json.load(f)
-    print("Configuration file opened")
     try:
         response = requests.head(config['token']['token_url'])
         if response.status_code == 200:
@@ -48,9 +27,15 @@ def main():
     except requests.RequestException as e:
         print(f"An error occurred: {e}", file=sys.stderr)
         exit -1
+    root_path = os.getcwd()
+    params_path = root_path + "/data/conf.json"
+    f = open(params_path)
+    config = json.load(f)
+    print("Configuration file opened")
+    access_token = accessToken(config)
     model_name = datetime.now().strftime("%Y%m%dT%H%M%S")
     device_name = datetime.now().strftime("%Y%m%dT%H%M%S")
-    access_token = accessToken(config)
+    
     with open('latest-model.txt', 'w') as f:
         f.write(model_name)
     with open('latest-device.txt', 'w') as f:
