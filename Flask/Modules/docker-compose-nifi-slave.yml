@@ -1,0 +1,74 @@
+version: "3.2"
+services:
+  nifi:
+    container_name: nifi
+    image: apache/nifi:1.16.2
+    hostname: $#node_name#$
+    environment:
+      - NIFI_CLUSTER_IS_NODE=true
+      - NIFI_CLUSTER_NODE_PROTOCOL_PORT=9091
+      - NIFI_CLUSTER_ADDRESS=$#node_name#$
+      - NIFI_ELECTION_MAX_WAIT=1 min
+      - NIFI_ZK_CONNECT_STRING=$#id_zookeeper#$:2181
+      - NIFI_WEB_HTTPS_PORT=9090
+      - SINGLE_USER_CREDENTIALS_USERNAME=$#nifi-user#$
+      - SINGLE_USER_CREDENTIALS_PASSWORD=$#nifi-password#$
+      - NIFI_SENSITIVE_PROPS_KEY=rHkWR1gDNW3R
+      - NIFI_WEB_PROXY_HOST=localhost
+      - NIFI_WEB_HTTPS_HOST=0.0.0.0
+      - NIFI_REMOTE_INPUT_HOST=0.0.0.0
+      - AUTH=tls
+      - KEYSTORE_PATH=/opt/nifi/nifi-current/conf/keystore.jks
+      - KEYSTORE_TYPE=JKS
+      - KEYSTORE_PASSWORD=$#keystore-password#$
+      - TRUSTSTORE_PATH=/opt/nifi/nifi-current/conf/truststore.jks
+      - TRUSTSTORE_TYPE=JKS
+      - TRUSTSTORE_PASSWORD=$#truststore-password#$
+      - NIFI_SECURITY_USER_AUTHORIZER=single-user-authorizer
+      - NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER=single-user-provider
+    ports:
+      - "9090:9090" # NiFi web HTTP port
+      - "9091:9091" # NiFi cluster protocol port
+      - "6342:6342" # NiFi cluster load balance port
+    extra_hosts:
+$#extra_hosts#$
+      ## Mapping for the nifi cluster
+      #- nifi-node-1:192.168.1.60
+      #- nifi-node-2:192.168.1.61
+      #- nifi-node-3:192.168.1.62
+
+      ## Mapping to match the endpoints in the nifi flow
+      #- dashboard:192.168.1.60
+      #- opensearch-n1:192.168.1.60
+      #- kafka:192.168.1.60
+    volumes:
+      - ./nifi/extensions:/opt/nifi/nifi-current/extensions
+      - ./nifi/conf:/opt/nifi/nifi-current/conf
+      - ./nifi/logs:/opt/nifi/nifi-current/logs
+    restart: unless-stopped
+    depends_on:
+      - varnish
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  varnish:
+    container_name: varnish
+    image: varnish:stable
+    hostname: cache
+    environment:
+      - VARNISH_SIZE=100MB
+      - VARNISHNCSA=true
+      - VARNISH_HTTP_PORTS=6081
+    ports:
+      - "6081:6081"
+    volumes:
+      - ./varnish/varnish-conf/default.vcl:/etc/varnish/default.vcl:ro
+      - ./varnish/docker-entrypoint:/root/custom-varnish-entrypoint
+      - ./varnish/varnishncsa-conf/format:/root/varnishncsa_format:ro
+      - ./varnish/logs:/root/logs:rw
+    tmpfs:
+      - /var/lib/varnish:exec
+    restart: unless-stopped
+    entrypoint: "/root/custom-varnish-entrypoint"

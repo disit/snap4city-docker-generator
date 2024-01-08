@@ -1,0 +1,315 @@
+version: "3.2"
+services:
+  proxy:
+    container_name: proxy
+    restart: unless-stopped
+    image: nginxinc/nginx-unprivileged
+    networks:
+      default:
+        aliases:
+          - $#base-hostname#$
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-proxy-conf:/etc/nginx/conf.d
+    sysctls:
+      - net.ipv4.ip_unprivileged_port_start=0
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  dashboard-builder:
+    container_name: dashboard-builder
+    restart: unless-stopped
+    image: disitlab/dashboard-builder:v7.1
+    ports:
+      - "70:80"
+    volumes:
+       - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
+       - ./notificator-conf:/var/www/html/notificator/conf
+       - ./iot-directory-conf:/var/www/html/iot-directory/conf
+       - ./iot-directory-certificate:/var/www/certificate
+       - ./iot-directory-log:/var/www/log
+       - ./apache-proxy.conf:/etc/apache2/conf-virtualhost/proxy.conf
+       - ./processloader-conf/config.php:/var/www/html/processloader/config.php
+       - ./processloader-conf/external_service.php:/var/www/html/processloader/external_service.php
+       - ./processloader-conf/datatablemanager_config.ini.php:/var/www/html/processloader/datatablemanager_config.ini.php
+       - ./processloader-conf/poimanager_config.ini.php:/var/www/html/processloader/poimanager_config.ini.php
+       - ./ownership-conf/config.php:/var/www/html/ownership-api/config.php
+       - ./ownership-conf/logs:/ownership-logs
+       - ./multiservicemap-conf:/var/www/html/MultiServiceMap/conf
+       - dashboard-img:/var/www/html/dashboardSmartCity/img
+       - datatable-uploads:/var/www/html/processloader/DataTableManager/files
+       - poitable-uploads:/var/www/html/processloader/POIManager/files
+    environment:
+      OWN_DB_HOST: "$#dashboard-db-host#$"
+      OWN_DB_USER: "$#dashboard-db-user#$"
+      OWN_DB_PWD: "$#dashboard-db-pwd#$"
+      OWN_SSO_USERINFO_ENDPOINT: "$#base-url#$/auth/realms/master/protocol/openid-connect/userinfo"
+      OWN_LDAPSERVER: "$#ldap-server#$"
+      OWN_LDAPBASEDN: "$#ldap-base-dn#$"
+      HEATMAP_DB_HOST: "$#dashboard-db-host#$"
+      HEATMAP_DB_USER: "$#dashboard-db-user#$"
+      HEATMAP_DB_PASSWORD: "$#dashboard-db-pwd#$"
+    depends_on:
+      - dashboarddb
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+
+  iot-fiware-harvester:
+    container_name: iot-fiware-harvester
+    image: disitlab/iot-directory-fiware-harvester:v0
+    environment:
+      "WAIT_TIME": "60m"
+    volumes:
+      - ./iot-fiware-harvester-conf/config.json:/app/config.json
+      - ./iot-fiware-harvester-conf/dbconfig.json:/app/dbconfig.json
+      - ./iot-fiware-harvester-conf/Download:/Download
+      - ./iot-fiware-harvester-conf/Results:/Results
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  iot-fiware-api:
+    container_name: iot-fiware-api
+    image: disitlab/iot-directory-fiware-harvester:v0
+    command: python3 API_ruleBuilder.py
+    volumes:
+      - ./iot-fiware-harvester-conf/config.json:/app/config.json
+      - ./iot-fiware-harvester-conf/dbconfig.json:/app/dbconfig.json
+      - ./iot-fiware-harvester-conf/Download:/Download
+      - ./iot-fiware-harvester-conf/Results:/Results
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  dashboard-backend:
+    container_name: dashboard-backend
+    restart: unless-stopped
+    image: disitlab/dashboard-backend:v1
+    volumes:
+      - ./dashboard-backend-conf/config.properties:/usr/app/config.properties
+    depends_on:
+      - dashboarddb
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  dashboard-cron:
+    container_name: dashboard-cron
+    restart: unless-stopped
+    image: disitlab/dashboard-builder:v7.1
+    volumes:
+       - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
+       - ./dashboard-cron-conf/crontab:/crontab
+    command: /bin/sh -c "crontab /crontab; cron -f"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  personaldata:
+    container_name: personaldata
+    restart: unless-stopped
+    image: disitlab/personaldata:v5
+#    image: tomcat:9.0.26-jdk8-openjdk-slim
+    volumes:
+      - ./datamanager-logs:/datamanager
+    environment:
+      "spring.profiles.active": "deploy"
+      "profiledb.datasource.url": "jdbc:mysql://$#datamanager-db-host#$:$#datamanager-db-port#$/profiledb"
+      "profiledb.datasource.username": "$#datamanager-db-user#$"
+      "profiledb.datasource.password": "$#datamanager-db-pwd#$"
+      "spring.openidconnect.userinfo_endpoint": "$#base-url#$/auth/"
+      "spring.openidconnect.userinfo_endpoint_test": ""
+      "spring.ldap.url": "ldap://$#ldap-server#$:389"
+      "spring.ldap.basicdn": "$#ldap-base-dn#$"
+      "spring.ldap.managerdn": "$#ldap-admin-dn#$"
+      "spring.ldap.password": "$#ldap-admin-pwd#$"
+      "config.kpi.organizationlist": "[\"Organization\"]"
+      "config.kpi.orginfourl": "$#base-url#$/dashboardSmartCity/api/getOrganizationParams.php"
+      "config.kpi.dictionary": "$#base-url#$/processloader/api/dictionary/"
+      "config.kpi.authentication.clientid": "js-kpi-client"
+      "config.grp.authentication.clientid": "js-grp-client"
+      "grpsensors.datasource.url": "$#base-url#$/dashboardSmartCity/api/sensors.php"
+      "grp.url": "$#base-url#$/datamanager/grp/?id=%d"
+#     "spring.cache.jcache.config": "classpath:ehcache.xml"
+      "kafka.bootstrapAddress": "kafka:9092"
+      "kafka.prefixTopic": "kpi-"
+      "kafka.sendMessages": "true"
+      logFileFolder: ""
+    ports:
+      - 8080:8080
+    links:
+      - dashboarddb
+    depends_on:
+      - dashboarddb
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  iot-discovery:
+    container_name: iot-discovery
+    image: disitlab/iot-directory-discover-api:v1
+    ports:
+      - 3003:3001
+    volumes:
+      - ./iot-discovery-conf/:/usr/src/snap4IotServer/snap4cityBroker/conf
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+
+  wsserver:
+    container_name: wsserver
+    restart: unless-stopped
+    image: disitlab/websocketserver:v5
+    ports:
+      - 9000:9000
+    volumes:
+      - ./dashboard-builder-conf:/websocketserver/conf
+    depends_on:
+      - dashboarddb
+  synoptics:
+    container_name: synoptics
+    restart: unless-stopped
+    image: disitlab/synoptics:v2
+    volumes:
+      - ./synoptics-conf/config.js:/usr/src/synoptics/new-config.js
+      - ./synoptics-conf/v2-config.js:/usr/src/synoptics/v2/new-config.js
+    ports:
+      - 3001:3001
+      - 3002:3002
+    restart: unless-stopped
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  zookeeper:
+    container_name: zookeeper
+    restart: unless-stopped
+    image: bitnami/zookeeper
+    ports:
+      - "2181:2181"
+    volumes:
+      - zkdata:/bitnami/zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  kafka:
+    container_name: kafka
+    restart: unless-stopped
+    image: bitnami/kafka:latest
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    ports:
+      - "9000:9000"
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+        - KAFKA_ENABLE_KRAFT=no
+        - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+        - ALLOW_PLAINTEXT_LISTENER=yes
+        - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT
+        - KAFKA_CFG_LISTENERS=CLIENT://:9092
+        - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092
+        - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+        - JMX_PORT=9000
+        - KAFKA_JMX_OPTS=-Djava.rmi.server.hostname=192.168.1.119 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.rmi.port=9000 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+
+    volumes:
+      - kafka:/bitnami/kafka
+    depends_on:
+      - zookeeper
+  od-insert-api:
+    container_name: od-insert-api
+    image: disitlab/od-matrix-api:v1
+    ports:
+      - 3100:3100
+    command: python -u ./od-insert.py
+    volumes:
+      - ./od-matrix-conf/config.yaml:/usr/src/app/config.yaml
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  od-get-api:
+    container_name: od-get-api
+    image: disitlab/od-matrix-api:v1
+    ports:
+      - 3200:3200
+    command: python -u ./od-get.py
+    volumes:
+      - ./od-matrix-conf/config.yaml:/usr/src/app/config.yaml
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  od-build-api:
+    container_name: od-build-api
+    image: disitlab/od-matrix-api:v1
+    ports:
+      - 3000:3000
+    command: python -u ./od-build.py
+    volumes:
+      - ./od-matrix-conf/config.yaml:/usr/src/app/config.yaml
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+
+  od-postgis:
+    container_name: od-postgis
+    image: postgis/postgis:latest
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: $#postgre-password#$
+    volumes:
+      - od-postgis-data:/var/lib/postgresql/data
+      - ./od-postgis/od-matrix-db-schema.sql:/docker-entrypoint-initdb.d/20-od-matrix-db-schema.sql
+      - ./od-postgis/italy_rx.sql:/docker-entrypoint-initdb.d/30-italy_rx.sql
+      - ./od-postgis:/od-postgis
+    restart: unless-stopped
+
+volumes:
+  dashboarddb:
+  dashboard-img:
+  zkdata:
+  kafka:
+  od-postgis-data:
+  geo-db-data:
+  geoserver-data:

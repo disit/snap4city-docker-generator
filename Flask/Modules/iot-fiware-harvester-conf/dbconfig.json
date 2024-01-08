@@ -1,0 +1,7 @@
+{
+    "host": "dashboarddb",
+    "user": "$#dashboard-db-user#$",
+    "password": "$#dashboard-db-pwd#$",
+    "database": "iotdb",
+    "ssl_disabled" :0
+}

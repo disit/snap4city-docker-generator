@@ -1,0 +1,27 @@
+version: "3.2"
+services:
+  dashboarddb:
+    container_name: dashboarddb
+    restart: unless-stopped
+    image: mariadb:10.3
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    volumes:
+      - dashboarddb:/var/lib/mysql
+      - ./mariadb-conf:/etc/mysql/mariadb.conf.d
+      - ./database/heatmap.sql:/docker-entrypoint-initdb.d/a_init.sql
+      - ./database/datatable.sql:/docker-entrypoint-initdb.d/b_init.sql
+
+    environment:
+      TZ: "Europe/Rome"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+      MYSQL_ROOT_PASSWORD: "rootpwd"
+      MYSQL_USER: '$#dashboard-db-user#$'
+      MYSQL_PASSWORD: '$#dashboard-db-pwd#$'
+      MYSQL_DATABASE: 'Dashboard'
+    ports:
+      - "3306:3306"

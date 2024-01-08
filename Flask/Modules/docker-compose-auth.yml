@@ -1,0 +1,67 @@
+version: "3.2"
+services:
+  ldap-server:
+    container_name: ldap-server
+    restart: unless-stopped
+    #image: osixia/openldap:latest
+    image: disitlab/preconf-openldap:v3
+    command: ["bash", "/ldif_files/run.sh"]
+    volumes:
+      - ./ldap/:/ldif_files
+      - ldap_lib:/var/lib/ldap
+      - ldap_etc:/etc/ldap/slapd.d
+    environment:
+      LDAP_ORGANISATION: "$#ldap-organization#$"
+      LDAP_DOMAIN: "ldap.$#ldap-organization#$.com"
+      LDAP_ADMIN_PASSWORD: "$#ldap-admin-pwd#$"
+    ports:
+      - "389:389"
+      - "636:636"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  myldap:
+    container_name: myldap
+    restart: unless-stopped
+    image: osixia/phpldapadmin
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "ldap-server"
+    ports:
+      - "6443:443"
+    depends_on:
+      - "ldap-server"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  keycloak:
+    container_name: keycloak
+    restart: unless-stopped
+    image: disitlab/preconf-keycloak:v6
+#      image: jboss/keycloak:4.8.3.Final
+    command: ["-Djboss.socket.binding.port-offset=8"]
+    ports:
+        - "8088:8088"
+    environment:
+        KEYCLOAK_USER: $#keycloak-admin#$
+        KEYCLOAK_PASSWORD: $#keycloak-admin-pwd#$
+        PROXY_ADDRESS_FORWARDING: "true"
+    depends_on:
+        - ldap-server
+    volumes:
+        - keycloak:/opt/jboss/keycloak/standalone/
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+volumes:
+  ldap_etc: {}
+  ldap_lib: {}
+  keycloak: {}

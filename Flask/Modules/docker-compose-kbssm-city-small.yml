@@ -1,0 +1,66 @@
+version: "3.2"
+services:
+  servicemap-$#id#$:
+    container_name: servicemap-$#id#$
+    restart: unless-stopped
+    image: disitlab/servicemap:v5.1
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+#    image: tomcat:9.0.26-jdk8-openjdk-slim
+
+    extra_hosts:
+      - "$#base-hostname#$:$#ip-0#$"
+    volumes:
+      - ./servicemap-$#id#$-conf:/root/servicemap
+      - ./servicemap-$#id#$-iot-conf/logs:/root/iot-log2
+      - ./servicemap-$#id#$-iot-conf:/root/iot-api-config:rw
+      - ./servicemap-$#id#$-conf/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml
+      - ./servicemap-$#id#$-superservicemap-conf/settings.xml:/usr/local/tomcat/settings.xml
+#    environment:
+    ports:
+      - $#8090#$:8080
+    depends_on:
+      - virtuoso-kb-$#id#$
+      - dashboarddb-$#id#$
+  virtuoso-kb-$#id#$:
+    container_name: virtuoso-kb-$#id#$
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    restart: unless-stopped
+    image: tenforce/virtuoso:1.3.1-virtuoso7.2.1
+    environment:
+      SPARQL_UPDATE: "true"
+      DEFAULT_GRAPH: "http://www.example.com/my-graph"
+    volumes:
+      - ./servicemap-$#id#$-conf:/root/servicemap
+      - virtuoso-$#id#$:/data
+    ports:
+      - "$#8890#$:8890"
+      - "$#1111#$:1111"
+    restart: unless-stopped
+  solr-kb-$#id#$:
+    container_name: solr-kb-$#id#$
+    image: solr:6.6.6
+    ports:
+     - "$#8983#$:8983"
+    volumes:
+      - solr-data-$#id#$:/var/solr
+    command:
+      - solr-precreate
+      - km4c-index
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+volumes:
+  virtuoso-$#id#$:
+  solr-data-$#id#$:

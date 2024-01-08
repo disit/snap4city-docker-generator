@@ -1,0 +1,42 @@
+version: "3"
+services:
+  $#node_name#$:
+    container_name: $#node_name#$
+    image: opensearchproject/opensearch:1.2.3
+    environment:
+      - cluster.name=snap4city-opensearch-cluster
+      - node.name=$#node_name#$
+      - discovery.seed_hosts=$#seed_hosts#$
+      - cluster.initial_master_nodes=$#seed_hosts#$
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - network.host=0.0.0.0
+      - network.publish_host=$#id_ip#$
+    hostname: $#node_name#$
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    extra_hosts:
+$#extra_hosts#$
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+      - ./opensearch-conf/root-ca.pem:/usr/share/opensearch/config/root-ca.pem
+      - ./opensearch-conf/node.pem:/usr/share/opensearch/config/esnode.pem
+      - ./opensearch-conf/node-key.pem:/usr/share/opensearch/config/esnode-key.pem
+      - ./opensearch-conf/admin.pem:/usr/share/opensearch/config/admin.pem
+      - ./opensearch-conf/admin-key.pem:/usr/share/opensearch/config/admin-key.pem
+      - ./opensearch-conf/opensearch.yml:/usr/share/opensearch/config/opensearch.yml
+      - ./opensearch-conf/security-config.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/config.yml
+      - ./opensearch-conf/internal_users.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml
+      - ./opensearch-conf/roles_mapping.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/roles_mapping.yml
+      - ./opensearch-conf/tenants.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/tenants.yml
+      - ./opensearch-conf/roles.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/roles.yml
+      - ./opensearch-conf/action_groups.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/action_groups.yml
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+
+volumes:
+  opensearch-data:

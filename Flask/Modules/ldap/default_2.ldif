@@ -1,0 +1,20 @@
+
+dn: cn=$#iotbroker_1#$,dc=ldap,dc=organization,dc=com
+cn: $#iotbroker_1#$
+gidnumber: $#number_1#$
+memberuid: cn=usermanager,dc=ldap,dc=organization,dc=com
+memberuid: cn=userareamanager,dc=ldap,dc=organization,dc=com
+memberuid: cn=userrootadmin,dc=ldap,dc=organization,dc=com
+memberuid: cn=usertooladmin,dc=ldap,dc=organization,dc=com
+objectclass: posixGroup
+objectclass: top
+
+dn: cn=$#iotbroker_2#$,dc=ldap,dc=organization,dc=com
+cn: $#iotbroker_2#$
+gidnumber: $#number_2#$
+memberuid: cn=usermanager,dc=ldap,dc=organization,dc=com
+memberuid: cn=userareamanager,dc=ldap,dc=organization,dc=com
+memberuid: cn=userrootadmin,dc=ldap,dc=organization,dc=com
+memberuid: cn=usertooladmin,dc=ldap,dc=organization,dc=com
+objectclass: posixGroup
+objectclass: top

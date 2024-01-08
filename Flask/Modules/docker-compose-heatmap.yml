@@ -1,0 +1,100 @@
+version: "3"
+services:
+
+  heatmap2geosrv:
+    container_name: heatmap2geosrv
+    image: disitlab/heatmap2geoserver:v0
+    volumes:
+      - ./heatmap-tmp:/go/src/heatmap2geoserver/data/
+    environment:
+      MySQL_hostname: $#dashboard-db-host#$
+      MySQL_username: $#dashboard-db-user#$
+      MySQL_password: $#dashboard-db-pwd#$
+      MySQL_database: heatmap
+      GeoServer_username: admin
+      GeoServer_password: $#postgre-geo-password#$
+      GeoServer_url: http://geoserver:8080/geoserver/rest
+      GeoServer_workspace: Snap4City
+      sleep_time: 20
+
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  heatmap-api:
+    container_name: heatmap-api
+    restart: unless-stopped
+    image: disitlab/heatmap-api:v0
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    ports:
+      - 8001:8080
+    environment:
+      HEATMAP_DB_ACCESS: $#dashboard-db-user#$:$#dashboard-db-pwd#$@tcp($#dashboard-db-host#$:3306)/heatmap?charset=utf8&parseTime=True
+  geoserver-db:
+    container_name: geoserver-db
+    image: kartoza/postgis:14-3.1
+    volumes:
+       - geo-db-data:/var/lib/postgresql
+    ports:
+      - 5434:5432
+    environment:
+      - POSTGRES_DB=gis,gwc
+      - POSTGRES_USER=$#postgre-geo-user#$
+      - POSTGRES_PASS=$#postgre-geo-password#$
+      - ALLOW_IP_RANGE=0.0.0.0/0
+     # - FORCE_SSL=TRUE
+    healthcheck:
+      test: "exit 0"
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  geoserver:
+    container_name: geoserver
+    image: kartoza/geoserver:2.20.0
+    volumes:
+      - geoserver-data:/opt/geoserver/data_dir
+    ports:
+      - 8600:8080
+    environment:
+      - GEOSERVER_DATA_DIR=/opt/geoserver/data_dir
+      - GEOWEBCACHE_CACHE_DIR=/opt/geoserver/data_dir/gwc
+      - GEOSERVER_ADMIN_PASSWORD=$#postgre-geo-password#$
+      - GEOSERVER_ADMIN_USER=admin
+      - INITIAL_MEMORY=2G
+      - MAXIMUM_MEMORY=4G
+      - POSTGRES_JNDI=TRUE
+      - HOST=geoserver-db
+      - POSTGRES_DB=gis
+      - POSTGRES_USER=$#postgre-geo-user#$
+      - POSTGRES_PASS=$#postgre-geo-password#$
+    depends_on:
+      geoserver-db:
+        condition: service_healthy
+    #healthcheck:
+      #test: curl --fail -s http://localhost:8080/ || exit 1
+      #interval: 1m30s
+      #timeout: 10s
+      #retries: 3
+
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+
+volumes:
+  datatable-uploads:
+  poitable-uploads:
+  od-postgis-data:
+  geo-db-data:
+  geoserver-data:

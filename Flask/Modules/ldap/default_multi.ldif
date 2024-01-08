@@ -1,0 +1,10 @@
+
+dn: cn=$#iotbroker#$,dc=ldap,dc=organization,dc=com
+cn: $#iotbroker#$
+gidnumber: $#number#$
+memberuid: cn=usermanager,dc=ldap,dc=organization,dc=com
+memberuid: cn=userareamanager,dc=ldap,dc=organization,dc=com
+memberuid: cn=userrootadmin,dc=ldap,dc=organization,dc=com
+memberuid: cn=usertooladmin,dc=ldap,dc=organization,dc=com
+objectclass: posixGroup
+objectclass: top

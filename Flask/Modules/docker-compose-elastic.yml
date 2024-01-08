@@ -1,0 +1,117 @@
+version: "3.2"
+services:
+  nifi:
+    container_name: nifi
+    #extra_hosts:
+    #  - "$#base-hostname#$:$#ip-0#$"
+    environment:
+      - NIFI_WEB_HTTPS_PORT=9090
+      - SINGLE_USER_CREDENTIALS_USERNAME=$#nifi-user#$
+      - SINGLE_USER_CREDENTIALS_PASSWORD=$#nifi-password#$
+      - NIFI_SENSITIVE_PROPS_KEY=$#nifi-enc-key#$
+      - NIFI_WEB_PROXY_HOST=localhost, $#base-hostname#$, $#base-hostname#$:9090
+      - NIFI_WEB_HTTPS_HOST=0.0.0.0
+      - NIFI_CLUSTER_ADDRESS=0.0.0.0
+      - NIFI_REMOTE_INPUT_HOST=0.0.0.0
+      - AUTH=tls
+      - KEYSTORE_PATH=/opt/nifi/nifi-current/conf/keystore.jks
+      - KEYSTORE_TYPE=JKS
+      - KEYSTORE_PASSWORD=$#keystore-password#$
+      - TRUSTSTORE_PATH=/opt/nifi/nifi-current/conf/truststore.jks
+      - TRUSTSTORE_TYPE=JKS
+      - TRUSTSTORE_PASSWORD=$#truststore-password#$
+      - NIFI_SECURITY_USER_AUTHORIZER=single-user-authorizer
+      - NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER=single-user-provider
+      - NIFI_JVM_HEAP_MAX=2g
+    image: apache/nifi:1.16.2
+    logging:
+      driver: json-file
+      options:
+        max-file: '10'
+        max-size: 100m
+    ports:
+    - published: 1030
+      target: 1030
+    - published: 9090
+      target: 9090
+    restart: unless-stopped
+    volumes:
+      - ./nifi/conf:/opt/nifi/nifi-current/conf:rw
+      - ./nifi/extensions:/opt/nifi/nifi-current/extensions:rw
+      - ./nifi/logs:/opt/nifi/nifi-current/logs
+    depends_on:
+      - varnish
+  opensearch-n1:
+    container_name: opensearch-n1
+    image: opensearchproject/opensearch:1.2.3
+    environment:
+      - discovery.type=single-node
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - network.host=0.0.0.0
+      - JAVA_HOME=/usr/share/opensearch/jdk
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+      - ./opensearch-conf/root-ca.pem:/usr/share/opensearch/config/root-ca.pem
+      - ./opensearch-conf/node1.pem:/usr/share/opensearch/config/esnode.pem
+      - ./opensearch-conf/node1-key.pem:/usr/share/opensearch/config/esnode-key.pem
+      - ./opensearch-conf/admin.pem:/usr/share/opensearch/config/admin.pem
+      - ./opensearch-conf/admin-key.pem:/usr/share/opensearch/config/admin-key.pem
+      - ./opensearch-conf/opensearch.yml:/usr/share/opensearch/config/opensearch.yml
+      - ./opensearch-conf/security-config.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/config.yml
+      - ./opensearch-conf/internal_users.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml
+      - ./opensearch-conf/roles_mapping.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/roles_mapping.yml
+      - ./opensearch-conf/tenants.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/tenants.yml
+      - ./opensearch-conf/roles.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/roles.yml
+      - ./opensearch-conf/action_groups.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/action_groups.yml
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+
+  opensearch-dashboards:
+    container_name: opensearch-dashboards
+    image: opensearchproject/opensearch-dashboards:1.2.0
+    ports:
+      - 5601:5601
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch-n1:9200"]' # must be a string with no spaces when specified as an environment variable
+      SERVER_BASEPATH: '/kibana'
+      SERVER_REWRITEBASEPATH: 'false'
+      OPENSEARCH_USER: kibanaserver
+      OPENSEARCH_PASSWORD: $#kibanauser-password#$
+    depends_on:
+      - opensearch-n1
+    volumes:
+      - ./opensearch-conf/opensearch_dashboards.yml:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  varnish:
+    container_name: varnish
+    image: varnish:stable
+    hostname: cache
+    environment:
+      - VARNISH_SIZE=100MB
+      - VARNISHNCSA=true
+      - VARNISH_HTTP_PORTS=6081
+    ports:
+      - "6081:6081"
+    volumes:
+      - ./varnish/varnish-conf/default.vcl:/etc/varnish/default.vcl:ro
+      - ./varnish/docker-entrypoint:/root/custom-varnish-entrypoint:rw
+      - ./varnish/varnishncsa-conf/format:/root/varnishncsa_format:ro
+      - ./varnish/logs:/root/logs:rw
+    tmpfs:
+      - /var/lib/varnish:exec
+    restart: unless-stopped
+    entrypoint: "/root/custom-varnish-entrypoint"
+volumes:
+  elastic-data:
+  opensearch-data:

@@ -1,0 +1,23 @@
+version: "3.2"
+services:
+  iotapp-$#nodered-id#$:
+    container_name: iotapp-$#nodered-id#$
+    restart: unless-stopped
+    image: disitlab/snap4city-nodered-v2.2.2-adv:v10
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    extra_hosts:
+      - "$#base-hostname#$:$#ip-0#$"
+      - "kafka:$#ip-0#$"
+      - "virtuoso-kb:$#ip-0#$"
+      - "zookeeper:$#ip-0#$"
+      - "opensearch-n1:$#ip-0#$"
+      - "ldap-server:$#ip-0#$"
+    volumes:
+      - ./iotapp-$#nodered-id#$:/data
+    ports:
+      - "1880:1880"

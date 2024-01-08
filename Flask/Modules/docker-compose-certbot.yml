@@ -1,0 +1,11 @@
+version: "3.2"
+services:
+  certbot:
+    container_name: certbot
+    image: certbot/certbot
+    user: "1000"
+    volumes:
+    - ./certbot/conf:/etc/letsencrypt
+    - ./certbot/logs:/var/log/letsencrypt
+    - ./certbot/work:/var/lib/letsencrypt
+    - ./certbot/www:/var/www/certbot

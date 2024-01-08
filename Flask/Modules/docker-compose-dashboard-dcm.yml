@@ -1,0 +1,285 @@
+version: "3.2"
+services:
+  proxy:
+    container_name: proxy
+    restart: unless-stopped
+    image: nginxinc/nginx-unprivileged
+    networks:
+      default:
+        aliases:
+          - $#base-hostname#$
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    volumes:
+      - ./nginx-proxy-conf:/etc/nginx/conf.d
+    sysctls:
+      - net.ipv4.ip_unprivileged_port_start=0
+  dashboard-builder:
+    container_name: dashboard-builder
+    restart: unless-stopped
+    image: disitlab/dashboard-builder:v7.1
+    ports:
+      - "70:80"
+    volumes:
+       - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
+       - ./notificator-conf:/var/www/html/notificator/conf
+       - ./iot-directory-conf:/var/www/html/iot-directory/conf
+       - ./iot-directory-certificate:/var/www/certificate
+       - ./iot-directory-log:/var/www/log
+       - ./apache-proxy.conf:/etc/apache2/conf-virtualhost/proxy.conf
+       - ./processloader-conf/config.php:/var/www/html/processloader/config.php
+       - ./processloader-conf/external_service.php:/var/www/html/processloader/external_service.php
+       - ./processloader-conf/datatablemanager_config.ini.php:/var/www/html/processloader/datatablemanager_config.ini.php
+       - ./processloader-conf/poimanager_config.ini.php:/var/www/html/processloader/poimanager_config.ini.php
+       - ./ownership-conf/config.php:/var/www/html/ownership-api/config.php
+       - ./ownership-conf/logs:/ownership-logs
+       - ./multiservicemap-conf:/var/www/html/MultiServiceMap/conf
+       - dashboard-img:/var/www/html/dashboardSmartCity/img
+       - datatable-uploads:/var/www/html/processloader/DataTableManager/files
+       - poitable-uploads:/var/www/html/processloader/POIManager/files
+    environment:
+      OWN_DB_HOST: "$#datamanager-db-host#$"
+      OWN_DB_USER: "$#datamanager-db-user#$"
+      OWN_DB_PWD: "$#datamanager-db-pwd#$"
+      OWN_SSO_USERINFO_ENDPOINT: "$#base-url#$/auth/realms/master/protocol/openid-connect/userinfo"
+      OWN_LDAPSERVER: "$#ldap-server#$"
+      OWN_LDAPBASEDN: "$#ldap-base-dn#$"
+      HEATMAP_DB_HOST: "$#dashboard-db-host#$"
+      HEATMAP_DB_USER: "$#dashboard-db-user#$"
+      HEATMAP_DB_PASSWORD: "$#dashboard-db-pwd#$"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    depends_on:
+      - dashboarddb
+      - keycloak
+  dashboard-backend:
+    container_name: dashboard-backend
+    restart: unless-stopped
+    image: disitlab/dashboard-backend:v1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    volumes:
+      - ./dashboard-backend-conf/config.properties:/usr/app/config.properties
+    depends_on:
+      - dashboarddb
+  iot-fiware-harvester:
+    container_name: iot-fiware-harvester
+    image: disitlab/iot-directory-fiware-harvester:v0
+    environment:
+      "WAIT_TIME": "60m"
+    volumes:
+      - ./iot-fiware-harvester-conf/config.json:/app/config.json
+      - ./iot-fiware-harvester-conf/dbconfig.json:/app/dbconfig.json
+      - ./iot-fiware-harvester-conf/Download:/Download
+      - ./iot-fiware-harvester-conf/Results:/Results
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  iot-fiware-api:
+    container_name: iot-fiware-api
+    image: disitlab/iot-directory-fiware-harvester:v0
+    ports:
+      - "5000"
+    command: python3 API_ruleBuilder.py
+    volumes:
+      - ./iot-fiware-harvester-conf/config.json:/app/config.json
+      - ./iot-fiware-harvester-conf/dbconfig.json:/app/dbconfig.json
+      - ./iot-fiware-harvester-conf/Download:/Download
+      - ./iot-fiware-harvester-conf/Results:/Results
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  dashboard-cron:
+    container_name: dashboard-cron
+    restart: unless-stopped
+    image: disitlab/dashboard-builder:v7.1
+
+    user: root
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    volumes:
+       - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
+       - ./dashboard-cron-conf/crontab:/crontab
+    command: /bin/sh -c "crontab /crontab; cron -f"
+
+  iot-discovery:
+    container_name: iot-discovery
+    image: disitlab/iot-directory-discover-api:v1
+    ports:
+      - 3003:3001
+    volumes:
+      - ./iot-discovery-conf/:/usr/src/snap4IotServer/snap4cityBroker/conf
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+
+  personaldata:
+    container_name: personaldata
+    restart: unless-stopped
+    image: disitlab/personaldata:v5
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+#    image: tomcat:9.0.26-jdk8-openjdk-slim
+    volumes:
+      - ./datamanager-logs:/usr/local/tomcat/logs/datamanager
+      - ./datamanager-conf:/datamanager-conf
+    environment:
+      "spring.profiles.active": "deploy"
+      "profiledb.datasource.url": "jdbc:mysql://$#datamanager-db-host#$:$#datamanager-db-port#$/profiledb"
+      "profiledb.datasource.username": "$#datamanager-db-user#$"
+      "profiledb.datasource.password": "$#datamanager-db-pwd#$"
+      "spring.openidconnect.userinfo_endpoint": "$#base-url#$/auth/"
+      "spring.openidconnect.userinfo_endpoint_test": ""
+      "spring.ldap.url": "ldap://$#ldap-server#$:389"
+      "spring.ldap.basicdn": "$#ldap-base-dn#$"
+      "spring.ldap.managerdn": "$#ldap-admin-dn#$"
+      "spring.ldap.password": "$#ldap-admin-pwd#$"
+      "config.kpi.organizationlist": "[\"Organization\"]"
+      "config.kpi.orginfourl": "$#base-url#$/dashboardSmartCity/api/getOrganizationParams.php"
+      "config.kpi.dictionary": "$#base-url#$/processloader/api/dictionary/"
+      "config.kpi.authentication.clientid": "js-kpi-client"
+      "config.grp.authentication.clientid": "js-grp-client"
+      "grpsensors.datasource.url": "$#base-url#$/dashboardSmartCity/api/sensors.php"
+      "grp.url": "$#base-url#$/datamanager/grp/?id=%d"
+#     "spring.cache.jcache.config": "classpath:ehcache.xml"
+      "kafka.bootstrapAddress": "kafka:9092"
+      "kafka.prefixTopic": "kpi-"
+      "kafka.sendMessages": "true"
+      "config.kpi.defaultsaveon": "ElasticSearch"
+      "elasticsearch.truststorefile": "/datamanager-conf/trust-store.p12"
+      "elasticsearch.truststorepass": "$#truststore-password#$"
+      "elasticsearch.username": "admin"
+      "elasticsearch.password": "$#opensearch-admin-pwd#$"
+      "elasticsearch.clustername": "na"
+      "elasticsearch.protocol": "https"
+      "elasticsearch.hosts": "opensearch-n1"
+      "elasticsearch.port": "9200"
+      "elasticsearch.kibanahost": "$#base-url#$/kibana"
+      "elasticsearch.kibanaDashboardUrl": "$#base-url#$/kibana/app/dashboards?security_tenant=global#/view/264dd3d0-23f0-11eb-9e9d-e5f981c2aab7?_a=(filters:!(),query:(language:lucene,query:'deviceName:KPI_ID'))"
+      "elasticsearch.indexname": "snap4-kpi"
+      #set the same as dashboard-builder and ownership
+      "security.encryptor.aes.secretkey": "$#aes-encryption-key-16chars#$"
+      "security.encryptor.aes.ivparameter": "$#aes-encryption-iv-16chars#$"
+      "JAVA_OPTS": "-DlogFileFolder=/usr/local/tomcat/logs"
+      "config.kpi.orginfourl": "$#base-url#$/dashboardSmartCity/api/getOrganizationParams.php"
+    ports:
+      - 8080:8080
+    links:
+      - dashboarddb
+    depends_on:
+      - dashboarddb
+      - keycloak
+  wsserver:
+    container_name: wsserver
+    restart: unless-stopped
+    image: disitlab/websocketserver:v5
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    ports:
+      - 9100:8000
+    volumes:
+      - ./dashboard-builder-conf:/websocketserver/conf
+    depends_on:
+      - dashboarddb
+      - keycloak
+  synoptics:
+    container_name: synoptics
+    restart: unless-stopped
+    image: disitlab/synoptics:v2
+    volumes:
+      - ./synoptics-conf/config.js:/usr/src/synoptics/new-config.js
+      - ./synoptics-conf/v2-config.js:/usr/src/synoptics/v2/new-config.js
+    ports:
+      - 3001:3001
+      - 3002:3002
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+  zookeeper:
+    container_name: zookeeper
+    restart: unless-stopped
+    image: bitnami/zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN:yes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    ports:
+      - "2181:2181"
+    volumes:
+      - zkdata:/bitnami/zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    container_name: kafka
+    image: bitnami/kafka:latest
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    ports:
+
+      - "9000:9000"
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+        - KAFKA_ENABLE_KRAFT=no
+        - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+        - ALLOW_PLAINTEXT_LISTENER=yes
+        - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT
+        - KAFKA_CFG_LISTENERS=CLIENT://:9092
+        - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092
+        - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+        - JMX_PORT=9000
+        - KAFKA_JMX_OPTS=-Djava.rmi.server.hostname=192.168.1.119 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.rmi.port=9000 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+
+    volumes:
+      - kafka:/bitnami/kafka
+    depends_on:
+      - zookeeper
+volumes:
+  dashboarddb:
+  dashboard-img:
+  zkdata:
+  kafka:

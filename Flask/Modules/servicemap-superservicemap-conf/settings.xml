@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<setting>
+  <label id="username">
+    <value>$#superservicemap-db-user#$</value>
+  </label>
+  <label id="password">
+    <value>$#superservicemap-db-pwd#$</value>
+  </label>
+  <label id="db">
+    <value>SuperServiceMap</value>
+  </label>
+  <label id="urlMySqlDB">
+    <value>jdbc:mysql://$#superservicemap-db-host#$/</value>
+  </label>
+  <label id="tmpcachexp">
+    <value>36000</value>
+  </label>
+</setting>
+

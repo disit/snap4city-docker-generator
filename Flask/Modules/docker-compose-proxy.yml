@@ -1,0 +1,35 @@
+version: "3.2"
+services:
+  certbot:
+    container_name: certbot
+    image: certbot/certbot
+    user: "1000"
+    volumes:
+    - ./certbot/conf:/etc/letsencrypt
+    - ./certbot/logs:/var/log/letsencrypt
+    - ./certbot/work:/var/lib/letsencrypt
+    - ./certbot/www:/var/www/certbot
+  proxy:
+    container_name: proxy
+    restart: unless-stopped
+    image: nginxinc/nginx-unprivileged
+    networks:
+      default:
+        aliases:
+          - $#base-hostname#$
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-proxy-conf:/etc/nginx/conf.d
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    sysctls:
+      - net.ipv4.ip_unprivileged_port_start=0
+
+    user: "1000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"

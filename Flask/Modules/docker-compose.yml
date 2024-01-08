@@ -1,0 +1,306 @@
+version: "3.2"
+services:
+  dashboard:
+    image: disitlab/dashboard-builder:v4
+    ports:
+      - "80:80"
+    volumes:
+       - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
+       - ./notificator-conf:/var/www/html/notificator/conf
+       - ./iot-directory-conf:/var/www/html/iot-directory/conf
+       - ./iot-directory-certificate:/var/www/certificate
+       - ./iot-directory-log:/var/www/log
+       - ./apache-proxy.conf:/etc/apache2/conf-virtualhost/proxy.conf
+       - ./processloader-conf/config.php:/var/www/html/processloader/config.php
+       - ./processloader-conf/external_service.php:/var/www/html/processloader/external_service.php
+       - ./processloader-conf/datatablemanager_config.ini.php:/var/www/html/processloader/datatablemanager_config.ini.php
+       - ./processloader-conf/poimanager_config.ini.php:/var/www/html/processloader/poimanager_config.ini.php
+       - ./ownership-conf/config.php:/var/www/html/ownership-api/config.php
+       - ./ownership-conf/logs:/ownership-logs
+       - ./multiservicemap-conf:/var/www/html/MultiServiceMap/conf
+       - dashboard-img:/var/www/html/dashboardSmartCity/img
+       - datatable-uploads:/var/www/html/processloader/DataTableManager/files
+       - poitable-uploads:/var/www/html/processloader/POIManager/files
+    environment:
+      OWN_DB_HOST: "dashboarddb"
+      OWN_DB_USER: "user"
+      OWN_DB_PWD: "passwordx"
+      OWN_SSO_USERINFO_ENDPOINT: "http://dashboard/auth/realms/master/protocol/openid-connect/userinfo"
+      OWN_LDAPSERVER: "ldap-server"
+      OWN_LDAPBASEDN: "dc=ldap,dc=organization,dc=com"
+    depends_on:
+      - dashboarddb
+      - keycloak
+  dashboard-backend:
+    image: disitlab/dashboard-backend:v1
+    volumes:
+      - ./dashboard-backend-conf/config.properties:/usr/app/config.properties
+    depends_on:
+      - dashboarddb
+  dashboard-cron:
+    image: disitlab/dashboard-builder:v4
+    volumes:
+       - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
+       - ./dashboard-cron-conf/crontab:/crontab
+    command: /bin/sh -c "crontab /crontab; cron -f"
+  personaldata:
+    image: disitlab/personaldata:v5
+#    image: tomcat:9.0.26-jdk8-openjdk-slim
+    volumes:
+      - ./datamanager-logs:/datamanager
+    environment:
+      "spring.profiles.active": "deploy"
+      "profiledb.datasource.url": "jdbc:mysql://dashboarddb:3306/profiledb"
+      "profiledb.datasource.username": "user"
+      "profiledb.datasource.password": "passwordx"
+      "spring.openidconnect.userinfo_endpoint": "http://dashboard/auth/"
+      "spring.openidconnect.userinfo_endpoint_test": ""
+      "spring.ldap.url": "ldap://ldap-server:389"
+      "spring.ldap.basicdn": "dc=ldap,dc=organization,dc=com"
+      "spring.ldap.managerdn": "cn=admin,dc=ldap,dc=organization,dc=com"
+      "spring.ldap.password": "secret"
+      "config.kpi.organizationlist": "[\"Organization\"]"
+      "config.kpi.dictionary": "http://dashboard/processloader/api/dictionary/"
+      "config.kpi.authentication.clientid": "js-kpi-client"
+      "config.grp.authentication.clientid": "js-grp-client"
+      "grpsensors.datasource.url": "http://dashboard/dashboardSmartCity/api/sensors.php"
+      "grp.url": "http://dashboard/datamanager/grp/?id=%d"
+#     "spring.cache.jcache.config": "classpath:ehcache.xml"
+      "kafka.bootstrapAddress": "kafka:9092"
+      "kafka.prefixTopic": "kpi-"
+      "kafka.sendMessages": "true"
+      logFileFolder: ""
+    ports:
+      - 8080:8080
+    links:
+      - dashboarddb
+    depends_on:
+      - dashboarddb
+      - keycloak
+  wsserver:
+    image: disitlab/websocketserver:v5
+    ports:
+      - 9000:9000
+    volumes:
+      - ./dashboard-builder-conf:/websocketserver/conf
+    depends_on:
+      - dashboarddb
+      - keycloak
+  synoptics:
+    image: disitlab/synoptics:v2
+    volumes:
+      - ./synoptics-conf/config.js:/usr/src/synoptics/new-config.js
+      - ./synoptics-conf/v2-config.js:/usr/src/synoptics/v2/new-config.js
+    ports:
+      - 3001:3001
+      - 3002:3002
+    restart: always
+  iotapp-nr1:
+    image: disitlab/snap4city-nodered-adv:v76
+    volumes:
+      - ./iotapp-nr1:/data
+    ports:
+      - "1880:1880"
+    depends_on:
+      - dashboard
+      - keycloak
+  iotapp-nr2:
+    image: disitlab/snap4city-nodered-adv:v76
+    volumes:
+      - ./iotapp-nr2:/data
+    ports:
+      - "1881:1880"
+    depends_on:
+      - dashboard
+      - keycloak
+
+  zookeeper:
+    image: bitnami/zookeeper
+    ports:
+      - "2181:2181"
+    volumes:
+      - zkdata:/bitnami/zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: bitnami/kafka:latest
+    ports:
+      - "9000:9000"
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+        - KAFKA_ENABLE_KRAFT=no
+        - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+        - ALLOW_PLAINTEXT_LISTENER=yes
+        - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT
+        - KAFKA_CFG_LISTENERS=CLIENT://:9092
+        - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092
+        - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+        - JMX_PORT=9000
+        - KAFKA_JMX_OPTS=-Djava.rmi.server.hostname=192.168.1.119 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.rmi.port=9000 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+
+    volumes:
+      - kafka:/bitnami/kafka
+    depends_on:
+      - zookeeper
+
+# IOTOBSF ######################################################
+  orionbrokerfilter:
+    image: disitlab/orionbrokerfilter:v0
+    depends_on:
+      - orion
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./orionbrokerfilter-logs:/usr/local/tomcat/logs/orionbrokerfilter
+      - ./orionbrokerfilter-conf:/usr/local/tomcat/credentials
+    environment:
+      "spring.profiles.active": "deploy"
+      "spring.openidconnect.clientid": "orionfilter"
+      "spring.openidconnect.username": "userrootadmin"
+      "spring.openidconnect.password": "Sl9.wrE@k"
+      "spring.openidconnect.token_endpoint": "http://dashboard/auth/realms/master/protocol/openid-connect/token"
+      "spring.ownership_endpoint": "http://dashboard/ownership-api/v1/list"
+      "spring.delegation_endpoint": "http://dashboard/datamanager/api/v1/apps"
+      "spring.orionbroker_endpoint": "http://orion:1026"
+      "spring.elapsingcache.minutes": "3"
+      "spring.prefixelementID": "Organization:iotobsf"
+      "connection.timeout": "10000"
+      "JAVA_OPTS": "-DlogFileFolder=/usr/local/tomcat/logs -Dmytruststorepass=password -Dmykeystorepass=password"
+    restart: always
+  orion:
+    image: fiware/orion
+    depends_on:
+      - mongo
+    ports:
+      - "1026:1026"
+    command: -dbhost mongo
+    restart: always
+  mongo:
+    image: mongo:3.6
+    restart: always
+    volumes:
+      - mongodb:/data/db
+
+#KBSSM ################################################################
+  servicemap:
+    image: disitlab/servicemap:v5.1
+#    image: tomcat:9.0.26-jdk8-openjdk-slim
+    volumes:
+      - ./servicemap-conf:/root/servicemap
+      - ./servicemap-iot-conf/logs:/root/iot-log2
+      - ./servicemap-iot-conf/:/root/usr/share/tomcat7/iot-config/
+      - ./servicemap-conf/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml
+      - ./servicemap-superservicemap-conf/settings.xml:/usr/local/tomcat/settings.xml
+#    environment:
+    ports:
+      - 8090:8080
+    depends_on:
+      - virtuoso-kb
+      - dashboarddb
+      - keycloak
+  virtuoso-kb:
+    image: tenforce/virtuoso:1.3.1-virtuoso7.2.1
+    environment:
+      SPARQL_UPDATE: "true"
+      DEFAULT_GRAPH: "http://www.example.com/my-graph"
+    volumes:
+      - ./servicemap-conf:/root/servicemap
+      - virtuoso:/data
+    ports:
+      - "8890:8890"
+      - "1111:1111"
+#IOTDES ################################################################
+  nifi:
+    image: apache/nifi:1.9.2
+    environment:
+      NIFI_WEB_HTTP_PORT: 9090
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./nifi/extensions:/opt/nifi/nifi-current/extensions
+      - ./nifi/conf:/opt/nifi/nifi-current/conf
+  elasticsearch:
+    image: elasticsearch:6.8.5
+    environment:
+      - 'path.repo=/elastic-bkup'
+    ports:
+      - "9200:9200"
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+      - ./elastic-bkup:/elastic-bkup
+  kibana:
+    image: kibana:6.8.5
+    ports:
+      - "5601:5601"
+
+######################################################################
+  dashboarddb:
+    image: mariadb:10.3
+    volumes:
+      - dashboarddb:/var/lib/mysql
+      - ./mariadb-conf:/etc/mysql/mariadb.conf.d
+- ./database/devicehealth.sql:/docker-entrypoint-initdb.d/c_init.sql
+
+      - ./database/dashboard.sql:/docker-entrypoint-initdb.d/0_init.sql
+      - ./database/dashboard-wizard-min.sql:/docker-entrypoint-initdb.d/1_init.sql
+      - ./database/dashboard-menu.sql:/docker-entrypoint-initdb.d/2_init.sql
+      - ./database/dashboard-mobmenu.sql:/docker-entrypoint-initdb.d/3_init.sql
+      - ./database/profiledb.sql:/docker-entrypoint-initdb.d/4_init.sql
+      - ./database/notificator.sql:/docker-entrypoint-initdb.d/5_init.sql
+      - ./database/iot-directory.sql:/docker-entrypoint-initdb.d/6_init.sql
+      - ./database/servicemap.sql:/docker-entrypoint-initdb.d/7_init.sql
+      - ./database/superservicemap.sql:/docker-entrypoint-initdb.d/8_init.sql
+      - ./database/processloader.sql:/docker-entrypoint-initdb.d/9_init.sql
+    environment:
+      TZ: "Europe/Rome"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+      MYSQL_ROOT_PASSWORD: "rootpwd"
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'passwordx'
+      MYSQL_DATABASE: 'Dashboard'
+    ports:
+      - "3306:3306"
+
+  ldap-server:
+    image: disitlab/preconf-openldap:v2
+#    image: osixia/openldap
+    environment:
+      LDAP_ORGANISATION: "organization"
+      LDAP_DOMAIN: "ldap.organization.com"
+      LDAP_ADMIN_PASSWORD: "secret"
+    ports:
+      - "389:389"
+      - "636:636"
+  myldap:
+    image: osixia/phpldapadmin
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "ldap-server"
+    ports:
+      - "6443:443"
+    depends_on:
+      - "ldap-server"
+  keycloak:
+      image: disitlab/preconf-keycloak:v4
+#      image: jboss/keycloak:4.8.3.Final
+      command: ["-Djboss.socket.binding.port-offset=8"]
+      ports:
+        - "8088:8088"
+      environment:
+        KEYCLOAK_USER: admin
+        KEYCLOAK_PASSWORD: admin
+      depends_on:
+        - ldap-server
+volumes:
+  dashboarddb:
+  dashboarddb2:
+  dashboard-img:
+  virtuoso:
+  mongodb:
+  elastic-data:
+  ckan_conf:
+  ckan_home:
+  ckan_storage:
+  pg_data:
+  zkdata:
+  kafka:

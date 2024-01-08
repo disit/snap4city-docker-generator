@@ -1,0 +1,40 @@
+version: "3.2"
+services:
+  dashboarddb:
+    container_name: dashboarddb
+    restart: unless-stopped
+    image: mariadb:10.3
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    volumes:
+      - dashboarddb:/var/lib/mysql
+      - ./mariadb-conf:/etc/mysql/mariadb.conf.d
+      - ./database/devicehealth.sql:/docker-entrypoint-initdb.d/c_init.sql
+
+      - ./database/dashboard.sql:/docker-entrypoint-initdb.d/0_init.sql
+      - ./database/dashboard-wizard-min.sql:/docker-entrypoint-initdb.d/1_init.sql
+      - ./database/dashboard-menu.sql:/docker-entrypoint-initdb.d/2_init.sql
+      - ./database/dashboard-mobmenu.sql:/docker-entrypoint-initdb.d/3_init.sql
+      - ./database/profiledb.sql:/docker-entrypoint-initdb.d/4_init.sql
+      - ./database/notificator.sql:/docker-entrypoint-initdb.d/5_init.sql
+      - ./database/iot-directory.sql:/docker-entrypoint-initdb.d/6_init.sql
+      - ./database/servicemap.sql:/docker-entrypoint-initdb.d/7_init.sql
+      - ./database/superservicemap.sql:/docker-entrypoint-initdb.d/8_init.sql
+      - ./database/processloader.sql:/docker-entrypoint-initdb.d/9_init.sql
+      - ./database/heatmap.sql:/docker-entrypoint-initdb.d/a_init.sql
+      - ./database/datatable.sql:/docker-entrypoint-initdb.d/b_init.sql
+      - ./database/preconfig.sql:/docker-entrypoint-initdb.d/z_init.sql
+      - ./database:/database
+    environment:
+      TZ: "Europe/Rome"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+      MYSQL_ROOT_PASSWORD: "$#dashboard-db-pwd-admin#$"
+      MYSQL_USER: '$#dashboard-db-user#$'
+      MYSQL_PASSWORD: '$#dashboard-db-pwd#$'
+      MYSQL_DATABASE: 'Dashboard'
+    ports:
+      - "3306:3306"

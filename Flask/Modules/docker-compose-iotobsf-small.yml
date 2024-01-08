@@ -1,0 +1,75 @@
+version: "3.2"
+services:
+# IOTOBSF ######################################################
+  orionbrokerfilter-$#orion-id#$:
+    container_name: orionbrokerfilter-$#orion-id#$
+    restart: unless-stopped
+    image: disitlab/orionbrokerfilter:v6
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    depends_on:
+      - orion-$#orion-id#$
+    ports:
+      - "$#8443#$:8443"
+    volumes:
+      - ./orionbrokerfilter-$#orion-id#$-logs:/usr/local/tomcat/logs/orionbrokerfilter
+      - ./orionbrokerfilter-conf:/usr/local/tomcat/credentials:rw
+    environment:
+      "spring.profiles.active": "deploy"
+      "spring.openidconnect.clientid": "orionfilter"
+      "spring.openidconnect.username": "$#dashboard-personaldata-user#$"
+      "spring.openidconnect.password": "$#dashboard-personaldata-user-pwd#$"
+      "spring.openidconnect.token_endpoint": "$#base-url#$/auth/realms/master/protocol/openid-connect/token"
+      "spring.ownership_endpoint": "$#base-url#$/ownership-api/v1/list"
+      "spring.delegation_endpoint": "$#base-url#$/datamanager/api"
+      "spring.orionbroker_endpoint": "http://orion-$#orion-id#$:1026"
+      "spring.elapsingcache.minutes": "3"
+      "spring.prefixelementID": "Organization:orion-$#org_id#$"
+      "spring.prefix_serviceuri": "http://www.disit.org/km4city/resource/iot"
+      "spring.organization": "Organization"
+      "spring.context_broker_name": "orion-$#org_id#$"
+      "connection.max": "100"
+      "multitenancy": "false"
+      "connection.timeout": "10000"
+      "JAVA_OPTS": "-DlogFileFolder=/usr/local/tomcat/logs -Dmytruststorepass=password -Dmykeystorepass=password"
+    restart: always
+  orion-$#orion-id#$:
+    container_name: orion-$#orion-id#$
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    restart: unless-stopped
+    image: fiware/orion
+    depends_on:
+      - mongo-$#orion-id#$
+    ports:
+      - "$#1026#$:1026"
+    command: -dbhost mongo-$#orion-id#$
+    extra_hosts:
+      - "$#base-hostname#$:$#ip-0#$"
+      - "ldap-server:$#ip-1#$"
+      - "nifi:$#ip-nifi#$"
+    restart: always
+  mongo-$#orion-id#$:
+    container_name: mongo-$#orion-id#$
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
+        max-file: "${S4C_LOG_MAX_FILE:-10}"
+    restart: unless-stopped
+    image: mongo:3.6
+    restart: always
+    volumes:
+      - mongodb-$#orion-id#$:/data/db
+
+volumes:
+  mongodb-$#orion-id#$:

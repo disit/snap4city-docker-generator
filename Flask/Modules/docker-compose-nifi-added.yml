@@ -1,0 +1,18 @@
+version: "3"
+services:
+  nifi:
+    container_name: nifi
+    image: apache/nifi:1.16.2
+    hostname: $#node_name#$
+    environment:
+      - NIFI_CLUSTER_IS_NODE=true
+      - NIFI_CLUSTER_NODE_PROTOCOL_PORT=9091
+      - NIFI_CLUSTER_ADDRESS=$#node_name#$
+      - NIFI_ELECTION_MAX_WAIT=1 min
+      - NIFI_ZK_CONNECT_STRING=$#id_zookeeper#$:2181
+    ports:
+      - "9090:9090" # NiFi web HTTP port
+      - "9091:9091" # NiFi cluster protocol port
+      - "6342:6342" # NiFi cluster load balance port
+    extra_hosts:
+$#extra_hosts#$

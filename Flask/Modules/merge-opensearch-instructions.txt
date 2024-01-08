@@ -1,0 +1,9 @@
+-1) make a backup
+0) have opensearch + opensearch dashboards already set up
+1) turn off opensearch + opensearch dashboards instances
+2) copy (not cut!) the first folder into the additional host (also rename it from "opensearch-conf-1 to "opensearch-conf"), replacing the existing files with the new ones while leaving other files as is
+3) copy the newly obtained folder to the second host, then apply the second folder to the folder in the second host (rename as previous step, 2 instead of 1)
+4) extract the opensearch + opensearch dashboards yaml section from the docker compose file and copy it in a new docker compose file in the second host
+5) patch the the yamls with the provided yamls (docker-compose -f base.yaml -f patch.yaml config > out.yaml)
+6) delete the redundant opensearch dashboards from the second docker-compose file
+7) start again opensearch + opensearch dashboards on both instances (only the first host has opensearch dashboard)
