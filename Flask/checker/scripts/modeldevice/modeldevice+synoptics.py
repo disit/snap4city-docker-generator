@@ -22,7 +22,51 @@ try:
     synoptics=sys.argv[3]
 except Exception as E:
     print("Operation failed due to",E)
+    print("Are you sure you gave the correct number of parameters? (username, password, test the synoptics)")
     exit(1)
+
+def getTokenViaUserCredentials(username,password):
+    payload = {
+        'f': 'json',
+        'client_id': 'js-kpi-client',
+        'grant_type': 'password',
+        'username': username,
+        'password': password
+    }
+
+    header = {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+
+    urlToken = "$#base-url#$/auth/realms/master/protocol/openid-connect/token"
+    response = requests.request("POST", urlToken, data=payload, headers=header)
+    token = response.json()
+    return token
+
+@sio.event
+def connect():
+    token = getTokenViaUserCredentials(username, password)
+    sio.emit("authenticate",token['access_token'])
+
+@sio.event
+def authenticate(data):
+    print('authenticate result: ', data)
+    jd = json.loads(data)
+    if jd['status']=='OK' :
+        sio.emit('subscribe','http://www.disit.org/km4city/resource/iot/orion-1/Organization/'+get_latest_device()+' dateObserved')
+
+@sio.event
+def subscribe(data):
+    r = json.loads(data)
+    if r['status'] == 'OK' :
+      sio.on('update http://www.disit.org/km4city/resource/iot/orion-1/Organization/'+get_latest_device()+' dateObserved', handle_update)
+
+def handle_update(data):
+    globals()['latest_data']=json.loads(data)['lastValue']
+
+@sio.event
+def disconnect():
+    print('disconnected from server')
 
 def main():
     root_path = os.getcwd()
@@ -40,17 +84,26 @@ def main():
         f.write(device_name)
     createModel(config, access_token)
     
-    
-
     createDevice(config, access_token, get_latest_device())
 
-    nData = 10
-    sleep = 2
     if synoptics == "True":
+        nData = 4
+        sleep = 2
+        previous_data = latest_data
         for i in range(0, nData):
             string_value = str(i)
-            sendData(config, access_token, get_latest_device()+'device', string_value)
+            sendData(config, access_token, get_latest_device(), string_value)
             time.sleep(sleep)
+            sio.connect(url='$#base-url#$',socketio_path='synoptics/socket.io',transports='websocket')
+            sio.wait()
+            sio.disconnect()
+            if (previous_data==None):
+                pass # first time setting a value
+            elif (previous_data!=latest_data):
+                print("Success: update was read as intended")
+            else:
+                print("Failure: the newest value wasn't read")
+    deletedevice(get_latest_device(), broker_name, access_token,config["model"]["model_url"])
 
 
 def createModel(conf, token):
@@ -58,8 +111,6 @@ def createModel(conf, token):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
     }
-    this_moment=datetime.now().strftime("%Y%m%dT%H%M%S")
-
     url = conf["model"]["model_url"] + f"action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&name={get_latest_model()}model&description=&type={conf['model']['model_type']}&kind={conf['model']['model_kind']}&producer=&frequency={conf['model']['model_frequency']}&kgenerator={conf['model']['model_kgenerator']}&edgegateway_type=&contextbroker={conf['model']['model_contextbroker']}&protocol={conf['model']['model_protocol']}&format={conf['model']['model_format']}&hc={conf['model']['model_hc']}&hv={conf['model']['model_hv']}&subnature={conf['model']['model_subnature']}&static_attributes=%5B%5D&service=&servicePath=&token={token}&nodered=true"
     response = requests.request("PATCH", url, headers=header)
     r = (response.text)
@@ -110,7 +161,7 @@ def sendData(conf, token, device_name, string_value):
     timestamp = timestamp[0:20] + "000Z"
     payload = {"value44":{"type":"string","value": string_value},"dateObserved":{"type":"string","value":timestamp}}
     # http://dashtest/orion-filter-orion-1/v2/entities/20231120T094406device/attrs?elementid=20231120T094406device&type=test
-    url = 'http://dashtest/orion-filter/orion-1/v2/entities/' + device_name + '/attrs?elementid=' + device_name + '&type=' + conf['model']['model_type']
+    url = '$#base-url#$/orion-filter/orion-1/v2/entities/' + device_name + '/attrs?elementid=' + device_name + '&type=' + conf['model']['model_type']
     print(url)
     response = requests.request("PATCH", url, data=json.dumps(payload), headers=header)
     print("Leggimi!",response)
