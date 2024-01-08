@@ -2,7 +2,11 @@ version: "3"
 services:
   app:
     container_name: app
-    build: ./Flask
+    build: 
+      context: ./Flask
+      tags:
+        - fabriziomereu/snap4city_installation_generator:dev.1.4.2
+        - fabriziomereu/snap4city_installation_generator:unstable
     image: fabriziomereu/snap4city_installation_generator:dev.1.4.1
     links:
       - db
