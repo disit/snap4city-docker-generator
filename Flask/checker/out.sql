@@ -63,6 +63,7 @@ INSERT INTO `complex_tests` VALUES (1,'Run setup.sh','bash scripts/run-setup.sh'
 (2,'Run post-setup.sh','bash scripts/run-post-setup.sh',NULL,'#ffffff','Calls post-setup.sh of Snap4City'),
 (3,'Read parameters','bash scripts/read_params.sh','string:username:u;number:age:a;string:fullname:f','#000000','This tests simply ensures that passing parameters works'),
 (4,'Check iotapps','bash scripts/check_iotapps.sh',NULL,'#20ff14','Check all iotapps, no matter how many they are'),
+(5,'RSubscribe broker','bash scripts/subscribe-broker.sh',NULL,'#ff2014','Subscribe the iot-broker'),
 (6,'Device Creation','bash scripts/models.sh','string:username:u;password:password:p','#ff7f00','Calls the test for adding a new device, adds some test data, while doublechecking with synoptics'),
 (7,'Start Containers','bash scripts/launch-containers.sh',NULL,'#7f7f7f',"Attempts to start all containers. Will take time if the images aren't downloaded yet."),
 (8,'Check Synoptics','bash scripts/modelssynoptics.sh','string:username:u;password:password:p','#ff7f00','Check the synoptics'),

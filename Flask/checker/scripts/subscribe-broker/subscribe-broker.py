@@ -1,14 +1,12 @@
-import datetime
-import json
+from datetime import datetime
 
 import requests
-
+import sys
 
 def accessToken(user, password):
     access_token = ''
     payload = {
-        'f': 'json',
-        'client_id': "php-ownership-api",
+        'client_id': "js-kpi-client",
         'client_secret': "a347fb2d-87f0-4d41-89a9-b746b5273ccd",
         'grant_type': 'password',
         'username': user,
@@ -16,7 +14,7 @@ def accessToken(user, password):
     }
 
     header = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded'
     }
 
     urlToken = "$#base-url#$/auth/realms/master/protocol/openid-connect/token"
@@ -40,32 +38,15 @@ def accessToken(user, password):
 
 
 def main():
-    json_payload={"token": accessToken("userrootadmin","Sl9.wrE@k"),
-    "action": "update",
-    "name": "orion-1",
-    "kind": "internal",
-    "path": "",
-    "version": "v2",
-    "visibility": "",
-    "ip": "orion-001",
-    "port": "1026",
-    "protocol": "ngsi",
-    "login": "login",
-    "password": "login",
-    "latitude": "$#lat-ib-0#$",
-    "longitude": "$#lng-ib-0#$",
-    "createdDate": "2024-01-11 09:21:42",
-    "accesslink": "orion-broker-filter-001",
-    "accessport": "8443",
-    "apikey": "null",
-    "sha": "",
-    "urlnificallback": "http://nifi:1030/ingestngsi",
-    "services": "[]",
-    "log_orion": "0",
-    }
+    url = "$#base-url#$/iot-directory/api/contextbroker.php"
+    url = url + "?token=" + accessToken("userrootadmin", "Sl9.wrE@k")
+    url = url + "&action=update&name=orion-1&kind=internal&path=&version=v2&visibility=&ip=orion-001&port=1026&protocol=ngsi&login=login&password=login"
+    url = url + "&latitude=$#lat-001#$&longitude=$#lng-001#$&createdDate=2024-01-11+09%3A21%3A42&accesslink=orion-broker-filter-001&accessport=8443&apikey=null&sha=&urlnificallback=http%3A%2F%2Fnifi%3A1030%2Fingestngsi&services=%5B%5D&log_orion=0&nodered="
     header={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'}
-    response=requests.request("POST", "$#base-url#$/iot-directory/api/contextbroker.php",headers=header,data=json.dumps(json_payload))
-    print(response)
+    response=requests.request("POST", url,headers=header)
+    print("status:",response.text['status'], "with message:",response.text['msg'][-2:])
+    if response.text['msg']=="Cannot retrieve use information":
+        print('Is the host able to resolve $#base-url#$ as itself?', file=sys.stderr)
     return 0
     
 if __name__ == "__main__":
