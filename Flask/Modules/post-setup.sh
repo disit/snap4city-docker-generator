@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 cd servicemap-conf
 ./update-ontology.sh localhost
 docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap.vt
