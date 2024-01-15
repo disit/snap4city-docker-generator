@@ -22,5 +22,6 @@
     "device": {
         "device_url": "$#base-url#$/iot-directory/api/device.php?"
     },
-    "patch": "$#base-url#$/orion-filter/orion-1/v2/entities/"
+    "patch": "$#base-url#$/orion-filter/orion-1/v2/entities/",
+    "base-url": "$#base-url#$"
 }

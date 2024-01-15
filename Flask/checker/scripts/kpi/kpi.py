@@ -5,11 +5,12 @@ import os
 import requests
 import time
 import requests
+import sys
 
 broker_name="orion-1"
 username = ""
 password = ""
-variable="testValue"
+variable="value44"
 try:
     username=sys.argv[1]
     password=sys.argv[2]
@@ -133,9 +134,8 @@ def accessToken(conf):
     payload = {
         'f': 'json',
         'client_id': conf.get('token').get('clientID'),
-        'client_secret': conf.get('token').get('clientSecret'),
         'grant_type': 'password',
-        'username': password,
+        'username': username,
         'password': password
     }
 
@@ -155,7 +155,7 @@ def accessToken(conf):
     except requests.exceptions.Timeout as errt:
         print(currentTime, "Timeout Error:", errt)
     except requests.exceptions.RequestException as err:
-        print(currentTime, "Oops: Something Else", err)
+        print(currentTime, "Ops: Something Else", err)
     else:
         token = response.json()
         access_token = token['access_token']

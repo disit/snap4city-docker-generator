@@ -11,6 +11,9 @@ http_session.verify = False
 sio = socketio.Client(logger=False, engineio_logger=False)
 import requests
 
+f = open("data/conf.json")
+config = json.load(f)
+
 latest_data = None
 broker_name="orion-001"
 username = ""
@@ -25,7 +28,7 @@ except Exception as E:
     print("Are you sure you gave the correct number of parameters? (username, password, test the synoptics)")
     exit(1)
 
-def getTokenViaUserCredentials(username,password):
+def getTokenViaUserCredentials():
     payload = {
         'f': 'json',
         'client_id': 'js-kpi-client',
@@ -38,21 +41,21 @@ def getTokenViaUserCredentials(username,password):
         'Content-Type': 'application/x-www-form-urlencoded'
     }
 
-    urlToken = "$#base-url#$/auth/realms/master/protocol/openid-connect/token"
+    urlToken = f"{config['base-url']}/auth/realms/master/protocol/openid-connect/token"
     response = requests.request("POST", urlToken, data=payload, headers=header)
     token = response.json()
     return token
 
 @sio.event
 def connect():
-    token = getTokenViaUserCredentials(username, password)
+    token = getTokenViaUserCredentials()
     sio.emit("authenticate",token['access_token'])
 
 @sio.event
 def authenticate(data):
     jd = json.loads(data)
     if jd['status']=='OK':
-        sio.emit('subscribe','http://www.disit.org/km4city/resource/iot/orion-1/Organization/'+get_latest_device()+' dateObserved')
+        sio.emit('subscribe','http://www.disit.org/km4city/resource/iot/orion-1/Organization/'+get_latest_device()+' value44')
     else:
         print("Error in authenticate: ",str(jd))
 
@@ -61,7 +64,7 @@ def subscribe(data):
     print("data received in subscribing", data)
     r = json.loads(data)
     if r['status'] == 'OK':
-        sio.on('update http://www.disit.org/km4city/resource/iot/orion-1/Organization/'+get_latest_device()+' dateObserved', handle_update)
+        sio.on('update http://www.disit.org/km4city/resource/iot/orion-1/Organization/'+get_latest_device()+' value44', handle_update)
     else:
         print("Error in subscribe: ",str(r))
         
@@ -76,10 +79,7 @@ def disconnect():
     print('disconnected from server')
 
 def main():
-    root_path = os.getcwd()
-    params_path = root_path + "/data/conf.json"
-    f = open(params_path)
-    config = json.load(f)
+    
     print("Configuration file opened")
     access_token = accessToken(config)
     model_name = datetime.now().strftime("%Y%m%dT%H%M%S")
@@ -95,13 +95,14 @@ def main():
 
     if synoptics == "True":
         nData = 3
-        sleep = 2
+        sleep = 5
         previous_data = latest_data
         for i in range(0, nData):
             string_value = str(i)
             sendData(config, accessToken(config), get_latest_device(), string_value)
+            print("Waiting", str(sleep), "seconds")
             time.sleep(sleep)
-            sio.connect(url='$#base-url#$',socketio_path='synoptics/socket.io',transports='websocket')
+            sio.connect(url=config['base-url'],socketio_path='synoptics/socket.io',transports='websocket')
             sio.wait()
             sio.disconnect()
             if str(latest_data)==string_value:
@@ -172,7 +173,7 @@ def sendData(conf, token, device_name, string_value):
     timestamp = timestamp[0:20] + "000Z"
     payload = {"value44":{"type":"string","value": string_value},"dateObserved":{"type":"string","value":timestamp}}
     # http://dashtest/orion-filter-orion-1/v2/entities/20231120T094406device/attrs?elementid=20231120T094406device&type=test
-    url = '$#base-url#$/orion-filter/orion-1/v2/entities/' + device_name + '/attrs?elementid=' + device_name + '&type=' + conf['model']['model_type']
+    url = f'{conf["base-url"]}/orion-filter/orion-1/v2/entities/' + device_name + '/attrs?elementid=' + device_name + '&type=' + conf['model']['model_type']
     print(url)
     response = requests.request("PATCH", url, data=json.dumps(payload), headers=header)
     if (response.status_code == 204):
