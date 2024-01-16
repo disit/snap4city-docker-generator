@@ -8,4 +8,4 @@ do
         p) password_v=${OPTARG};;
     esac
 done
-python3 modeldevice+synoptics.py $username_v $password_v False
+python3 modeldevice+synoptics+delegate.py $username_v $password_v False

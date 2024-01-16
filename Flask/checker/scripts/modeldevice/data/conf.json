@@ -1,6 +1,6 @@
 {
     "token": {
-        "clientID": "php-ownership-api",
+        "clientID": "js-kpi-client",
         "clientSecret": "a347fb2d-87f0-4d41-89a9-b746b5273ccd",
         "username": "userareamanager",
         "password": "****changeme****",
@@ -23,5 +23,7 @@
         "device_url": "$#base-url#$/iot-directory/api/device.php?"
     },
     "patch": "$#base-url#$/orion-filter/orion-1/v2/entities/",
-    "base-url": "$#base-url#$"
+    "base-url": "$#base-url#$",
+    "usernamedelegated": "userareamanager",
+    "usernamedelegatedpassword": "Mdn!hkH"
 }
