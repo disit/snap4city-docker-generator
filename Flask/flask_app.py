@@ -15,12 +15,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.'''
 
 from flask import Flask, render_template, url_for, request, redirect, session, send_file, send_from_directory
+import atexit
 import os, json, errno, shutil
 import datetime
 from contextlib import closing
 import re
 import mysql.connector
 import sys
+import subprocess
+from apscheduler.schedulers.background import BackgroundScheduler
 sys.path.insert(1,'/functions')
 from functions import snap4
 if "allow_compress" not in os.environ:
@@ -32,7 +35,40 @@ if "add_utils" not in os.environ:
 if 'send-aws-k8s' not in os.environ:
     os.environ['send-aws-k8s'] ="False"
 
+def print_date_time_sql():
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
+    # Define the dump filename
+    dump_filename = f"configurator_dump_{timestamp}.tsv"
+
+    result=""
+    # Construct the mysqldump command
+    with closing(mysql.connector.connect(user= "access_user",
+        password= "psw_something",
+        host= "db",
+        port= 3306,
+        database= "configurations v-2",
+        auth_plugin= 'caching_sha2_password')) as conn:
+            q = "Select * from saved_configurations"
+            cursor=conn.cursor()
+            cursor.execute(q)
+            result=cursor.fetchall()
+    try:
+        with open("./Output/"+dump_filename, "w") as f:
+            for row in result:
+                f.write("\t".join(row))
+                f.write("\n")
+        print("[LOG] Dumped",dump_filename)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during database dump: {e}")
+
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=print_date_time_sql, trigger="interval", days=1)
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
 
 def create_app():
@@ -60,6 +96,8 @@ def create_app():
 
     print("[LOG] Database Setup Ended at",datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
     # This user is defined inside one of the sql for the db startup. It has proper permissions set.
+    
+    print_date_time_sql()
     db_conn_info = {
         "user": "access_user",
         "passwd": "psw_something",
@@ -79,6 +117,7 @@ def create_app():
     @app.route('/updating_information')
     def update_info():
         return render_template('updating_instructions.html')
+
 
     @app.route('/micro_components_x')
     def micro_x_2():
@@ -553,7 +592,6 @@ esac
                 snap4.make_sql_normal('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', 'orion-001', int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
                 snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.xml.gz',int(iotbrokers),fine_as_is)
-                snap4.make_ngnix_normal('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)
                 descriptor=post['$#Time#$']+'-'+post['# of IoT-Apps']+'-'+iotbrokers+'-'
                 if int(iotbrokers) == 1:
                     snap4.make_ldif('./Output/'+token+'/'+ips[0]+'/ldap', 'default.ldif', ['1000'], ['orion-1'])

@@ -218,16 +218,7 @@ UNLOCK TABLES;
 -- Table structure for table `saved_configurations`
 --
 
-DROP TABLE IF EXISTS `saved_configurations`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `saved_configurations` (
-  `Token` varchar(200) NOT NULL,
-  `Placeholder` varchar(200) NOT NULL,
-  `Values` varchar(500) DEFAULT NULL,
-  PRIMARY KEY (`Token`,`Placeholder`),
-  KEY `placeholder_key_configurations_idx` (`Placeholder`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

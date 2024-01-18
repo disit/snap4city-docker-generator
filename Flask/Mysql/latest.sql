@@ -214,25 +214,6 @@ INSERT INTO `placeholder_table` VALUES (83,'','\\','docker-compose-auth.yml','$#
 /*!40000 ALTER TABLE `placeholder_table` ENABLE KEYS */;
 UNLOCK TABLES;
 
---
--- Table structure for table `saved_configurations`
---
-
-DROP TABLE IF EXISTS `saved_configurations`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `saved_configurations` (
-  `Token` varchar(200) NOT NULL,
-  `Placeholder` varchar(200) NOT NULL,
-  `Values` varchar(500) DEFAULT NULL,
-  PRIMARY KEY (`Token`,`Placeholder`),
-  KEY `placeholder_key_configurations_idx` (`Placeholder`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `saved_configurations`
---
 
 LOCK TABLES `saved_configurations` WRITE;
 /*!40000 ALTER TABLE `saved_configurations` DISABLE KEYS */;

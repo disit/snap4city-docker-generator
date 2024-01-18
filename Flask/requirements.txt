@@ -3,3 +3,4 @@ mysql-connector-python
 waitress
 pyyaml==5.3.1
 docker-compose
+APScheduler
