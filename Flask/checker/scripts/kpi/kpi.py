@@ -90,31 +90,37 @@ def main():
     print("Configuration file opened")
     access_token = accessToken(conf)
     globals()['kpi_id']=createKpi(conf,access_token)
-    getKpi(kpi_id,conf,access_token)
     for i in range(5):
         sendDataKpi(kpi_id,conf,access_token,str(i))
+        getKpi(kpi_id,conf,access_token,str(i))
         sio.connect(url=conf['url'],socketio_path='synoptics/socket.io',transports='websocket')
         sio.wait()
         sio.disconnect()
         if globals()['latest_data'] == i:
-            print("Data sent matched data received")
+            print("Data sent matched data received from synoptics")
         else:
-            print("[Error] Data did not match data received")
+            print("[Error] Data did not match data received from synoptics")
+        
             
-def getKpi(idKpi,conf, token):
+def getKpi(idKpi,conf, token, base_to_check):
 
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
     }
 
-    url = conf["url"] + '/datamanager/api/v1/kpidata/'+str(idKpi)+'/values/?sourceRequest=iotapp&highLevelType=MyKPI"'
+    url = conf["url"] + '/datamanager/api/v1/kpidata/'+str(idKpi)+'/values/?sourceRequest=iotapp&highLevelType=MyKPI"&last=1'
 
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
         print("Request was successful: the kpi was received")
-        
+        if response.json()[0]["value"]==str(base_to_check)+'.0':
+            print("Data sent matched data received from KPI")
+        else:
+            print("[Error] Data sent did not match data received from KPI")
+            print("Response:")
+            print(response.json())
     else:
         print(f"[Error] Request failed with status code: {response.status_code}")
         print("Response:")
@@ -221,7 +227,7 @@ def accessToken(conf):
         print(currentTime, "[Error] Ops: Something Else", err)
     else:
         token = response.json()
-        print("The access token was collected successfully")
+        print("The access token was correctly collected")
         access_token = token['access_token']
 
     return access_token
