@@ -217,6 +217,13 @@ UNLOCK TABLES;
 
 LOCK TABLES `saved_configurations` WRITE;
 /*!40000 ALTER TABLE `saved_configurations` DISABLE KEYS */;
+CREATE TABLE `saved_configurations` (
+  `Token` varchar(200) NOT NULL,
+  `Placeholder` varchar(200) NOT NULL,
+  `Values` varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`Token`,`Placeholder`),
+  KEY `placeholder_key_configurations_idx` (`Placeholder`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40000 ALTER TABLE `saved_configurations` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

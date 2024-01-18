@@ -43,16 +43,20 @@ def print_date_time_sql():
 
     result=""
     # Construct the mysqldump command
-    with closing(mysql.connector.connect(user= "access_user",
-        password= "psw_something",
-        host= "db",
-        port= 3306,
-        database= "configurations v-2",
-        auth_plugin= 'caching_sha2_password')) as conn:
-            q = "Select * from saved_configurations"
-            cursor=conn.cursor()
-            cursor.execute(q)
-            result=cursor.fetchall()
+    try:
+        with closing(mysql.connector.connect(user= "access_user",
+            password= "psw_something",
+            host= "db",
+            port= 3306,
+            database= "configurations v-2",
+            auth_plugin= 'caching_sha2_password')) as conn:
+                q = "Select * from saved_configurations"
+                cursor=conn.cursor()
+                cursor.execute(q)
+                result=cursor.fetchall()
+    except mysql.connector.errors.DatabaseError:
+        print("Database not ready for connection; skipping dump...")
+        return
     try:
         with open("./Output/"+dump_filename, "w") as f:
             for row in result:
@@ -73,7 +77,6 @@ atexit.register(lambda: scheduler.shutdown())
 
 def create_app():
     app = Flask(__name__)
-    data = ""
     print("[LOG] Waiting",os.environ['time_wait_update_db'],"seconds for db startup...")
     os.system("sleep "+os.environ['time_wait_update_db'])
     print("[LOG] Attempting to update DB with latest data")
@@ -83,11 +86,12 @@ def create_app():
                 arr_f = f.read().split(';')
                 for a in arr_f:
                     if any(substring in a for substring in ['DROP TABLE IF EXISTS `saved_configurations`','CREATE TABLE `saved_configurations`']):
-                        pass
+                        continue
                     try:
                         cursor = conn.cursor()
                         cursor.execute(a, multi=True)
                         conn.commit()
+                        
 
                     except mysql.connector.Error as err:
                         print("[LOG] Database Setup Error at",datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),"reason:",err)
