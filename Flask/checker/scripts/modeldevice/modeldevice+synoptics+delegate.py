@@ -57,7 +57,7 @@ def authenticate(data):
     if jd['status']=='OK':
         sio.emit('subscribe','http://www.disit.org/km4city/resource/iot/orion-1/Organization/'+get_latest_device()+' value44')
     else:
-        print("Error in authenticate: ",str(jd))
+        print("Synoptics: [ERROR] in authenticate: ",str(jd))
 
 @sio.event
 def subscribe(data):
@@ -66,7 +66,7 @@ def subscribe(data):
     if r['status'] == 'OK':
         sio.on('update http://www.disit.org/km4city/resource/iot/orion-1/Organization/'+get_latest_device()+' value44', handle_update)
     else:
-        print("Error in subscribe: ",str(r))
+        print("Synoptics: [ERROR] in subscribe: ",str(r))
         
         
 def handle_update(data):
@@ -101,15 +101,17 @@ def main():
             print('\n')
             string_value = str(i)
             sendData(config, accessToken(config), get_latest_device(), string_value)
+            
             print("Waiting", str(sleep), "seconds")
+            time.sleep(sleep)
+            access_token_delegated = accessTokenDelegated(config)
+            readDelegateDevice(uriDelegateDevice, config, access_token_delegated, string_value)
+            
+            print("Waiting another", str(sleep), "seconds")
             time.sleep(sleep)
             sio.connect(url=config['base-url'],socketio_path='synoptics/socket.io',transports='websocket')
             sio.wait()
             sio.disconnect()
-            print("Waiting another", str(sleep), "seconds")
-            time.sleep(sleep)
-            access_token_delegated = accessTokenDelegated(config)
-            readDelegateDevice(uriDelegateDevice, config, access_token_delegated, string_value)
             if str(latest_data)==string_value:
                 print("Data was received from synoptics")
             else:
@@ -137,14 +139,14 @@ def readDelegateDevice(serviceuri, conf, token, value_read):
         if value_read==response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"]:
             print("Servicemap: read expected value")
         else:
-            print("Servicemap: didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
+            print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
         #print("Request was successful.")
         #print("Response:")
         #print(response.json())
     else:
-        print(f"Servicemap: request failed with status code: {response.status_code}")
+        print(f"Servicemap: [ERROR] request failed with status code: {response.status_code}")
         print("Response:")
-        print(response.text) 
+        print(response.text)
 
 def createModel(conf, token):
     header = {
