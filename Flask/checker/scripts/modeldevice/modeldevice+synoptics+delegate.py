@@ -29,6 +29,11 @@ except Exception as E:
     exit(1)
 
 def getTokenViaUserCredentials():
+    """Get the authentication token from keycloak. Uses global variables to ease programming
+
+    Returns:
+        dict: The response from the keycloak service
+    """ 
     payload = {
         'f': 'json',
         'client_id': 'js-kpi-client',
@@ -48,11 +53,18 @@ def getTokenViaUserCredentials():
 
 @sio.event
 def connect():
+    """Connect to synoptics with the auth token
+    """
     token = getTokenViaUserCredentials()
     sio.emit("authenticate",token['access_token'])
 
 @sio.event
 def authenticate(data):
+    """Attempts to authenticate to the synoptics
+
+    Args:
+        data (str): The auth token
+    """  
     jd = json.loads(data)
     if jd['status']=='OK':
         sio.emit('subscribe','http://www.disit.org/km4city/resource/iot/orion-1/Organization/'+get_latest_device()+' value44')
@@ -61,6 +73,11 @@ def authenticate(data):
 
 @sio.event
 def subscribe(data):
+    """Subscribes to a given resource, receiving the latest data. Performs a minimal amount of error checking
+
+    Args:
+        data (str): the identifier of the resource
+    """   
     print("data received in subscribing", data)
     r = json.loads(data)
     if r['status'] == 'OK':
@@ -70,16 +87,24 @@ def subscribe(data):
         
         
 def handle_update(data):
+    """Saves the received data in global variable for later use
+
+    Args:
+        data (str): string representation of the received data
+    """  
     print("Data updated with",data)
     globals()['latest_data']=json.loads(data)['lastValue']
     sio.disconnect()
 
 @sio.event
 def disconnect():
+    """Disconnects upon completing the task of receiving data
+    """ 
     print('Disconnected from server')
 
 def main():
-    
+    """Creates a model, then creates a device based on the model, then delegates the device to another user ,then sends data to the model, and finally checks if the data can be accessed with both the servicemap and the synoptics
+    """    
     access_token = accessToken(config)
     model_name = datetime.now().strftime("%Y%m%dT%H%M%S")
     device_name = datetime.now().strftime("%Y%m%dT%H%M%S")
@@ -126,6 +151,14 @@ def main():
     deletedevice(get_latest_device(), broker_name, access_token,config["model"]["model_url"])
 
 def readDelegateDevice(serviceuri, conf, token, value_read):
+    """Reads data from a delegated device, then checks if the data read is the data expected
+
+    Args:
+        serviceuri (_type_): _description_
+        conf (dict): Dictionary holding the data, see data/conf.json
+        token (str): Authentication token for keycloak
+        value_read (str): Value to check against the value received
+    """    
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -149,6 +182,12 @@ def readDelegateDevice(serviceuri, conf, token, value_read):
         print(response.text)
 
 def createModel(conf, token):
+    """Creates a new model, with the data required to create it found in a configuration dictionary
+
+    Args:
+        conf (dict): Dictionary holding the data, see data/conf.json
+        token (str): Authentication token for keycloak
+    """    
     header = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -161,6 +200,13 @@ def createModel(conf, token):
     time.sleep(2)
 
 def createDevice(conf, token, device_name):
+    """Creates a new device using the model created earlier
+
+    Args:
+        conf (dict): Dictionary holding the data, see data/conf.json
+        token (str): Authentication token for keycloak
+        device_name (str): Name of the device
+    """    
     long = "11.24657"
     lat = "43.77709"
 
@@ -178,6 +224,16 @@ def createDevice(conf, token, device_name):
     time.sleep(2)
     
 def getDevice(conf, device_name, token):
+    """Get a device given its name
+
+    Args:
+        conf (dict): Dictionary holding the data, see data/conf.json
+        device_name (str): Name of the device
+        token (str): Authentication token for keycloak
+
+    Returns:
+        dict: The device found, or None if it wasn't found
+    """    
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -204,6 +260,14 @@ def getDevice(conf, device_name, token):
     return desired_element    
 
 def accessTokenDelegated(conf):
+    """Get the authentication token from keycloak. Uses global variables to ease programming. Uses the delegated credentials
+
+    Args:
+        conf (dict): Dictionary holding the data, see data/conf.json
+
+    Returns:
+        dict: The response from the keycloak service
+    """    
     access_token = ''
     payload = {
         'f': 'json',
@@ -238,6 +302,16 @@ def accessTokenDelegated(conf):
 
     
 def delegateDevice(device_name, conf, token):
+    """Given a device, delegates it to a different user
+
+    Args:
+        device_name (str): Name of the device to be delegated
+        conf (dict): Dictionary holding the data, see data/conf.json
+        token (str): Authentication token for keycloak
+
+    Returns:
+        str: Response of the request
+    """    
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -267,6 +341,14 @@ def delegateDevice(device_name, conf, token):
     return device['elementUrl']
     
 def deletedevice(device_name, context_broker, access_token, base_uri):
+    """Given a device name, deletes it
+
+    Args:
+        device_name (str): Name of the device
+        context_broker (str): Context broker of the to-be-deleted device
+        access_token (str): Authentication token for keycloak
+        base_uri (str): Protocol and domain name of the url where to perform the action
+    """    
     header = {
         "Content-Type": "application/json",
         "Accept": "application/x-www-form-urlencoded",
@@ -283,6 +365,14 @@ def deletedevice(device_name, context_broker, access_token, base_uri):
     
 
 def sendData(conf, token, device_name, string_value):
+    """Given a device and some data, sends said data to the given device, then prints the result of the operation
+
+    Args:
+        conf (dict): Dictionary holding the data, see data/conf.json
+        token (str): Authentication token for keycloak
+        device_name (str): Name of the device
+        string_value (str): Value to sent to the device
+    """    
     header = {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -301,6 +391,14 @@ def sendData(conf, token, device_name, string_value):
         print("Insert Failed")
 
 def accessToken(conf):
+    """Get the authentication token from keycloak. Uses global variables to ease programming
+
+    Args:
+        conf (dict): Dictionary holding the data, see data/conf.json
+
+    Returns:
+        dict: The response from the keycloak service
+    """       
     access_token = ''
     payload = {
         'f': 'json',
@@ -333,10 +431,20 @@ def accessToken(conf):
     return access_token
 
 def get_latest_device():
+    """Returns the name of the latest device created, which is saved to a file
+
+    Returns:
+        str: String containing the name of the device
+    """    
     with open('latest-device.txt', 'r') as f:
         return f.read()
         
 def get_latest_model():
+    """Returns the name of the latest model created, which is saved to a file
+
+    Returns:
+        str: String containing the name of the model
+    """  
     with open('latest-model.txt', 'r') as f:
         return f.read()
 
