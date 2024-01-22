@@ -32,6 +32,11 @@ conf= json.load(f)
 
 ####
 def getTokenViaUserCredentials():
+    """Get the authentication token from keycloak. Uses global variables to ease programming
+
+    Returns:
+        dict: The response from the keycloak service
+    """    
     payload = {
         'f': 'json',
         'client_id': 'js-kpi-client',
@@ -51,11 +56,18 @@ def getTokenViaUserCredentials():
 
 @sio.event
 def connect():
+    """Connect to synoptics with the auth token
+    """    
     token = getTokenViaUserCredentials()
     sio.emit("authenticate",token['access_token'])
 
 @sio.event
 def authenticate(data):
+    """Attempts to authenticate to the synoptics
+
+    Args:
+        data (str): The auth token
+    """    
     jd = json.loads(data)
     if jd['status']=='OK':
         sio.emit('subscribe',str(kpi_id))
@@ -65,6 +77,11 @@ def authenticate(data):
 
 @sio.event
 def subscribe(data):
+    """Subscribes to a given resource, receiving the latest data. Performs a minimal amount of error checking
+
+    Args:
+        data (str): the identifier of the resource
+    """    
     print("data received in subscribing", data)
     r = json.loads(data)
     if r['status'] == 'OK':
@@ -75,18 +92,26 @@ def subscribe(data):
         
         
 def handle_update(data):
+    """Saves the received data in global variable for later use
+
+    Args:
+        data (str): string representation of the received data
+    """    
     print("Data updated with",data)
     globals()['latest_data']=json.loads(data)['lastValue']
     sio.disconnect()
 
 @sio.event
 def disconnect():
+    """Disconnects upon completing the task of receiving data
+    """    
     print('Disconnected from server')
 ####
 
 
 def main():
-    
+    """Creates a kpi, sends data, then reads it from both the servicemap and the synoptics to ensure that all of the involved components are properly functioning
+    """    
     print("Configuration file opened")
     access_token = accessToken(conf)
     globals()['kpi_id']=createKpi(conf,access_token)
@@ -102,8 +127,15 @@ def main():
             print("[Error] Data did not match data received from synoptics")
         
             
-def getKpi(idKpi,conf, token, base_to_check):
+def getKpi(idKpi, conf, token, base_to_check):
+    """Receives the data from a kpi. Then attempts to check if it is properly functioning
 
+    Args:
+        idKpi (str): Identifier of the kpi
+        conf (dict): Dictionary holding the data, see data/conf.json
+        token (str): Authentication token for keycloak
+        base_to_check (int): The previous value received
+    """    
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -115,6 +147,8 @@ def getKpi(idKpi,conf, token, base_to_check):
 
     if response.status_code == 200:
         print("Request was successful: the kpi was received")
+        
+        # value is sent as a string of a float, thus the control value is being cast to a float by adding a 0 decimal
         if response.json()[0]["value"]==str(base_to_check)+'.0':
             print("Data sent matched data received from KPI")
         else:
@@ -126,7 +160,15 @@ def getKpi(idKpi,conf, token, base_to_check):
         print("Response:")
         print(response.text)
 
-def sendDataKpi(idKpi,conf, token, value):
+def sendDataKpi(idKpi, conf, token, value):
+    """Send data to a given kpi
+
+    Args:
+        idKpi (str): Identifier of the kpi
+        conf (dict): Dictionary holding the data, see data/conf.json
+        token (str): Authentication token for keycloak
+        value (str): Value to be sent to the kpi
+    """    
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -150,7 +192,15 @@ def sendDataKpi(idKpi,conf, token, value):
 
 
 def createKpi(conf, token):
+    """Creates a kpi with a configuration saved inside the function as a dict
 
+    Args:
+        conf (dict): Dictionary holding the data, see data/conf.json
+        token (str): Authentication token for keycloak
+
+    Returns:
+        str: id of the created kpi
+    """
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -199,6 +249,14 @@ def createKpi(conf, token):
 
 
 def accessToken(conf):
+    """Get the authentication token from keycloak. Uses global variables to ease programming
+
+    Args:
+        conf (dict): Dictionary holding the data, see data/conf.json
+
+    Returns:
+        dict: The response from the keycloak service
+    """    
     access_token = ''
     payload = {
         'f': 'json',
