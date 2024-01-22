@@ -28,6 +28,24 @@ except Exception as E:
     print("Are you sure you gave the correct number of parameters? (username, password, test the synoptics)")
     exit(1)
 
+def get_latest_device():
+    """Returns the name of the latest device created, which is saved to a file
+
+    Returns:
+        str: String containing the name of the device
+    """    
+    with open('latest-device.txt', 'r') as f:
+        return f.read()
+        
+def get_latest_model():
+    """Returns the name of the latest model created, which is saved to a file
+
+    Returns:
+        str: String containing the name of the model
+    """  
+    with open('latest-model.txt', 'r') as f:
+        return f.read()
+
 def getTokenViaUserCredentials():
     """Get the authentication token from keycloak. Uses global variables to ease programming
 
@@ -46,7 +64,7 @@ def getTokenViaUserCredentials():
         'Content-Type': 'application/x-www-form-urlencoded'
     }
 
-    urlToken = f"{config['base-url']}/auth/realms/master/protocol/openid-connect/token"
+    urlToken = config['base-url']+"/auth/realms/master/protocol/openid-connect/token"
     response = requests.request("POST", urlToken, data=payload, headers=header)
     token = response.json()
     return token
@@ -161,7 +179,7 @@ def readDelegateDevice(serviceuri, conf, token, value_read):
     """    
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}"
+        "Authorization": "Bearer "+token
     }
 
     url = conf["base-url"] + '/superservicemap/api/v1/?serviceUri='+ serviceuri +'&realtime=true&appID=iotapp'
@@ -169,15 +187,18 @@ def readDelegateDevice(serviceuri, conf, token, value_read):
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
-        if value_read==response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"]:
-            print("Servicemap: read expected value")
-        else:
-            print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
-        #print("Request was successful.")
-        #print("Response:")
-        #print(response.json())
+        try:
+            if value_read==response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"]:
+                print("Servicemap: read expected value")
+            else:
+                print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
+            #print("Request was successful.")
+            #print("Response:")
+            #print(response.json())
+        except KeyError:
+            print("Servicemap: There was no value to read: json is",response.json())
     else:
-        print(f"Servicemap: [ERROR] request failed with status code: {response.status_code}")
+        print("Servicemap: [ERROR] request failed with status code:",response.status_code)
         print("Response:")
         print(response.text)
 
@@ -190,13 +211,13 @@ def createModel(conf, token):
     """    
     header = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}"
+        "Authorization": "Bearer "+token
     }
-    url = conf["model"]["model_url"] + f"action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&name={get_latest_model()}&description=&type={conf['model']['model_type']}&kind={conf['model']['model_kind']}&producer=&frequency={conf['model']['model_frequency']}&kgenerator={conf['model']['model_kgenerator']}&edgegateway_type=&contextbroker={conf['model']['model_contextbroker']}&protocol={conf['model']['model_protocol']}&format={conf['model']['model_format']}&hc={conf['model']['model_hc']}&hv={conf['model']['model_hv']}&subnature={conf['model']['model_subnature']}&static_attributes=%5B%5D&service=&servicePath=&token={token}&nodered=true"
+    url = conf["model"]["model_url"] + "action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&name="+get_latest_model()+"&description=&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&producer=&frequency="+conf['model']['model_frequency']+"&kgenerator="+conf['model']['model_kgenerator']+"&edgegateway_type=&contextbroker="+conf['model']['model_contextbroker']+"&protocol="+conf['model']['model_protocol']+"&format="+conf['model']['model_format']+"&hc="+conf['model']['model_hc']+"&hv="+conf['model']['model_hv']+"&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5D&service=&servicePath=&token="+token+"&nodered=true"
     response = requests.request("PATCH", url, headers=header)
     r = (response.text)
     r = json.loads(r)
-    print(f"\nStatus for model {get_latest_model()}: " + r['status'])
+    print("\nStatus for model,",get_latest_model(), "+ r['status']")
     time.sleep(2)
 
 def createDevice(conf, token, device_name):
@@ -213,14 +234,14 @@ def createDevice(conf, token, device_name):
     header = {
         "Content-Type": "application/json",
         "Accept": "application/x-www-form-urlencoded",
-        "Authorization": f"Bearer {token}",
+        "Authorization": "Bearer "+token,
     }
     
-    url = conf["device"]["device_url"] + f"action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&id={device_name}&type={conf['model']['model_type']}&kind={conf['model']['model_kind']}&contextbroker={conf['model']['model_contextbroker']}&format={conf['model']['model_format']}&mac=&model={get_latest_model()}&producer=&latitude={lat}&longitude={long}&visibility=&frequency={conf['model']['model_frequency']}&token={token}&k1=ae402872-8207-4451-83cb-d047a2f68340&k2=ecb6a002-8452-4f90-88d7-e0c4c4dcf370&edgegateway_type=&edgegateway_uri=&subnature={conf['model']['model_subnature']}&static_attributes=%5B%5D&service=&servicePath=&nodered=true"
+    url = conf["device"]["device_url"] + "action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&id="+device_name+"&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&contextbroker="+conf['model']['model_contextbroker']+"&format="+conf['model']['model_format']+"&mac=&model="+get_latest_model()+"&producer=&latitude="+lat+"&longitude="+long+"&visibility=&frequency="+conf['model']['model_frequency']+"&token="+token+"&k1=ae402872-8207-4451-83cb-d047a2f68340&k2=ecb6a002-8452-4f90-88d7-e0c4c4dcf370&edgegateway_type=&edgegateway_uri=&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5D&service=&servicePath=&nodered=true"
     response = requests.request("PATCH", url, headers=header)
     r = (response.text)
     r = json.loads(r)
-    print(f"\nStatus for device {get_latest_device()}: " + r['status'])
+    print("\nStatus for device ",get_latest_device()+ " + r['status']")
     time.sleep(2)
     
 def getDevice(conf, device_name, token):
@@ -236,7 +257,7 @@ def getDevice(conf, device_name, token):
     """    
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}"
+        "Authorization": "Bearer "+token
     }
     url = conf["base-url"] + '/ownership-api/v1/list/?type=IOTID&accessToken='+token
 
@@ -247,7 +268,7 @@ def getDevice(conf, device_name, token):
         data=response.json()
 
     else:
-        print(f"Request failed with status code: {response.status_code}")
+        print("Request failed with status code:",response.status_code)
         print("Response:")
         print(response.text)
         
@@ -314,7 +335,7 @@ def delegateDevice(device_name, conf, token):
     """    
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}"
+        "Authorization": "Bearer "+token
     }
     
     device=getDevice(conf, device_name, token)  
@@ -334,7 +355,7 @@ def delegateDevice(device_name, conf, token):
         #print("Response:")
         #print(response.json())
     else:
-        print(f"Request failed with status code: {response.status_code}")
+        print("Request failed with status code:",response.status_code)
         print("Response:")
         print(response.text)
         
@@ -352,12 +373,12 @@ def deletedevice(device_name, context_broker, access_token, base_uri):
     header = {
         "Content-Type": "application/json",
         "Accept": "application/x-www-form-urlencoded",
-        "Authorization": f"Bearer {access_token}",
+        "Authorization": "Bearer "+ access_token,
     }
     url = base_uri + "?action=delete&id=" + device_name + "&contextbroker=" + context_broker + "&token=" + access_token + "&nodered=yes"
     response = requests.request("POST", url, headers=header)
     if (response.status_code == 200):
-        print(f"\nDevice {device_name} deleted successfully")
+        print("\nDevice," +device_name+ "deleted successfully")
     elif (response.status_code == 401):
         print("\nUnauthorized, accessToken: " + access_token)
     else:
@@ -376,7 +397,7 @@ def sendData(conf, token, device_name, string_value):
     header = {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "Authorization": f"Bearer {token}",
+        "Authorization": "Bearer "+token,
     }
     timestamp = datetime.now().isoformat()
     timestamp = timestamp[0:20] + "000Z"
@@ -430,23 +451,7 @@ def accessToken(conf):
         access_token = token['access_token']
     return access_token
 
-def get_latest_device():
-    """Returns the name of the latest device created, which is saved to a file
 
-    Returns:
-        str: String containing the name of the device
-    """    
-    with open('latest-device.txt', 'r') as f:
-        return f.read()
-        
-def get_latest_model():
-    """Returns the name of the latest model created, which is saved to a file
-
-    Returns:
-        str: String containing the name of the model
-    """  
-    with open('latest-model.txt', 'r') as f:
-        return f.read()
 
 if __name__ == "__main__":
     main()

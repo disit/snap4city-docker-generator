@@ -59,6 +59,7 @@ def connect():
     """Connect to synoptics with the auth token
     """    
     token = getTokenViaUserCredentials()
+    print(str(token))
     sio.emit("authenticate",token['access_token'])
 
 @sio.event
@@ -150,13 +151,13 @@ def getKpi(idKpi, conf, token, base_to_check):
         
         # value is sent as a string of a float, thus the control value is being cast to a float by adding a 0 decimal
         if response.json()[0]["value"]==str(base_to_check)+'.0':
-            print("Data sent matched data received from KPI")
+            print("Data sent matched data received from KPI:", response.json()[0]["value"])
         else:
             print("[Error] Data sent did not match data received from KPI")
             print("Response:")
             print(response.json())
     else:
-        print(f"[Error] Request failed with status code: {response.status_code}")
+        print(f"[Error] Request getKPI failed with status code: {response.status_code}")
         print("Response:")
         print(response.text)
 
@@ -173,9 +174,7 @@ def sendDataKpi(idKpi, conf, token, value):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
     }
-
     url = conf["url"] + '/datamanager/api/v1/kpidata/'+str(idKpi)+'/values/?sourceRequest=iotapp'
-
     data = {
         "kpiId": idKpi,
         "value": value,
@@ -186,7 +185,7 @@ def sendDataKpi(idKpi, conf, token, value):
     if response.status_code == 200:
         print("Request was successful: some data was sent to the kpi")
     else:
-        print(f"[Error] Request failed with status code: {response.status_code}")
+        print(f"[Error] Request sendDataKPI failed with status code: {response.status_code}")
         print("Response:")
         print(response.text)
 
@@ -207,7 +206,7 @@ def createKpi(conf, token):
     }
 
     url = conf["url"] + '/datamanager/api/v1/kpidata/?sourceRequest=kpieditor'
-
+    print(url)
     data = {
         "highLevelType": "MyKPI",
         "valueName": "countingWifiLast",
@@ -237,8 +236,8 @@ def createKpi(conf, token):
 
     if response.status_code == 200:
         print("Request was successful: a new kpi was created")
-        print("Response:")
-        print(response.json())
+        #print("Response:")
+        #print(response.json())
     else:
         print(f"[Error] Request failed with status code: {response.status_code}")
         print("Response:")
