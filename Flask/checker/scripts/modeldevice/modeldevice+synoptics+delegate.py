@@ -1,7 +1,6 @@
 from datetime import datetime
 import time
 import json
-import os
 import sys
 import socketio
 import requests

@@ -49,7 +49,7 @@ def getTokenViaUserCredentials():
         'Content-Type': 'application/x-www-form-urlencoded'
     }
 
-    urlToken = f"{conf['url']}/auth/realms/master/protocol/openid-connect/token"
+    urlToken = conf['url']+"/auth/realms/master/protocol/openid-connect/token"
     response = requests.request("POST", urlToken, data=payload, headers=header)
     token = response.json()
     return token
@@ -59,7 +59,7 @@ def connect():
     """Connect to synoptics with the auth token
     """    
     token = getTokenViaUserCredentials()
-    print(str(token))
+    #print(str(token))
     sio.emit("authenticate",token['access_token'])
 
 @sio.event
@@ -156,10 +156,12 @@ def getKpi(idKpi, conf, token, base_to_check):
             print("[Error] Data sent did not match data received from KPI")
             print("Response:")
             print(response.json())
+            print("Url used:",url)
     else:
-        print(f"[Error] Request getKPI failed with status code: {response.status_code}")
+        print("[Error] Request getKPI failed with status code:",response.status_code)
         print("Response:")
         print(response.text)
+        print("Url used:",url)
 
 def sendDataKpi(idKpi, conf, token, value):
     """Send data to a given kpi
@@ -188,6 +190,7 @@ def sendDataKpi(idKpi, conf, token, value):
         print(f"[Error] Request sendDataKPI failed with status code: {response.status_code}")
         print("Response:")
         print(response.text)
+        print("Url used:",conf["url"] + '/datamanager/api/v1/kpidata/'+str(idKpi)+'/values/?sourceRequest=iotapp')
 
 
 def createKpi(conf, token):
