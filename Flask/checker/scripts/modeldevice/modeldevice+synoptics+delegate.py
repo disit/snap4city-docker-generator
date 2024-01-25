@@ -237,6 +237,8 @@ def createDevice(conf, token, device_name):
     }
     
     url = conf["device"]["device_url"] + "action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&id="+device_name+"&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&contextbroker="+conf['model']['model_contextbroker']+"&format="+conf['model']['model_format']+"&mac=&model="+get_latest_model()+"&producer=&latitude="+lat+"&longitude="+long+"&visibility=&frequency="+conf['model']['model_frequency']+"&token="+token+"&k1=ae402872-8207-4451-83cb-d047a2f68340&k2=ecb6a002-8452-4f90-88d7-e0c4c4dcf370&edgegateway_type=&edgegateway_uri=&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5D&service=&servicePath=&nodered=true"
+    #mobile_device_url
+    #url = conf["device"]["device_url"] + f"action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&id="+device_name+"&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&contextbroker="+conf['model']['model_contextbroker']+"&format="+conf['model']['model_format']+"&mac=&model="+get_latest_model()+"&producer=&latitude="+lat+"&longitude="+long+"&visibility=&frequency="+conf['model']['model_frequency']+"&token="+token+"&k1=ae402872-8207-4451-83cb-d047a2f68340&k2=ecb6a002-8452-4f90-88d7-e0c4c4dcf370&edgegateway_type=&edgegateway_uri=&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5B%22http%3A%2F%2Fwww.disit.org%2Fkm4city%2Fschema%23isMobile%22%2C%22true%22%5D%5D&service=&servicePath=&nodered=true"    
     response = requests.request("PATCH", url, headers=header)
     r = (response.text)
     r = json.loads(r)
@@ -401,8 +403,9 @@ def sendData(conf, token, device_name, string_value):
     timestamp = datetime.now().isoformat()
     timestamp = timestamp[0:20] + "000Z"
     payload = {"value44":{"type":"string","value": string_value},"dateObserved":{"type":"string","value":timestamp}}
-    # http://dashtest/orion-filter-orion-1/v2/entities/20231120T094406device/attrs?elementid=20231120T094406device&type=test
-    url = f'{conf["base-url"]}/orion-filter/orion-1/v2/entities/' + device_name + '/attrs?elementid=' + device_name + '&type=' + conf['model']['model_type']
+    #mobile_device_url
+    #payload = {"value44":{"type":"string","value": string_value},"dateObserved":{"type":"string","value":timestamp},"latitude":{"value":"49.67971430832918","type":"float"},"longitude":{"value":"9.760345207618004","type":"float"}}
+    url = conf["base-url"]+'/orion-filter/orion-1/v2/entities/' + device_name + '/attrs?elementid=' + device_name + '&type=' + conf['model']['model_type']
     print(url)
     response = requests.request("PATCH", url, data=json.dumps(payload), headers=header)
     if (response.status_code == 204):
