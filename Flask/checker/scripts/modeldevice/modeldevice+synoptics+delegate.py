@@ -121,7 +121,7 @@ def disconnect():
     print('Disconnected from server')
 
 def main():
-    """Creates a model, then creates a device based on the model, then delegates the device to another user ,then sends data to the model, and finally checks if the data can be accessed with both the servicemap and the synoptics
+    """Creates a model, then creates a device based on the model, then delegates the device to another user, then sends data to the model, and finally checks if the data can be accessed with both the servicemap and the synoptics
     """    
     access_token = accessToken(config)
     model_name = datetime.now().strftime("%Y%m%dT%H%M%S")
@@ -172,7 +172,7 @@ def readDelegateDevice(serviceuri, conf, token, value_read):
     """Reads data from a delegated device, then checks if the data read is the data expected
 
     Args:
-        serviceuri (_type_): _description_
+        serviceuri (str): Url of the delegated device
         conf (dict): Dictionary holding the data, see data/conf.json
         token (str): Authentication token for keycloak
         value_read (str): Value to check against the value received
@@ -331,7 +331,7 @@ def delegateDevice(device_name, conf, token):
         token (str): Authentication token for keycloak
 
     Returns:
-        str: Response of the request
+        str: elementUrl of the request
     """    
     headers = {
         "Content-Type": "application/json",
