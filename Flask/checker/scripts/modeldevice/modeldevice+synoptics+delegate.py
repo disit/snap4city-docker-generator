@@ -216,7 +216,7 @@ def createModel(conf, token):
     response = requests.request("PATCH", url, headers=header)
     r = (response.text)
     r = json.loads(r)
-    print("\nStatus for model,",get_latest_model(), "+"+ r['status'])
+    print("\nStatus for model,",get_latest_model(), "with", r['status'])
     time.sleep(2)
 
 def createDevice(conf, token, device_name):
@@ -242,7 +242,7 @@ def createDevice(conf, token, device_name):
     response = requests.request("PATCH", url, headers=header)
     r = (response.text)
     r = json.loads(r)
-    print("\nStatus for device:",get_latest_device()+ "with"+ r['status'])
+    print("\nStatus for device:",get_latest_device(), "with", r['status'])
     time.sleep(2)
     
 def getDevice(conf, device_name, token):
