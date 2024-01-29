@@ -179,20 +179,22 @@ def main():
                 print("Success: update was read as intended")
             else:
                 print("Failure: the newest value wasn't read")
-    deletedevice(get_latest_device(), broker_name, access_token,config["model"]["model_url"])
+    deletedevice(get_latest_device(), broker_name, access_token, config["model"]["model_url"])
+    deletemodel(get_latest_model(), access_token, config["model"]["model_url"])
+    
 
 def readDelegateDevice(serviceuri, conf, token, value_read):
     """Reads data from a delegated device, then checks if the data read is the data expected
 
     Args:
-        serviceuri (_type_): _description_
+        serviceuri (str): The base url used
         conf (dict): Dictionary holding the data, see data/conf.json
         token (str): Authentication token for keycloak
         value_read (str): Value to check against the value received
     """    
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "Bearer"+ token
+        "Authorization": "Bearer "+ token
     }
 
     url = conf["base-url"] + '/superservicemap/api/v1/?serviceUri='+ serviceuri +'&realtime=true&appID=iotapp'
@@ -403,6 +405,42 @@ def deletedevice(device_name, context_broker, access_token, base_uri):
     else:
         print("\nSomething else went wrong: " + response.content)
     
+    
+def deletemodel(modelname, access_token, base_url):
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Authorization": "Bearer "+access_token
+    }
+    url = base_url + "action=get_all_models_DataTable&nodered=true"
+    print(url)
+    response = requests.request("POST", url, headers=headers)
+    if (response.status_code == 200):
+        print("\nModels found, searching...")
+        if response.json()["status"] == "ko":
+            print(response.json()["log"])
+            return
+        for device in response.json()["data"]:
+            if modelname==device["name"]:
+                response = requests.request("POST", url, headers=headers)
+                url = base_url + "action=delete&id="+device["id"]+"&token=" + access_token
+                if (response.status_code == 200):
+                    print("\nDevice",modelname,"deleted successfully")
+                    return
+                elif (response.status_code == 401):
+                    print("\nUnauthorized, accessToken: " + accessToken(config))
+                    return
+                else:
+                    print("\nSomething else went wrong: " + response.content)
+                    return
+        print("Model to be deleted wasn't found among", str(response.json()["recordsTotal"]),"received")
+        return
+    elif (response.status_code == 401):
+        print("\nUnauthorized, accessToken: " + accessToken(config))
+    else:
+        print("\nSomething else went wrong: " + response.content)
+    return
 
 def sendData(conf, token, device_name, string_value):
     """Given a device and some data, sends said data to the given device, then prints the result of the operation
