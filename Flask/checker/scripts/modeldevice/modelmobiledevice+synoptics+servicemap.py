@@ -179,7 +179,7 @@ def main():
                 print("Success: update was read as intended")
             else:
                 print("Failure: the newest value wasn't read")
-    deletedevice(get_latest_device(), broker_name, access_token, config["model"]["model_url"])
+    deletedevice(get_latest_device(), broker_name, access_token, config["device"]["device_url"])
     deletemodel(get_latest_model(), access_token, config["model"]["model_url"])
     
 
@@ -396,8 +396,9 @@ def deletedevice(device_name, context_broker, access_token, base_uri):
         "Accept": "application/x-www-form-urlencoded",
         "Authorization": "Bearer " + access_token
     }
-    url = base_uri + "?action=delete&id=" + device_name + "&contextbroker=" + context_broker + "&token=" + access_token + "&nodered=yes"
+    url = base_uri + "action=delete&id=" + device_name + "&contextbroker=" + context_broker + "&token=" + access_token + "&nodered=yes"
     response = requests.request("POST", url, headers=header)
+    # always returns 200
     if (response.status_code == 200):
         if response.json()["status"] == "ok":
             print("\nDevice",device_name,"deleted successfully")

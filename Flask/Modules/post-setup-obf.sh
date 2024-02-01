@@ -1,1 +1,1 @@
-docker-compose restart orionbrokerfilter-$#orion-id#$
+#docker-compose restart orionbrokerfilter-$#orion-id#$

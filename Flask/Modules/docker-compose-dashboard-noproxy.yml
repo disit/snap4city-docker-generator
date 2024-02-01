@@ -3,7 +3,7 @@ services:
   dashboard-builder:
     container_name: dashboard-builder
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v7.1
+    image: disitlab/dashboard-builder:v7.7.2
     ports:
       - "70:80"
     volumes:
@@ -89,7 +89,7 @@ services:
   dashboard-cron:
     container_name: dashboard-cron
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v7.1
+    image: disitlab/dashboard-builder:v7.7.2
     user: root
     logging:
       driver: "json-file"
@@ -118,7 +118,7 @@ services:
   personaldata:
     container_name: personaldata
     restart: unless-stopped
-    image: disitlab/personaldata:v5
+    image: disitlab/personaldata:v5.1
 
     logging:
       driver: "json-file"
@@ -194,7 +194,7 @@ services:
   synoptics:
     container_name: synoptics
     restart: unless-stopped
-    image: disitlab/synoptics:v2
+    image: disitlab/synoptics:v2.4
     volumes:
       - ./synoptics-conf/config.js:/usr/src/synoptics/new-config.js
       - ./synoptics-conf/v2-config.js:/usr/src/synoptics/v2/new-config.js

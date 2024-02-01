@@ -3,7 +3,7 @@ services:
   iotapp-$#nodered-id#$:
     container_name: iotapp-$#nodered-id#$
     restart: unless-stopped
-    image: disitlab/snap4city-nodered-v2.2.2-adv:v10
+    image: disitlab/snap4city-nodered-v2.2.2-adv:v11
 
     logging:
       driver: "json-file"

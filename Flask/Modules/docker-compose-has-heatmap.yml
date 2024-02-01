@@ -100,7 +100,7 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   personaldata:
-    image: disitlab/personaldata:v5
+    image: disitlab/personaldata:v5.1
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
       - ./datamanager-logs:/usr/local/tomcat/logs/datamanager
@@ -172,7 +172,7 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   synoptics:
-    image: disitlab/synoptics:v2
+    image: disitlab/synoptics:v2.4
     volumes:
       - ./synoptics-conf/config.js:/usr/src/synoptics/new-config.js
       - ./synoptics-conf/v2-config.js:/usr/src/synoptics/v2/new-config.js
@@ -197,7 +197,7 @@ services:
         max-file: "${S4C_LOG_MAX_FILE:-10}"
 
   iotapp-nr1:
-    image: disitlab/snap4city-nodered-v2.2.2-adv:v10
+    image: disitlab/snap4city-nodered-v2.2.2-adv:v11
     volumes:
       - ./iotapp-nr1:/data
     ports:
@@ -214,7 +214,7 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   iotapp-nr2:
-    image: disitlab/snap4city-nodered-v2.2.2-adv:v10
+    image: disitlab/snap4city-nodered-v2.2.2-adv:v11
     volumes:
       - ./iotapp-nr2:/data
     ports:
@@ -332,7 +332,7 @@ services:
 
 #KBSSM ################################################################
   servicemap:
-    image: disitlab/servicemap:v5.1
+    image: disitlab/servicemap:v5.7.2
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
       - ./servicemap-conf:/root/servicemap

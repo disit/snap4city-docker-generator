@@ -129,6 +129,6 @@ curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<w
 
 
 echo rebooting services
-docker-compose restart opensearch-dashboards personaldata wsserver iot-fiware-harvester varnish proxy
+docker-compose restart opensearch-dashboards wsserver iot-fiware-harvester varnish proxy
 echo fixing openldap admin password
 docker-compose exec ldap-server bash /ldif_files/psw.sh
