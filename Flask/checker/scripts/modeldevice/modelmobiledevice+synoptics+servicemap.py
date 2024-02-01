@@ -16,7 +16,7 @@ config = json.load(f)
 
 latest_data = None
 position = None
-broker_name="orion-001"
+broker_name="orion-1"
 username = ""
 password = ""
 synoptics = ""
@@ -255,7 +255,7 @@ def createDevice(conf, token, device_name):
         "Authorization": "Bearer "+token
     }
     
-    #url = conf["model"]["model_url"] + "action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&name="+get_latest_model()+"&description=&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&producer=&frequency="+conf['model']['model_frequency']+"&kgenerator="+conf['model']['model_kgenerator']+"&edgegateway_type=&contextbroker="+conf['model']['model_contextbroker']+"&protocol="+conf['model']['model_protocol']+"&format="+conf['model']['model_format']+"&hc="+conf['model']['model_hc']+"&hv="+conf['model']['model_hv']+"&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5D&service=&servicePath=&token="+token+"&nodered=true"
+    #url = conf["device"]["device_url"] + "action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&name="+get_latest_model()+"&description=&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&producer=&frequency="+conf['model']['model_frequency']+"&kgenerator="+conf['model']['model_kgenerator']+"&edgegateway_type=&contextbroker="+conf['model']['model_contextbroker']+"&protocol="+conf['model']['model_protocol']+"&format="+conf['model']['model_format']+"&hc="+conf['model']['model_hc']+"&hv="+conf['model']['model_hv']+"&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5D&service=&servicePath=&token="+token+"&nodered=true"
     url = conf["device"]["device_url"] + "action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&id="+device_name+"&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&contextbroker="+conf['model']['model_contextbroker']+"&format="+conf['model']['model_format']+"&mac=&model="+get_latest_model()+"&producer=&latitude="+lat+"&longitude="+long+"&visibility=&frequency="+conf['model']['model_frequency']+"&token="+token+"&k1=ae402872-8207-4451-83cb-d047a2f68340&k2=ecb6a002-8452-4f90-88d7-e0c4c4dcf370&edgegateway_type=&edgegateway_uri=&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5B%22http%3A%2F%2Fwww.disit.org%2Fkm4city%2Fschema%23isMobile%22%2C%22true%22%5D%5D&service=&servicePath=&nodered=true"
     print(url)
     response = requests.request("PATCH", url, headers=header)
@@ -418,7 +418,6 @@ def deletemodel(modelname, access_token, base_url):
         "Authorization": "Bearer "+access_token
     }
     url = base_url + "action=get_all_models_DataTable&nodered=true"
-    print(url)
     response = requests.request("POST", url, headers=headers)
     if (response.status_code == 200):
         print("\nModels found, searching...")

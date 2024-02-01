@@ -10,7 +10,6 @@ services:
           - $#base-hostname#$
     ports:
       - "80:80"
-    restart: unless-stopped
 
     logging:
       driver: "json-file"
@@ -191,7 +190,6 @@ services:
       "security.encryptor.aes.secretkey": "$#aes-encryption-key-16chars#$"
       "security.encryptor.aes.ivparameter": "$#aes-encryption-iv-16chars#$"
       "JAVA_OPTS": "-DlogFileFolder=/usr/local/tomcat/logs"
-      "config.kpi.orginfourl": "$#base-url#$/dashboardSmartCity/api/getOrganizationParams.php"
     ports:
       - 8080:8080
     links:
@@ -226,7 +224,6 @@ services:
     ports:
       - 3001:3001
       - 3002:3002
-    restart: unless-stopped
     logging:
       driver: "json-file"
       options:
@@ -247,8 +244,6 @@ services:
       - "2181:2181"
     volumes:
       - zkdata:/bitnami/zookeeper
-    environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
   kafka:
     container_name: kafka
     image: bitnami/kafka:latest

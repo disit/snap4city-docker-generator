@@ -36,7 +36,6 @@ services:
       "multitenancy": "false"
       "connection.timeout": "10000"
       "JAVA_OPTS": "-DlogFileFolder=/usr/local/tomcat/logs -Dmytruststorepass=password -Dmykeystorepass=password"
-    restart: always
   orion-$#orion-id#$:
     container_name: orion-$#orion-id#$
     restart: unless-stopped
@@ -57,7 +56,6 @@ services:
       - "$#base-hostname#$:$#ip-0#$"
       - "ldap-server:$#ip-1#$"
       - "nifi:$#ip-nifi#$"
-    restart: always
   mongo-$#orion-id#$:
     container_name: mongo-$#orion-id#$
     restart: unless-stopped
@@ -68,7 +66,6 @@ services:
       options:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
-    restart: always
     volumes:
       - mongodb-$#orion-id#$:/data/db
 

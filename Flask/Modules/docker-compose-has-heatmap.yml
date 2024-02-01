@@ -91,7 +91,6 @@ services:
     volumes:
        - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
        - ./dashboard-cron-conf/crontab:/crontab
-    user: root
     command: /bin/sh -c "crontab /crontab; cron -f"
     restart: unless-stopped
     logging:
@@ -605,8 +604,7 @@ services:
     volumes:
       - dashboarddb:/var/lib/mysql
       - ./mariadb-conf:/etc/mysql/mariadb.conf.d
-- ./database/devicehealth.sql:/docker-entrypoint-initdb.d/c_init.sql
-
+      - ./database/devicehealth.sql:/docker-entrypoint-initdb.d/c_init.sql
       - ./database:/database
       - ./database/dashboard.sql:/docker-entrypoint-initdb.d/0_init.sql
       - ./database/dashboard-wizard-min.sql:/docker-entrypoint-initdb.d/1_init.sql

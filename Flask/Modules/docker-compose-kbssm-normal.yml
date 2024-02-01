@@ -45,7 +45,6 @@ services:
     ports:
       - "8890:8890"
       - "1111:1111"
-    restart: unless-stopped
   solr-kb:
     container_name: solr-kb
     image: solr:6.6.6

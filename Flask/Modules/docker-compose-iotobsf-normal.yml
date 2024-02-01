@@ -12,11 +12,6 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
 
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${S4C_LOG_MAX_SIZE:-100m}"
-        max-file: "${S4C_LOG_MAX_FILE:-10}"
     depends_on:
       - orion-$#orion-id#$
     ports:
@@ -42,7 +37,6 @@ services:
       "multitenancy": "false"
       "connection.timeout": "10000"
       "JAVA_OPTS": "-DlogFileFolder=/usr/local/tomcat/logs -Dmytruststorepass=password -Dmykeystorepass=password"
-    restart: always
   orion-$#orion-id#$:
     container_name: orion-$#orion-id#$
     restart: unless-stopped
@@ -61,7 +55,6 @@ services:
     ports:
       - "$#1026#$:1026"
     command: -dbhost mongo-$#orion-id#$
-    restart: always
   mongo-$#orion-id#$:
     container_name: mongo-$#orion-id#$
     restart: unless-stopped
@@ -72,7 +65,6 @@ services:
       options:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
-    restart: always
     volumes:
       - mongodb-$#orion-id#$:/data/db
 
