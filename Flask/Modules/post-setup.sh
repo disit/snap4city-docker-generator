@@ -1,12 +1,12 @@
 #!/bin/bash
-set -e
+#set -e
 
 cd servicemap-conf
 source ./update-ontology.sh localhost
 x_exit_code=$?
 
 if [ $x_exit_code -ne 0 ]; then
-    echo "Source failed, trying second method..."
+    echo "Sourcing ontologies failed, trying second method..."
     
     ./update-ontology.sh localhost
     y_exit_code=$?
@@ -22,6 +22,8 @@ fi
 docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap.vt
 docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/valuetypes.vt
 docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap-dbpedia.vt
+#new addition
+docker-compose exec virtuoso-kb /bin/bash -c "sync && /usr/local/virtuoso-opensource/bin/isql-v 1111 -U dba -P $#virtuoso-kb-pwd#$ 'EXEC=checkpoint;'"
 ##note: split this for opensearch
 ##curl -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/iotdata-organization' -d @mapping_Sensors-ETL-IOT-v3.json
 

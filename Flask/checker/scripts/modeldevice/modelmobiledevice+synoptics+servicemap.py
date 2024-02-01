@@ -399,7 +399,10 @@ def deletedevice(device_name, context_broker, access_token, base_uri):
     url = base_uri + "?action=delete&id=" + device_name + "&contextbroker=" + context_broker + "&token=" + access_token + "&nodered=yes"
     response = requests.request("POST", url, headers=header)
     if (response.status_code == 200):
-        print("\nDevice",device_name,"deleted successfully")
+        if response.json()["status"] == "ok":
+            print("\nDevice",device_name,"deleted successfully")
+        else:
+            print("Connected successfully but an error occourred while deleting the device. JSON of response:",response.json())
     elif (response.status_code == 401):
         print("\nUnauthorized, accessToken: " + access_token)
     else:
@@ -426,7 +429,10 @@ def deletemodel(modelname, access_token, base_url):
                 response = requests.request("POST", url, headers=headers)
                 url = base_url + "action=delete&id="+device["id"]+"&token=" + access_token
                 if (response.status_code == 200):
-                    print("\nDevice",modelname,"deleted successfully")
+                    if response.json()["status"] == "ok":
+                        print("\nDevice",modelname,"deleted successfully")
+                    else:
+                        print("Connected successfully but an error occourred while deleting the model. JSON of response:",response.json())
                     return
                 elif (response.status_code == 401):
                     print("\nUnauthorized, accessToken: " + accessToken(config))
