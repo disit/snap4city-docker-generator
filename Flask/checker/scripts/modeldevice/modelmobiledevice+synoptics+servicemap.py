@@ -169,7 +169,7 @@ def main():
             readDelegateDevice(uriDelegateDevice, config, access_token_delegated, string_value)
             if str(latest_data)==string_value:
                 print("Data was received from synoptics")
-                print("position detected:",position, "- should be",i,"and",i*1.5)
+                print("position detected:",position, "- should be",i*1.0,"and",i*1.5)
             else:
                 print(latest_data, string_value)
                 print("Error: data was not received")
@@ -465,7 +465,7 @@ def sendData(conf, token, device_name, string_value):
     timestamp = datetime.now().isoformat()
     timestamp = timestamp[0:20] + "000Z"
     num = int(string_value)
-    payload = {"value44":{"type":"string","value": string_value},"dateObserved":{"type":"string","value":timestamp},"latitude":{"value":str(0+num),"type":"float"},"longitude":{"value":str(0+num*1.5),"type":"float"}}
+    payload = {"value44":{"type":"string","value": string_value},"dateObserved":{"type":"string","value":timestamp},"latitude":{"value":str(num*1.0),"type":"float"},"longitude":{"value":str(num*1.5),"type":"float"}}
     # http://dashtest/orion-filter-orion-1/v2/entities/20231120T094406device/attrs?elementid=20231120T094406device&type=test
     url = f'{conf["base-url"]}/orion-filter/orion-1/v2/entities/' + device_name + '/attrs?elementid=' + device_name + '&type=' + conf['model']['model_type']
     print(url)

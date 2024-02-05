@@ -16,7 +16,7 @@ services:
     ports:
       - "$#8443#$:8443"
     volumes:
-      - ./orionbrokerfilter-$#orion-id#$-logs:/usr/local/tomcat/logs/orionbrokerfilter
+
       - ./orionbrokerfilter-conf:/usr/local/tomcat/credentials:rw
     environment:
       "spring.profiles.active": "deploy"

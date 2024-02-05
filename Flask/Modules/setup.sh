@@ -1,4 +1,4 @@
-
+#!/bin/bash
 chmod -R a+w iotapp-*
 chmod u+x opensearch-conf/gen-certs.sh
 chmod a+w iot-directory-certificate
@@ -35,13 +35,11 @@ chmod a+w certbot/www
 chown -R 1000:1000 certbot
 #chmod a+w ckan-conf
 sysctl -w vm.max_map_count=262144
-chmod a+w orionbrokerfilter-*-logs
 cd opensearch-conf
 ./gen-certs.sh
 
 #set up certificates nifi
 cd ..
-#!/bin/bash
 docker-compose up -d nifi
 docker run --rm --name toolkit -d apache/nifi:1.16.2
 docker exec -ti toolkit /opt/nifi/nifi-toolkit-current/bin/tls-toolkit.sh standalone -n 'localhost' -C 'CN=admin, OU=NIFI' -S $#keystore-password#$ -P $#truststore-password#$

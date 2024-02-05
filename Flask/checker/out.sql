@@ -68,7 +68,9 @@ INSERT INTO `complex_tests` VALUES (1,'Run setup.sh','bash scripts/run-setup.sh'
 (7,'Start Containers','bash scripts/launch-containers.sh',NULL,'#7f7f7f',"Attempts to start all containers. Will take time if the images aren't downloaded yet."),
 (8,'Check Synoptics+Servicemap','bash scripts/modelssynoptics.sh','string:username:u;password:password:p','#ff7f00','Check the synoptics and the servicemap by creating a device (and a model) and then ensuring that any data sent to the device is then accessible.'),
 (9,'Check KPI','bash scripts/kpi.sh','string:username:u;password:password:p','#ff7f00','Calls the test for the KPI component'),
-(10,'Check Keycloak keys','scripts\keycloakkeys\keycloakkeys.py',NULL,'#0f7f08','Calls the test for the amount of keys in keycloak');
+(10,'Check Keycloak keys','scripts/keycloakkeys/keycloakkeys.py',NULL,'#0f7f08','Calls the test for the amount of keys in keycloak');
+(11,'Wide test','bash scripts/modeldevice/modelmobiledevice+synoptics+servicemap.py','string:username:u;password:password:p','#0f7f48','Performs a wide test among models, devices, synoptics and servicemap, then attempts to clean up');
+
 /*!40000 ALTER TABLE `complex_tests` ENABLE KEYS */;
 UNLOCK TABLES;
 
