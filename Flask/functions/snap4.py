@@ -775,21 +775,6 @@ def make_multiple_brokers(iot_broker_amount, path, yml, placeholders):
         placeholders_in_file(path+'/docker-compose-iotobsf-'+str(i+1).zfill(3)+'.yml',placeholders)
         post_setup_obf(path, i)
 
-    s=''
-    try:
-        with open(path+'/setup.sh','r') as f:
-            s=f.read()
-    except FileNotFoundError as e:
-        #happens in dcm+ and it works as expected
-        pass
-    s='chmod a+w orionbrokerfilter-*-logs\n'+s
-    try:
-        with open(path+'/setup.sh','w') as f:
-            f.write(s)
-    except FileNotFoundError as e:
-        os.makedirs(path)
-        with open(path+'/setup.sh','w') as f:
-            f.write(s)
     return
 
 def post_setup_obf(path, id, file_to_append='post-setup.sh'):
