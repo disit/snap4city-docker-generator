@@ -451,6 +451,7 @@ def create_app():
                     detailed_ips['$#'+key+'#$']=value
                 else:
                     fine_as_is[key]=value
+            
             # a list of a set of a list is a list without duplicates, lenght tells apart the former from the latter
             if len(ips) != len(set(ips)) and not os.environ['allow_compress']:
                 print('IPs were not all different.')
@@ -475,6 +476,10 @@ def create_app():
                 references = dict(references.items() ^ remove_later.items())  # remove solved references from currently unresolved references
                 if not change: # either no more references exist or we hit a loop (eg $#id#$ -> $#psw#$ and $#psw#$ -> $#id#$)
                     break
+            if fine_as_is["$#base-protocol#$"] == "https":
+                fine_as_is["$#ws-port#$"] = "443"
+            elif fine_as_is["$#base-protocol#$"] == "http":
+                fine_as_is["$#ws-port#$"] = "80"
             try:
                 shutil.rmtree('./Output/'+token)
             except FileNotFoundError:
