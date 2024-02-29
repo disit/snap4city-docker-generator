@@ -1,3 +1,4 @@
+#!/bin/bash
 chmod a+w nifi/conf
 chmod a+w nifi/conf/flow.xml.gz
 chmod a+w nifi/extensions
@@ -12,7 +13,6 @@ cd opensearch-conf
 
 #set up certificates nifi
 cd ..
-#!/bin/bash
 docker-compose up -d nifi
 docker run --rm --name toolkit -d apache/nifi:1.16.2
 docker exec -ti toolkit /opt/nifi/nifi-toolkit-current/bin/tls-toolkit.sh standalone -n 'localhost' -C 'CN=admin, OU=NIFI' --subjectAlternativeNames '$#nifi-ips#$,0.0.0.0d' -S $#keystore-password#$ -P $#truststore-password#$
