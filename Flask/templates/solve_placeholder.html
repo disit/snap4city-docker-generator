@@ -42,6 +42,12 @@
             <input type="text" class="form-control" autocomplete="off" title='{{element[5]|safe}}' aria-describedby="button-addon2" id="{{element[0]}}" name="{{element[0]}}" id="random-{{element[0]}}">
             <button class="btn btn-outline-dark" type="button" id="button-{{element[0]}}" onclick="random_value(this, {{element[6]}})">Randomize</button>
           </div>
+          {%elif element[1]=='select' and element[0]=="$#base-protocol#$|$#dashboard-websocket-protocol#$"%}
+          <select class="form-select" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" onchange="handlemail(this)" required>
+            {%for select_value in element[6].split(',')%}
+            <option value="{{select_value}}">{{select_value}}</option>
+            {%endfor%}
+          </select>
           {%elif element[1]=='select'%}
           <select class="form-select" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
             {%for select_value in element[6].split(',')%}
@@ -75,7 +81,7 @@
             {%elif element[1]=='number'%}
             <input type="number" class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" value="{{element[4]}}" required>
             {%elif element[1]=='url'%}
-            <input type="{{element[1]}}"  class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" value="{{element[4]}}" required>
+            <input type="{{element[1]}}" class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" value="{{element[4]}}" required>
             {%elif element[1]=='email'%}
             <input type="{{element[1]}}" class="form-control" id="{{element[0]}}" name="{{element[0]}}" data-bs-toggle="tooltip" data-bs-html="true" title="{{element[5]|safe}}" required>
             {%elif element[1]=='random'%}
@@ -226,6 +232,36 @@
       y.value = "Show default fields";
     }
   };
+
+  //if an user selects https, we also need an email; otherwise, don't spawn/remove the mail field
+  function handlemail(selectelement) {
+    var selectedValue = selectelement.value;
+
+    if (selectedValue === 'https|wss') {
+      createEmailInput(selectelement);
+    } else if (selectedValue === 'http|ws') {
+      deleteEmailInput();
+  }
+  }
+
+  function createEmailInput(parent) {
+
+    var textInput = document.createElement("input");
+    textInput.setAttribute("type", "email");
+    textInput.setAttribute("id", "$#email#$");
+    textInput.setAttribute("name", "$#email#$");
+    textInput.setAttribute("placeholder", "Enter your email");
+    textInput.setAttribute("class", "form-control");
+    
+    parent.parentNode.appendChild(textInput);
+  }
+  
+  function deleteEmailInput() {
+    var textInput = document.getElementById("$#email#$");
+    if (textInput) {
+      textInput.remove();
+    }
+  }
 
   async function makeToken_function() { // make a token, save to database (if needed), allow export, notify user
     document.getElementById("time_of_configuration").value = (new Date()).toISOString();

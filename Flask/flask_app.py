@@ -556,7 +556,9 @@ def create_app():
                     snap4.fixvarnish('./Output/'+token+'/'+ips[0]+'/varnish/varnish-conf/default.vcl', False)
                     snap4.make_ngnix_micro_ssl('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)
                     snap4.copy('./Modules/enc.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt.sh')
+                    snap4.copy('./Modules/letsencrypt-renew.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh')
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt.sh', fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh', fine_as_is)
                     with open('./Output/'+token+'/'+ips[0]+'/post-setup.sh', 'r') as f:
                         quick_fix=f.read()
                         quick_fix="""#!/bin/bash
@@ -623,7 +625,9 @@ esac
                     snap4.fixvarnish('./Output/'+token+'/'+ips[0]+'/varnish/varnish-conf/default.vcl', False)
                     snap4.make_ngnix_normal_ssl('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)
                     snap4.copy('./Modules/enc.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt.sh')
+                    snap4.copy('./Modules/letsencrypt-renew.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh')
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt.sh', fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh', fine_as_is)
                     with open('./Output/'+token+'/'+ips[0]+'/post-setup.sh', 'r') as f:
                         quick_fix=f.read()
                         quick_fix="""#!/bin/bash
@@ -679,7 +683,9 @@ esac
                 if fine_as_is["$#base-protocol#$"] == "https":
                     snap4.make_ngnix_small_ssl('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)
                     snap4.copy('./Modules/enc.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt.sh')
+                    snap4.copy('./Modules/letsencrypt-renew.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh')
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt.sh', fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt-renew', fine_as_is)
                     with open('./Output/'+token+'/'+ips[0]+'/post-setup.sh', 'r') as f:
                         quick_fix=f.read()
                         quick_fix="""#!/bin/bash
@@ -741,7 +747,9 @@ esac
                 if fine_as_is["$#base-protocol#$"] == "https":
                     snap4.make_ngnix_dcs_ssl('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is,fine_as_is['# of ServiceMaps'])
                     snap4.copy('./Modules/enc.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt.sh')
+                    snap4.copy('./Modules/letsencrypt-renew.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh')
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt.sh', fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh', fine_as_is)
                     with open('./Output/'+token+'/'+ips[0]+'/post-setup.sh', 'r') as f:
                         quick_fix=f.read()
                         quick_fix="""#!/bin/bash
@@ -830,7 +838,9 @@ esac
                 if fine_as_is["$#base-protocol#$"] == "https":
                     snap4.make_ngnix_dcm_ssl(fine_as_is, './Output/'+token+'/'+ips[0]+'/nginx-proxy-conf', int(post['# of IoT-Apps']), list_iotapp, list_virtuoso, ips[1], list_opensearch[0], ips[4], 1880, list_broker)
                     snap4.copy('./Modules/enc.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt.sh')
+                    snap4.copy('./Modules/letsencrypt-renew.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh')
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt.sh', fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh', fine_as_is)
                     with open('./Output/'+token+'/'+ips[0]+'/post-setup.sh', 'r') as f:
                         quick_fix=f.read()
                         quick_fix="""#!/bin/bash
