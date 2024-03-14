@@ -678,7 +678,6 @@ esac
                         pass
                 for i in range(len(ips)): # one single compose in each VM
                     snap4.merge_yaml('./Output/'+token+'/'+ips[i])
-                snap4.merge_sh('./Output/'+token+'/'+ips[2]+'/pre-post-setup.sh',['./Output/'+token+'/'+ips[2]+'/pre-post-setup.sh','./Output/'+token+'/'+ips[2]+'/small.sh'])
                 os.rename('./Output/'+token+'/'+ips[2]+'/pre-post-setup.sh','./Output/'+token+'/'+ips[2]+'/post-setup.sh')
                 if fine_as_is["$#base-protocol#$"] == "https":
                     snap4.make_ngnix_small_ssl('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)

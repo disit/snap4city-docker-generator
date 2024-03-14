@@ -813,9 +813,12 @@ def fix_service_map_config(file_path, replacing_string):
 def merge_sh(file_path, files_to_merge):
     s = ""
     for item in files_to_merge:
-        with open(item, 'r') as file_opened:
-            s+=file_opened.read()
-        os.remove(item)
+        try:
+            with open(item, 'r') as file_opened:
+                s+=file_opened.read()
+            os.remove(item)
+        except Exception as E:
+            print("[WARN]",item,"was not found, the file wasn't merged.")
     with open(file_path, 'a') as file_opened:
         file_opened.write(s)
     return
