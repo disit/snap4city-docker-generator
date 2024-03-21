@@ -485,6 +485,11 @@ def create_app():
                 fine_as_is["$#ws-port#$"] = "443"
             elif fine_as_is["$#base-protocol#$"] == "http":
                 fine_as_is["$#ws-port#$"] = "80"
+            else:
+                print("[LOG] Invalid protocol detected")
+                return render_template('404.html',helpmail=os.environ["help_mail"],version=os.environ["version"]), 404
+            if not snap4.ensure_validity(fine_as_is, ips):
+                return render_template('404.html',helpmail=os.environ["help_mail"],version=os.environ["version"]), 404
             try:
                 shutil.rmtree('./Output/'+token)
             except FileNotFoundError:
@@ -521,9 +526,11 @@ def create_app():
                         snap4.placeholders_in_file(os.path.join(dname,file), fine_as_is)
                     except UnicodeDecodeError as E:
                         pass #doesn't matter
-            if not snap4.ensure_validity(fine_as_is, ips):
-                return render_template('404.html',helpmail=os.environ["help_mail"],version=os.environ["version"]), 404
+
             if modello in ("Micro","Kubernetes"):
+                if len(ips)>1:
+                    print("[LOG] The amount of IPs provided did not match the given amount of IPs for the Micro/Kubernetes model.")
+                    return render_template('404.html',helpmail=os.environ["help_mail"],version=os.environ["version"]), 404
                 for i in range(int(post['# of IoT-Apps'])):
                     snap4.make_iotapp_folder('./Modules/iotapp-id','./Output/'+token+'/'+ips[0],i+1, fine_as_is)
                     if i == 0:
@@ -594,7 +601,10 @@ esac
 
             #refactor
             elif modello == "Normal":
-                iotbrokers = fine_as_is['# of Iot-Brokers']
+                if len(ips)!=2:
+                    print("[LOG] The amount of IPs provided did not match the given amount of IPs for the Normal model.")
+                    return render_template('404.html',helpmail=os.environ["help_mail"],version=os.environ["version"]), 404
+                
                 for i in range(int(post['# of IoT-Apps'])):  #iotapps go in second vm, hence the second folder
                     snap4.make_iotapp_folder('./Modules/iotapp-id','./Output/'+token+'/'+ips[1],i+1, fine_as_is)
                     if i == 0:
@@ -606,14 +616,14 @@ esac
                 #make_apache_proxy_conf_normal('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
                 snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
                 snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
-                snap4.make_multiple_brokers(iotbrokers,'./Output/'+token+'/'+ips[1],'docker-compose-iotobsf-normal.yml',fine_as_is)
+                snap4.make_multiple_brokers(fine_as_is['# of Iot-Brokers'],'./Output/'+token+'/'+ips[1],'docker-compose-iotobsf-normal.yml',fine_as_is)
                 snap4.make_sql_normal('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', 'orion-001', int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
-                snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.xml.gz',int(iotbrokers),fine_as_is)
-                descriptor=post['$#Time#$']+'-'+post['# of IoT-Apps']+'-'+iotbrokers+'-'
-                if int(iotbrokers) == 1:
+                snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.xml.gz',int(fine_as_is['# of Iot-Brokers']),fine_as_is)
+                descriptor=post['$#Time#$']+'-'+post['# of IoT-Apps']+'-'+fine_as_is['# of Iot-Brokers']+'-'
+                if int(fine_as_is['# of Iot-Brokers']) == 1:
                     snap4.make_ldif('./Output/'+token+'/'+ips[0]+'/ldap', 'default.ldif', ['1000'], ['orion-1'])
-                elif int(iotbrokers) == 2:
+                elif int(fine_as_is['# of Iot-Brokers']) == 2:
                     snap4.make_ldif('./Output/'+token+'/'+ips[0]+'/ldap', 'default.ldif', ['1000','1001'], ['orion-1','orion-2'],2)
 
                 # after files are in order, fix the placeholders
@@ -659,6 +669,10 @@ esac
                 for i in range(len(ips)): # one single compose in each VM
                     snap4.merge_yaml('./Output/'+token+'/'+ips[i])
             elif modello == "Small":
+                if len(ips)!=4:
+                    print("[LOG] The amount of IPs provided did not match the given amount of IPs for the Micro/Kubernetes Small.")
+                    return render_template('404.html',helpmail=os.environ["help_mail"],version=os.environ["version"]), 404
+                
                 iotbrokers = fine_as_is['# of Iot-Brokers']
                 for i in range(int(post['# of IoT-Apps'])):  #iotapps go in fourth vm
                     snap4.make_iotapp_folder('./Modules/iotapp-id','./Output/'+token+'/'+ips[3],i+1, fine_as_is)
@@ -712,6 +726,10 @@ esac
                     snap4.make_ngnix_small('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)
 
             elif modello == "DataCitySmall":
+                if len(ips)!=6:
+                    print("[LOG] The amount of IPs provided did not match the given amount of IPs for the Micro/Kubernetes Model.")
+                    return render_template('404.html',helpmail=os.environ["help_mail"],version=os.environ["version"]), 404
+                
                 iotbrokers = fine_as_is['# of Iot-Brokers']
                 for i in range(int(post['# of IoT-Apps'])):  #iotapps go in sixth vm
                     snap4.make_iotapp_folder('./Modules/iotapp-id','./Output/'+token+'/'+ips[5],i+1, fine_as_is)
@@ -782,6 +800,9 @@ esac
                 list_opensearch=list_nifi
                 list_broker=[value for (key,value) in sorted(detailed_ips.items()) if "broker" in key]
                 list_virtuoso=[value for (key,value) in sorted(detailed_ips.items()) if "virtuoso" in key]
+                if len(list_iotapp)+len(list_nifi)+len(list_broker)+len(list_virtuoso) +3 != len(ips):
+                    print("[LOG] The amount of IPs provided did not match the expected amount of IPs for the DataCityMedium Model.")
+                    return render_template('404.html',helpmail=os.environ["help_mail"],version=os.environ["version"]), 404
                 #we need to fix a few values in fine_as_is
                 fine_as_is['$#superservicemap-db-host#$']=list_virtuoso[0]
                 fine_as_is['$#ip-nifi#$']=list_nifi[0]
@@ -874,6 +895,9 @@ esac
                 list_nifi=[value for (key,value) in sorted(detailed_ips.items()) if "nifi" in key]
                 list_broker=[value for (key,value) in sorted(detailed_ips.items()) if "broker" in key]
                 list_virtuoso=[value for (key,value) in sorted(detailed_ips.items()) if "virtuoso" in key]
+                if len(list_iotapp)+len(list_opensearch)+len(list_nifi)+len(list_broker)+len(list_virtuoso) +6 != len(ips):
+                    print("[LOG] The amount of IPs provided did not match the expected amount of IPs for the DataCityLarge Model.")
+                    return render_template('404.html',helpmail=os.environ["help_mail"],version=os.environ["version"]), 404
 
                 #we need to fix a few values in fine_as_is
                 fine_as_is['$#superservicemap-db-host#$']=list_virtuoso[0]

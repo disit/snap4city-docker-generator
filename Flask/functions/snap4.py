@@ -41,8 +41,8 @@ def ensure_validity(placeholders, ips):
     if int(placeholders["# of IoT-Apps"]) < 1:
         print("[LOG] Tried a configuration with too few iotapps.")
         return False
-    if '# of IoT-Brokers' in placeholders:
-        if int(placeholders["# of IoT-Brokers"]) > 4:
+    if '# of Iot-Brokers' in placeholders:
+        if int(placeholders["# of Iot-Brokers"]) > 4:
             print("[LOG] Tried a configuration with too many iotbrokers.")
             return False
     if '# of ServiceMaps' in placeholders:
@@ -1165,7 +1165,8 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     # therefore yq is used to fix the mistake, which happens on the depends_on attribute
     # however THAT also gives problem, because it will give a depends_on where there is no such thing
     # we can complete the preconfig with sed, removing the wrong lines
-
+    if not os.path.exists(location):
+        print("[LOG] The location provided wasn't valid (",location,"), won't proceed with kubernetes convertion.")
     #
     os.system('''cd ''' + location + '''
     mkdir kubernetes
