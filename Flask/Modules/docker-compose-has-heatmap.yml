@@ -99,7 +99,8 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   personaldata:
-    image: disitlab/personaldata:v5.1
+    image: disitlab/personaldata:v5
+    #build: ./build/personaldata.1
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
       - ./datamanager-logs:/usr/local/tomcat/logs/datamanager
@@ -157,6 +158,7 @@ services:
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   wsserver:
     image: disitlab/websocketserver:v5
+    #build: ./build/wsserver
     ports:
       - 9100:8000
     volumes:
@@ -331,7 +333,7 @@ services:
 
 #KBSSM ################################################################
   servicemap:
-    image: disitlab/servicemap:v5.7.2
+    image: disitlab/servicemap:v5.8.1
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
       - ./servicemap-conf:/root/servicemap
@@ -340,6 +342,12 @@ services:
       - ./servicemap-conf/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml
       - ./servicemap-superservicemap-conf/settings.xml:/usr/local/tomcat/settings.xml
       - ./servicemap-conf/cacerts:/usr/local/openjdk-8/jre/lib/security/cacerts
+      - ./servicemap-whatif-router/gh-data:/usr/local/tomcat/gh-data
+      - ./servicemap-trafficflowmanager:/home/debian/TrafficFlowManager
+    environment:
+      GH_MAP_PBF: "gh-data/map.osm.pbf"
+      GH_LOCATION_PFX: "gh-data/map"
+      GH_TYPICAL_TTT_PATH: "gh-data/typical_ttt"
 #    environment:
     ports:
       - 8090:8080

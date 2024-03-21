@@ -145,7 +145,7 @@
           <br>
           <br>
             {%for i in range(value|int)%}
-            <div class="col-md"><label for="servicemap-{{(i|string).zfill(3)}}" class="form-label">Servicemap-{{i}} name</label><input type="text" name="$#servicemap-{{(i|string).zfill(3)}}#$" id="$#servicemap-{{(i|string).zfill(3)}}#$" class="form-control" required value="servicemap-{{(i|string).zfill(3)}}.local" data-bs-toggle="tooltip" data-bs-html="true" title="The domain"></div>
+            <div class="col-md"><label for="$#servicemap-{{(i|string).zfill(3)}}#$" class="form-label">Servicemap-{{i}} name</label><input type="text" name="$#servicemap-{{(i|string).zfill(3)}}#$" id="$#servicemap-{{(i|string).zfill(3)}}#$" class="form-control" required value="servicemap-{{(i|string).zfill(3)}}.local" data-bs-toggle="tooltip" data-bs-html="true" title="The domain"></div>
             <hr><br>
             {%endfor%}
         </div>

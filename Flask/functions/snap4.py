@@ -15,6 +15,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.'''
 
 
 import os, errno, shutil, copy
+from copy import deepcopy
 import re
 import gzip
 
@@ -32,6 +33,55 @@ def make_iotapp_folder(origin, path, id_iotapp, placeholders):
             with open(os.path.join(path+'/iotapp-'+str(id_iotapp).zfill(3),file),'w') as f:
                 f.write(s)
     return
+
+def ensure_validity(placeholders, ips):
+    if int(placeholders["# of IoT-Apps"]) > 1051:
+        print("[LOG] Tried a configuration with too many iotapps.")
+        return False
+    if int(placeholders["# of IoT-Apps"]) < 1:
+        print("[LOG] Tried a configuration with too few iotapps.")
+        return False
+    if '# of IoT-Brokers' in placeholders:
+        if int(placeholders["# of IoT-Brokers"]) > 4:
+            print("[LOG] Tried a configuration with too many iotbrokers.")
+            return False
+    if '# of ServiceMaps' in placeholders:
+        if int(placeholders["# of ServiceMaps"]) > 4:
+            print("[LOG] Tried a configuration with too many servicemaps.")
+            return False
+    if '# of Opensearch nodes' in placeholders:
+        if int(placeholders["# of Opensearch nodes"]) > 4:
+            print("[LOG] Tried a configuration with too many Opensearch Nodes.")
+            return False
+    if '# of Opensearch nodes' in placeholders:
+        if int(placeholders["# of Opensearch nodes"]) < 1:
+            print("[LOG] Tried a configuration with too few Opensearch Nodes.")
+            return False
+    if '# of IoT-Brokers' in placeholders:
+        if int(placeholders["# of IoT-Brokers"]) < 1:
+            print("[LOG] Tried a configuration with too few iotbrokers.")
+            return False
+    if '# of ServiceMaps' in placeholders:
+        if int(placeholders["# of ServiceMaps"]) < 1:
+            print("[LOG] Tried a configuration with too few servicemaps.")
+            return False
+    if '# of Virtuoso nodes' in placeholders:
+        if int(placeholders["# of Virtuoso nodes"]) > 4:
+            print("[LOG] Tried a configuration with too many Virtuoso Nodes.")
+            return False
+    if '# of Virtuoso nodes' in placeholders:
+        if int(placeholders["# of Virtuoso nodes"]) < 1:
+            print("[LOG] Tried a configuration with too few Virtuoso Nodes.")
+            return False
+
+
+    ip_pattern = re.compile(r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$')
+    for ip in ips:
+        match = ip_pattern.match(ip)
+        if not match:
+            print("[LOG] Found a missing IP")
+            return False
+    return True
 
 # the amount of iot apps and their sockets are required
 # sockets should have the length of iot_amount
@@ -831,7 +881,7 @@ def make_n_servicemaps(amount_of_servicemaps, path, placeholders,start=0):
         print('skipping folder creation')
     sql=make_servicemap_sql(int(amount_of_servicemaps))
     for i in range(int(amount_of_servicemaps)):
-        temp_sql=copy.deepcopy(sql)
+        temp_sql=deepcopy(sql)
         temp_sql.pop(i)
         copy('./Modules/servicemap-conf', path+'/servicemap-'+str(i+1+start).zfill(3)+'-conf')
         copy('./Modules/servicemap-iot-conf', path+'/servicemap-'+str(i+1+start).zfill(3)+'-iot-conf')

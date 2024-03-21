@@ -72,6 +72,7 @@ services:
     container_name: dashboard-builder
     restart: unless-stopped
     image: disitlab/dashboard-builder:v7.7.2
+    #build: ./build/dashboard-builder
     ports:
       - "70:80"
     volumes:
@@ -156,7 +157,8 @@ services:
   personaldata:
     container_name: personaldata
     restart: unless-stopped
-    image: disitlab/personaldata:v5.1
+    image: disitlab/personaldata:v5
+    #build: ./build/personaldata.1
 
     logging:
       driver: "json-file"
@@ -217,6 +219,7 @@ services:
     container_name: wsserver
     restart: unless-stopped
     image: disitlab/websocketserver:v5
+    #build: ./build/wsserver
 
     logging:
       driver: "json-file"

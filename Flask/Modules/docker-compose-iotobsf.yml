@@ -4,7 +4,8 @@ services:
   orionbrokerfilter-$#orion-id#$:
     container_name: orionbrokerfilter-$#orion-id#$
     restart: unless-stopped
-    image: disitlab/orionbrokerfilter:v5.3
+    image: disitlab/orionbrokerfilter:v6
+    #build: ./build/orionbrokerfilter.3
 
     logging:
       driver: "json-file"

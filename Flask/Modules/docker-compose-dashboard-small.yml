@@ -24,6 +24,7 @@ services:
     container_name: dashboard-builder
     restart: unless-stopped
     image: disitlab/dashboard-builder:v7.7.2
+    #build: ./build/dashboard-builder
     ports:
       - "70:80"
     volumes:
@@ -124,7 +125,8 @@ services:
   personaldata:
     container_name: personaldata
     restart: unless-stopped
-    image: disitlab/personaldata:v5.1
+    image: disitlab/personaldata:v5
+    #build: ./build/personaldata.1
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
       - ./datamanager-logs:/datamanager
@@ -181,6 +183,7 @@ services:
     container_name: wsserver
     restart: unless-stopped
     image: disitlab/websocketserver:v5
+    #build: ./build/wsserver
     ports:
       - 9000:9000
     volumes:
