@@ -48,6 +48,7 @@ services:
     ports:
         - "8088:8088"
     environment:
+        DB_VENDOR: h2
         KEYCLOAK_USER: $#keycloak-admin#$
         KEYCLOAK_PASSWORD: $#keycloak-admin-pwd#$
         PROXY_ADDRESS_FORWARDING: "true"
