@@ -127,6 +127,8 @@ echo
 echo add geoserver workspace Snap4City
 curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>Snap4City</name></workspace>"  http://localhost/geoserver/rest/workspaces
 
+echo add geoserver workspace traffic
+curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>traffic</name></workspace>"  http://localhost/geoserver/rest/workspaces
 
 echo rebooting services
 docker-compose restart opensearch-dashboards wsserver iot-fiware-harvester varnish proxy

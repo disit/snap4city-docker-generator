@@ -7,7 +7,7 @@ services:
       - "$#base-hostname#$:$#ip-0#$"
 
     restart: unless-stopped
-    image: disitlab/servicemap:v5.8.1
+    image: disitlab/servicemap:v5.8.3
 
     logging:
       driver: "json-file"

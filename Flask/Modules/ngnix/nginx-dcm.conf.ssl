@@ -88,6 +88,8 @@ server {
         }
         location  /trafficflowmanager/ {
                 proxy_pass "http://servicemap:8080/trafficflowmanager/";
+                client_max_body_size 50M;
+		proxy_read_timeout 10m;
         }
         location /auth/ {
                 proxy_pass "http://$#ip-1#$:8088/auth/";
@@ -102,6 +104,7 @@ server {
                 proxy_set_header Upgrade $http_upgrade;
                 proxy_set_header Connection "upgrade";
                 proxy_pass "https://synoptics:3001/socket.io/";
+                proxy_read_timeout 30m;
         }
         location  /iot-directory/stubs/ {
                 proxy_pass "http://iot-discovery:3001/";
@@ -120,12 +123,13 @@ server {
                 proxy_pass "http://$#ip-0#$:3100";
         }
         location  /geoserver {
-            proxy_pass "http://geoserver:8080/geoserver";
-    }
-    location  /odmm-build/api {
+                proxy_pass "http://geoserver:8080/geoserver";
+                client_max_body_size 50M;
+        }
+        location  /odmm-build/api {
                 proxy_pass "http://$#ip-0#$:3000";
         }
-    location  /geoserver {
+        location  /geoserver {
                 proxy_pass "http://$#ip-4#$:8080/geoserver";
         }
 

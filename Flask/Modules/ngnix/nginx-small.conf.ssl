@@ -106,6 +106,7 @@ server {
         location  /synoptics/socket.io/ {
                 proxy_set_header Upgrade $http_upgrade;
                 proxy_set_header Connection "upgrade";
+		proxy_read_timeout 30m;
                 proxy_pass "https://synoptics:3001/socket.io/";
         }
         location  /iot-directory/stubs/ {
@@ -124,7 +125,7 @@ server {
         location  /odmm-insert/api {
                 proxy_pass "http://od-insert-api:3100";
         }
-    location  /odmm-build/api {
+        location  /odmm-build/api {
                 proxy_pass "http://od-build-api:3000";
         }
 
@@ -148,8 +149,9 @@ server {
         }
 	rewrite ^/orion-filter/orion-1/?$ /orion-filter/orion-1/v2 permanent;
 
-    location  /geoserver {
+        location  /geoserver {
                 proxy_pass "http://geoserver:8080/geoserver";
+		client_max_body_size 50M;	
         }
 }
 
@@ -159,7 +161,7 @@ server {
 
         server_name servicemap.local;
 
-                        location  /ServiceMap/ {
+        location  /ServiceMap/ {
                 proxy_pass "http://servicemap:8080/ServiceMap/";
         }
         location  /whatif-router/ {
@@ -173,6 +175,8 @@ server {
         }
         location  /trafficflowmanager/ {
                 proxy_pass "http://servicemap:8080/trafficflowmanager/";
+                client_max_body_size 50M;
+		proxy_read_timeout 10m;
         }
         location  /ServiceMap/api/v1/iot/ {
                 proxy_pass "http://servicemap:8080/iot/";

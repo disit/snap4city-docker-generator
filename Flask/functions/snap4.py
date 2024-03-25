@@ -674,6 +674,15 @@ def adjust_dashboard_menu_dump(iot_app_amount, add_checker=False): #make iotapps
     #add superservicemap
     str_to_add = str_to_add[:-2]  # remove the last comma and new line
     str_to_add+=''';\nINSERT INTO `Dashboard`.`MainMenuSubmenus` (`id`, `menu`, `linkUrl`, `linkId`, `icon`, `text`, `privileges`, `userType`, `externalApp`, `openMode`, `iconColor`, `pageTitle`, `menuOrder`) VALUES ('10800', '1059', '/MultiServiceMap/', 'map1link21', 'fa fa-map', 'MultiServiceMap', "[\'RootAdmin\',\'ToolAdmin\', \'AreaManager\', \'Manager\', \'Public\']", 'any', 'any', 'iframe', '#20ff41', 'SuperServiceMap', '2');'''
+    return str_to_add+adjust_dashboard_menu_for_filemanager()
+
+def adjust_dashboard_menu_for_filemanager():
+    str_to_add = '''\nINSERT INTO `dashboard`.`mainmenusubmenus` (`id`, `menu`, `linkUrl`, `linkId`, `icon`, `text`, `privileges`, `userType`, `externalApp`, `openMode`, `iconColor`, `pageTitle`, `menuOrder`, `organizations`) VALUES ('10245', '1095', '../management/filemanager.php', 'filamanager', 'fa fa-server', 'Filamanager', '[\'RootAdmin\', \'ToolAdmin\', \'AreaManager\', \'Manager\']', 'any', 'yes', 'iframe', '#66ee22', 'FileManager', '100', '*');'''
+    # INSERT INTO `Dashboard`.`MainMenuSubmenus` values (277,1095,'https://processloader.snap4city.org/management/filemanager.php',NULL,'psLink2hh','fa fa-download','Filemanager','[\'*\']','any','yes','iframe','#41b5f4','Filemanager',7,'')
+    return str_to_add
+
+def add_file_model_definition():
+    str_to_add = '''INSERT INTO `iotdb`.`model` (`id`, `name`, `description`, `devicetype`, `kind`, `producer`, `frequency`, `attributes`, `contextbroker`, `protocol`, `format`, `healthiness_criteria`, `healthiness_value`, `kgenerator`, `edgegateway_type`, `organization`, `visibility`, `subnature`, `static_attributes`) VALUES ('2', '', 'fileModel', 'file', 'sensor', 'DISIT', '600', '[{\"value_name\":\"dateObserved\",\"data_type\":\"string\",\"value_type\":\"timestamp\",\"editable\":\"0\",\"value_unit\":\"timestamp\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"originalfilename\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"newfileid\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"language\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"description\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"filesize\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"filetype\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"}]', 'orion-1', 'ngsi', 'json', 'refresh_rate', '300', 'normal', '', 'Organization', 'public', '', '[]');'''
     return str_to_add
 
 def adjust_profiledb_dump(iot_app_amount): # assigns iotapps to user (defaults to user area manager)
@@ -696,6 +705,10 @@ def placeholders_in_file(file_path, placeholders): #replace all placeholders wit
         file_opened.write(s)
 
 def make_sql_micro(file_location, broker_ip, iotapps, broker_data, add_checker=True):
+    #filemanager stuff
+    filemanagerstring = ""
+    with open("../Modules/database/filamanager.sql", 'w') as filemanagerstuff:
+        filemanagerstring = filemanagerstuff.read()
     with open(file_location, 'w') as f:
         data=[]
         data.append('DELETE FROM profiledb.`ownership`;\n') # clean ownership
@@ -717,6 +730,7 @@ DELETE FROM Dashboard.MainMenu WHERE ID=2004;
         for element in data:
             if element is not None:
                 f.write(element)
+        f.write('\n' + filemanagerstring)
     return
 
 def adjust_dashboard_menu_dump_servicemaps(amount_of_servicemaps, path, fine_as_is):
@@ -746,6 +760,9 @@ def make_sql_normal(file_location, broker_ip, iotapps, broker_data, add_checker=
     return make_sql_micro(file_location, broker_ip, iotapps, broker_data, add_checker)
 
 def make_sql_small(file_location_1, file_location_2, broker_ip, iotapps, broker_data):
+    filemanagerstring = ""
+    with open("../Modules/database/filamanager.sql", 'w') as filemanagerstuff:
+        filemanagerstring = filemanagerstuff.read()
     brokers = iotbroker_add(broker_ip,broker_data)
     with open(file_location_1, 'w') as f:
         data=[]
@@ -766,7 +783,7 @@ UPDATE Dashboard.MainMenuSubmenus SET `privileges` = '[\'RootAdmin\',\'ToolAdmin
         for element in data:
             if element is not None:
                 f.write(element)
-    data=[]
+        f.write('\n' + filemanagerstring)
     return
 
 def make_sql_dcs(file_location_1, file_location_2, broker_ip, iotapps, broker_data):

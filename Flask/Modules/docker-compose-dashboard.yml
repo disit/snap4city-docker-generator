@@ -157,7 +157,7 @@ services:
   personaldata:
     container_name: personaldata
     restart: unless-stopped
-    image: disitlab/personaldata:v5
+    image: disitlab/personaldata:v5.1.1
     #build: ./build/personaldata.1
 
     logging:

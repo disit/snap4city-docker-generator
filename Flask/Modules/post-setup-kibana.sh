@@ -91,6 +91,13 @@ echo add dashboard
 curl --insecure -u admin:$#opensearch-admin-pwd#$ -XPOST "http://localhost/kibana/api/saved_objects/_import?overwrite=true" -H "osd-xsrf: true" -H "securitytenant: global" --form file=@osd-dashboard.ndjson
 echo
 
+echo add geoserver workspace Snap4City
+curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>Snap4City</name></workspace>"  http://localhost/geoserver/rest/workspaces
+
+
+echo add geoserver workspace traffic
+curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>traffic</name></workspace>"  http://localhost/geoserver/rest/workspaces
+
 # for understanding what's going on here, go here
 # https://nifi.apache.org/docs/nifi-docs/rest-api/index.html
 # components must be disabeld or stopped before edit can happen
