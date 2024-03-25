@@ -16,18 +16,6 @@ server {
                         location  /ServiceMap/ {
                 proxy_pass "http://servicemap:8080/ServiceMap/";
         }
-        location  /whatif-router/ {
-                proxy_pass "http://servicemap:8080/whatif-router/";
-        }
-        location  /trafficflowmanager/ {
-                proxy_pass "http://servicemap:8080/trafficflowmanager/";
-        }
-        location  /whatif-router/ {
-                proxy_pass "http://servicemap:8080/whatif-router/";
-        }
-        location  /trafficflowmanager/ {
-                proxy_pass "http://servicemap:8080/trafficflowmanager/";
-        }
         location  / {
                 proxy_pass "http://dashboard-builder/";
         }
@@ -114,6 +102,13 @@ server {
         }
         location /auth/ {
                 proxy_pass "http://keycloak:8088/auth/";
+        }
+        
+        location  /whatif-router/ {
+                proxy_pass "http://servicemap:8080/whatif-router/";
+        }
+        location  /trafficflowmanager/ {
+                proxy_pass "http://servicemap:8080/trafficflowmanager/";
         }
         location /datamanager/ {
                 proxy_pass "http://personaldata:8080/datamanager/";
