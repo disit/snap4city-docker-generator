@@ -3,7 +3,7 @@ services:
   servicemap-$#id#$:
     container_name: servicemap-$#id#$
     restart: unless-stopped
-    image: disitlab/servicemap:v5.8.3
+    image: disitlab/servicemap:v5.8.2
 
     logging:
       driver: "json-file"
