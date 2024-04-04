@@ -1032,7 +1032,7 @@ def iotbroker_add(broker_url, broker_coords): #TODO remove iotbsf hardcoding  #T
     contextbroker='''INSERT INTO iotdb.`contextbroker` (`name`, `protocol`, `ip`, `port`, `uri`, `login`, `password`, `latitude`, `longitude`, `accesslink`, `accessport`, `sha`, `organization`, `apikey`, `visibility`, `version`, `path`, `kind`, `subscription_id`, `urlnificallback`) values'''
     i=0
     for broker in broker_coords:
-        contextbroker+="('orion-"+str(i+1)+"','ngsi','orion-001','1026',NULL,'login','login','"+str(broker_coords[i][0])+"','"+str(broker_coords[i][1])+"','orion-broker-filter-001','"+str(8443+i)+"','','Organization',NULL,'private', 'v2', '', 'internal', 'register', 'http://nifi:1030/ingestngsi'),"
+        contextbroker+="('orion-"+str(i+1)+"','ngsi','orion-001','1026',NULL,'login','login','"+str(broker_coords[i][0])+"','"+str(broker_coords[i][1])+"','orionbrokerfilter-001','"+str(8443+i)+"','','Organization',NULL,'private', 'v2', '', 'internal', 'register', 'http://nifi:1030/ingestngsi'),"
         i+=1
     contextbroker=contextbroker[:-1]+';\n'
     return [ownership,contextbroker]

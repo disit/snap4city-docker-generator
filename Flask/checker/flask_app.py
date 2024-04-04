@@ -15,9 +15,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.'''
 
 
 import subprocess
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_file
 import mysql.connector
 import json
+import os
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
 
 
 
@@ -31,7 +35,6 @@ db_conn_info = {
         "auth_plugin": 'mysql_native_password'
     }
 def create_app():
-
     app = Flask(__name__)
     app.secret_key = b'\x8a\x17\x93kT\xc0\x0b6;\x93\xfdp\x8bLl\xe6u\xa9\xf5x'
     @app.route("/")
@@ -195,7 +198,7 @@ def create_app():
         container_name = subprocess.run('docker ps -a -f id='+container_id+' --format "{{.Names}}"', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n')[0]
         return render_template('log_show.html', container_id = container_id, r = r, container_name=container_name)
     
-    def get_container_data():
+    def get_container_data(do_not_jsonify=True):
         containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
         containers_stats = [b for b in (subprocess.run('docker stats --format json -a --no-stream', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
         containers_merged = []
@@ -206,7 +209,50 @@ def create_app():
                         if key1 == "Name" and key2 == "Names":
                             if value1 == value2:
                                 containers_merged.append({**json.loads(container_ps), **json.loads(container_stats)})
+        if do_not_jsonify:
+            return containers_merged
         return jsonify(containers_merged)
+    
+    @app.route('/generate_pdf', methods=['POST'])
+    def generate_pdf():
+        data_stored = []
+        for container_data in get_container_data():
+            r = '<br>'.join(subprocess.run('docker logs '+container_data['ID'] + ' --tail 500', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
+            data_stored.append({"header": container_data['Name'], "string": r})
+        
+        # Create a PDF document
+        pdf_output_path = "logs.pdf"
+        doc = SimpleDocTemplate(pdf_output_path, pagesize=letter)
+        styles = getSampleStyleSheet()
+
+        # Initialize list to store content
+        content = []
+
+        # Iterate over pairs
+        for pair in data_stored:
+            header = pair["header"]
+            string = pair["string"]
+            strings = string.split("<br>")
+
+            # Add header to content
+            content.append(Paragraph(f"<b>{header}</b>", styles["Heading1"]))
+
+            # Add normal string if it exists
+            for substring in strings:
+                content.append(Paragraph(substring, styles["Normal"]))
+
+        # Add content to the PDF document
+        doc.build(content)
+
+        # Send the PDF file as a response
+        response = send_file(pdf_output_path)
+
+        # Delete the PDF file after it has been sent
+        #os.remove(pdf_output_path)
+
+        return response
+    
+    
     
     return app
     
