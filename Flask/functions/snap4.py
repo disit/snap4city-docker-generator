@@ -677,7 +677,7 @@ def adjust_dashboard_menu_dump(iot_app_amount, add_checker=False): #make iotapps
     return str_to_add+adjust_dashboard_menu_for_filemanager()+add_file_model_definition()
 
 def adjust_dashboard_menu_for_filemanager():
-    str_to_add = '''\nINSERT INTO `Dashboard`.`MainMenuSubmenus` (`id`, `menu`, `linkUrl`, `linkId`, `icon`, `text`, `privileges`, `userType`, `externalApp`, `openMode`, `iconColor`, `pageTitle`, `menuOrder`, `organizations`) VALUES ('10245', '1095', '../management/filemanager.php', 'filamanager', 'fa fa-server', 'Filamanager', "[\'RootAdmin\', \'ToolAdmin\', \'AreaManager\', \'Manager\']", 'any', 'yes', 'iframe', '#66ee22', 'FileManager', '100', '*');'''
+    str_to_add = '''\nINSERT INTO `Dashboard`.`MainMenuSubmenus` (`id`, `menu`, `linkUrl`, `linkId`, `icon`, `text`, `privileges`, `userType`, `externalApp`, `openMode`, `iconColor`, `pageTitle`, `menuOrder`, `organizations`) VALUES ('10245', '1095', '../management/filemanager.php', 'filemanager', 'fa fa-server', 'Filemanager', "[\'RootAdmin\', \'ToolAdmin\', \'AreaManager\', \'Manager\']", 'any', 'yes', 'iframe', '#66ee22', 'FileManager', '100', '*');'''
     # INSERT INTO `Dashboard`.`MainMenuSubmenus` values (277,1095,'https://processloader.snap4city.org/management/filemanager.php',NULL,'psLink2hh','fa fa-download','Filemanager','[\'*\']','any','yes','iframe','#41b5f4','Filemanager',7,'')
     return str_to_add
 
@@ -761,7 +761,7 @@ def make_sql_normal(file_location, broker_ip, iotapps, broker_data, add_checker=
 
 def make_sql_small(file_location_1, file_location_2, broker_ip, iotapps, broker_data):
     filemanagerstring = ""
-    with open("../Modules/database/filamanager.sql", 'w') as filemanagerstuff:
+    with open("./Modules/database/filemanager.sql", 'r') as filemanagerstuff:
         filemanagerstring = filemanagerstuff.read()
     brokers = iotbroker_add(broker_ip,broker_data)
     with open(file_location_1, 'w') as f:

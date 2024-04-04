@@ -12,7 +12,6 @@ services:
         max-file: "${S4C_LOG_MAX_FILE:-10}"
     volumes:
       - dashboarddb:/var/lib/mysql
-      - ./mariadb-conf:/etc/mysql/mariadb.conf.d
 
     environment:
       TZ: "Europe/Rome"

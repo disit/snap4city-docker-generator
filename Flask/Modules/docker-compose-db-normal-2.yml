@@ -12,9 +12,6 @@ services:
         max-file: "${S4C_LOG_MAX_FILE:-10}"
     volumes:
       - dashboarddb:/var/lib/mysql
-      - ./mariadb-conf:/etc/mysql/mariadb.conf.d
-
-      - ./database/iot-directory.sql:/docker-entrypoint-initdb.d/6_init.sql
     environment:
       TZ: "Europe/Rome"
       MYSQL_ALLOW_EMPTY_PASSWORD: "no"

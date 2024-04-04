@@ -680,7 +680,7 @@ esac
                 #make_apache_proxy_conf_small('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
                 descriptor=post['$#Time#$']+'-'+post['# of IoT-Apps']+'-'+iotbrokers+'-'
                 snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
-                snap4.fix_service_map_config('./Output/'+token+'/'+ips[2]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
+                snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
                 snap4.make_multiple_brokers(iotbrokers,'./Output/'+token+'/'+ips[3],'docker-compose-iotobsf-small.yml',fine_as_is)
                 snap4.make_sql_small('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', './Output/'+token+'/'+ips[0]+'/database/preconfig.sql', ips[3], int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
@@ -699,14 +699,14 @@ esac
                         pass
                 for i in range(len(ips)): # one single compose in each VM
                     snap4.merge_yaml('./Output/'+token+'/'+ips[i])
-                os.rename('./Output/'+token+'/'+ips[2]+'/pre-post-setup.sh','./Output/'+token+'/'+ips[2]+'/post-setup.sh')
+                #os.rename('./Output/'+token+'/'+ips[2]+'/pre-post-setup.sh','./Output/'+token+'/'+ips[2]+'/post-setup.sh')
                 if fine_as_is["$#base-protocol#$"] == "https":
                     snap4.make_ngnix_small_ssl('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)
                     snap4.copy('./Modules/enc.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt.sh')
                     snap4.copy('./Modules/letsencrypt-renew.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh')
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt.sh', fine_as_is)
-                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt-renew', fine_as_is)
-                    with open('./Output/'+token+'/'+ips[0]+'/post-setup.sh', 'r') as f:
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh', fine_as_is)
+                    with open('./Output/'+token+'/'+ips[0]+'/post-setup-wsserver.sh', 'r') as f:
                         quick_fix=f.read()
                         quick_fix="""#!/bin/bash
 
@@ -720,7 +720,7 @@ case $yn in
 		exit 1;;
 esac
 """ + quick_fix
-                    with open('./Output/'+token+'/'+ips[0]+'/post-setup.sh', 'w') as f:
+                    with open('./Output/'+token+'/'+ips[0]+'/post-setup-wsserver.sh', 'w') as f:
                         f.write(quick_fix)
                 else:
                     snap4.make_ngnix_small('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)
