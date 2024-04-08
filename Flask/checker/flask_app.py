@@ -18,6 +18,8 @@ import subprocess
 from flask import Flask, jsonify, render_template, request, send_file
 import mysql.connector
 import json
+import os
+from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
@@ -221,19 +223,34 @@ def create_app():
         
         # Create a PDF document
         pdf_output_path = "logs.pdf"
-        doc = SimpleDocTemplate(pdf_output_path, pagesize=letter)
+        doc = SimpleDocTemplate(pdf_output_path, pagesize=letter, leftMargin=0.5*inch, rightMargin=0.5*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
         styles = getSampleStyleSheet()
 
         # Initialize list to store content
         content = []
-
+        extra_logs = []
         # index
         content.append(Paragraph("The following are hyperlinks to logs of each container.", styles["Heading1"]))
         for pair in data_stored:
+            if pair["header"] in ['dashboard-backend','myldap']:
+                continue
             content.append(Paragraph(f'<a href="#{pair["header"]}" color="blue">{pair["header"]}</a>', styles["Normal"]))
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        for root, dirs, files in os.walk(os.path.join(current_dir, os.pardir)):
+            if 'log.txt' in files:
+                logs_file_path = os.path.join(root, 'log.txt')
+                with open(logs_file_path, 'r') as file:
+                    content.append(Paragraph('<a href="#iot-directory-log" color="blue">iot-directory-log</a>', styles["Normal"]))
+                    extra_logs.append(Paragraph(f'<b><a name={file.read()}></a>{file.read()}</b>', styles["Heading1"]))
+                break  # Stop searching after finding the first occurrence
+        else:
+            print("")
         content.append(PageBreak())
         # Iterate over pairs
         for pair in data_stored:
+            if pair["header"] in ['dashboard-backend','myldap']:
+                continue
             header = pair["header"]
             string = pair["string"]
             strings = string.split("<br>")
@@ -244,7 +261,9 @@ def create_app():
             # Add normal string if it exists
             for substring in strings:
                 content.append(Paragraph(substring, styles["Normal"]))
-
+            content.append(PageBreak())
+        for extra in extra_logs:
+            content.append(extra)
         # Add content to the PDF document
         doc.build(content)
 

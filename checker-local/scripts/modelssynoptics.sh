@@ -1,6 +1,4 @@
 #!bin/bash
-cd modeldevice
-
 while getopts u:p: flag
 do
     case "${flag}" in
@@ -8,4 +6,4 @@ do
         p) password_v=${OPTARG};;
     esac
 done
-python3 modeldevice+synoptics.py $username_v $password_v True
+python3 scripts/modeldevice/modeldevice+synoptics.py $username_v $password_v True

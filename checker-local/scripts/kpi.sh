@@ -1,6 +1,4 @@
 #!bin/bash
-cd kpi
-
 while getopts u:p: flag
 do
     case "${flag}" in
@@ -8,4 +6,4 @@ do
         p) password_v=${OPTARG};;
     esac
 done
-python3 kpi.py $username_v $password_v
+python3 scripts/kpi/kpi.py $username_v $password_v

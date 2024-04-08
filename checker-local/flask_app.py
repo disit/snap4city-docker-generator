@@ -18,9 +18,9 @@ import subprocess
 from flask import Flask, jsonify, render_template, request, send_file
 import mysql.connector
 import json
-import os
+from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
 
 
@@ -198,7 +198,7 @@ def create_app():
         container_name = subprocess.run('docker ps -a -f id='+container_id+' --format "{{.Names}}"', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n')[0]
         return render_template('log_show.html', container_id = container_id, r = r, container_name=container_name)
     
-    def get_container_data(do_not_jsonify=True):
+    def get_container_data(do_not_jsonify=False):
         containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
         containers_stats = [b for b in (subprocess.run('docker stats --format json -a --no-stream', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
         containers_merged = []
@@ -213,21 +213,27 @@ def create_app():
             return containers_merged
         return jsonify(containers_merged)
     
-    @app.route('/generate_pdf')
+    @app.route('/generate_pdf', methods=['POST'])
     def generate_pdf():
         data_stored = []
-        for container_data in get_container_data():
+        for container_data in get_container_data(True):
             r = '<br>'.join(subprocess.run('docker logs '+container_data['ID'] + ' --tail 500', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
             data_stored.append({"header": container_data['Name'], "string": r})
         
         # Create a PDF document
         pdf_output_path = "logs.pdf"
-        doc = SimpleDocTemplate(pdf_output_path, pagesize=letter)
+        doc = SimpleDocTemplate(pdf_output_path, pagesize=letter, leftMargin=0.5*inch, rightMargin=0.5*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
         styles = getSampleStyleSheet()
 
         # Initialize list to store content
         content = []
 
+        # index
+        content.append(Paragraph("The following are hyperlinks to logs of each container.", styles["Heading1"]))
+        for pair in data_stored:
+            content.append(Paragraph(f'<a href="#{pair["header"]}" color="blue">{pair["header"]}</a>', styles["Normal"]))
+            
+        content.append(PageBreak())
         # Iterate over pairs
         for pair in data_stored:
             header = pair["header"]
@@ -235,20 +241,18 @@ def create_app():
             strings = string.split("<br>")
 
             # Add header to content
-            content.append(Paragraph(f"<b>{header}</b>", styles["Heading1"]))
+            content.append(Paragraph(f'<b><a name={header}></a>{header}</b>', styles["Heading1"]))
 
             # Add normal string if it exists
             for substring in strings:
                 content.append(Paragraph(substring, styles["Normal"]))
+            content.append(PageBreak())
 
         # Add content to the PDF document
         doc.build(content)
 
         # Send the PDF file as a response
         response = send_file(pdf_output_path)
-
-        # Delete the PDF file after it has been sent
-        #os.remove(pdf_output_path)
 
         return response
     

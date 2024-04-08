@@ -206,7 +206,7 @@ function getTestResult(container) {
   
 function makeTable(containerdata) {
 
-    const headerData = ["Disk Data I/0", "CPU%", "ContainerID", "Image", "Mem%", "Mem Used / Mem Max", "Container Name", "Network I/O", "Ports", "Running for / Exited since", "Size", "Status", "Reboot", "Is alive test", "Last tests results"];
+    const headerData = ["Disk Data I/0", "CPU%", "ContainerID (click for container-logs)", "Image", "Mem%", "Mem Used / Mem Max", "Container Name", "Network I/O", "Ports", "Running for / Exited since", "Size", "Status", "Reboot", "Is alive test", "Last tests results"];
     //const rowData = containerdata.split('\n');
     //rowData.pop();
     /*
@@ -326,7 +326,7 @@ function makeTable(containerdata) {
 <label for="freezecontainers">Stop containers refresh</label>
 <input type="checkbox" id="freezecontainers">
 <form action="generate_pdf">
-    <input type="submit" class="btn btn-info" value="Generate pdf with all container logs" />
+    <input type="submit" class="btn btn-info" value="Generate pdf with all container logs (might take several seconds)" />
 </form>
 <div id="output" class="main">
     <br>
