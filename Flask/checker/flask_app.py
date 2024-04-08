@@ -12,8 +12,6 @@ GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.'''
-
-
 import subprocess
 from flask import Flask, jsonify, render_template, request, send_file
 import mysql.connector
@@ -23,8 +21,6 @@ from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
-
-
 
 # edit this block according to your mysql server's configuration
 db_conn_info = {
@@ -48,14 +44,11 @@ def create_app():
                 cursor.execute(query)
                 conn.commit()
                 results = cursor.fetchall()
-                
                 return render_template("checker.html",extra=results)
         except Exception as e:
             print("Something went wrong because of",e)
             return render_template("error_showing.html", r = e)
         
-
-
     @app.route("/read_containers", methods=['POST','GET'])
     def check():
         if request.method == "POST":
@@ -81,13 +74,10 @@ def create_app():
                     total_result = ""
                     for r in list(results):
                         command_ran = subprocess.run(r[0], shell=True, capture_output=True, text=True, encoding="cp437").stdout
-                        
                         total_result += command_ran
                         query_1 = 'insert into tests_results (datetime, result, container, command) values (now(), %s, %s, %s);'
                         cursor.execute(query_1,(command_ran, request.form.to_dict()['container'],r[0],))
-                        
                         conn.commit()
-                        
                         log_to_db('test_ran', "result was "+command_ran)
                     return jsonify(results)
             except Exception as e:
@@ -123,9 +113,7 @@ def create_app():
                         total_result += string_used
                         query_1 = 'insert into tests_results (datetime, result, container, command) values (now(), %s, %s, %s);'
                         cursor.execute(query_1,(string_used, test_name,r[0],))
-                        
                         conn.commit()
-                        
                         log_to_db('test_ran', "result was "+string_used)
                     return jsonify(total_result)
             except Exception as e:
@@ -160,7 +148,6 @@ def create_app():
                     conn.commit()
                     log_to_db('getting_tests', 'Tests results were read')
                     results = cursor.fetchall()
-                    
                     return jsonify(results)
             except Exception as e:
                 print("Something went wrong because of",e)
@@ -190,7 +177,6 @@ def create_app():
             err = '<p style="color:#FF0000";>'+err+'</p>'
         if len(err)==0 and len(out)==0:
             out = '<input type="button" name="db-success" id="db-success" value="Success! Click to reload" class="form-control" onclick="location.reload()"/>'
-            
         return err+out
     
     @app.route("/container/<container_id>")
@@ -221,15 +207,11 @@ def create_app():
             r = '<br>'.join(subprocess.run('docker logs '+container_data['ID'] + ' --tail 500', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
             data_stored.append({"header": container_data['Name'], "string": r})
         
-        # Create a PDF document
         pdf_output_path = "logs.pdf"
         doc = SimpleDocTemplate(pdf_output_path, pagesize=letter, leftMargin=0.5*inch, rightMargin=0.5*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
         styles = getSampleStyleSheet()
-
-        # Initialize list to store content
         content = []
         extra_logs = []
-        # index
         content.append(Paragraph("The following are hyperlinks to logs of each container.", styles["Heading1"]))
         for pair in data_stored:
             if pair["header"] in ['dashboard-backend','myldap']:
@@ -242,40 +224,27 @@ def create_app():
                 logs_file_path = os.path.join(root, 'log.txt')
                 with open(logs_file_path, 'r') as file:
                     content.append(Paragraph('<a href="#iot-directory-log" color="blue">iot-directory-log</a>', styles["Normal"]))
-                    extra_logs.append(Paragraph(f'<b><a name={file.read()}></a>{file.read()}</b>', styles["Heading1"]))
-                break  # Stop searching after finding the first occurrence
-        else:
-            print("")
+                    extra_logs.append(Paragraph(f'<b><a name=iot-directory-log></a>iot-directory-log</b>', styles["Heading1"]))
+                    extra_logs.append(Paragraph(file.read(), styles["Normal"]))
+                break
         content.append(PageBreak())
-        # Iterate over pairs
         for pair in data_stored:
             if pair["header"] in ['dashboard-backend','myldap']:
                 continue
             header = pair["header"]
             string = pair["string"]
             strings = string.split("<br>")
-
-            # Add header to content
             content.append(Paragraph(f'<b><a name={header}></a>{header}</b>', styles["Heading1"]))
-
-            # Add normal string if it exists
             for substring in strings:
                 content.append(Paragraph(substring, styles["Normal"]))
             content.append(PageBreak())
         for extra in extra_logs:
             content.append(extra)
-        # Add content to the PDF document
         doc.build(content)
-
-        # Send the PDF file as a response
         response = send_file(pdf_output_path)
-
         return response
-    
-    
     
     return app
     
-
 if __name__ == "__main__":
     create_app().run(host='localhost', port=4080)

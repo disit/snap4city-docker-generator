@@ -1,19 +1,14 @@
 '''Copyright (C) 2023 DISIT Lab http://www.disit.org - University of Florence
-
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
 published by the Free Software Foundation, either version 3 of the
 License, or (at your option) any later version.
-
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
-
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.'''
-
-
 import subprocess
 from flask import Flask, jsonify, render_template, request, send_file
 import mysql.connector
@@ -22,9 +17,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
-
-
-
+import os
 # edit this block according to your mysql server's configuration
 db_conn_info = {
         "user": "root",
@@ -53,8 +46,6 @@ def create_app():
             print("Something went wrong because of",e)
             return render_template("error_showing.html", r = e)
         
-
-
     @app.route("/read_containers", methods=['POST','GET'])
     def check():
         if request.method == "POST":
@@ -213,7 +204,7 @@ def create_app():
             return containers_merged
         return jsonify(containers_merged)
     
-    @app.route('/generate_pdf', methods=['POST'])
+    @app.route('/generate_pdf')
     def generate_pdf():
         data_stored = []
         for container_data in get_container_data(True):
@@ -224,42 +215,56 @@ def create_app():
         pdf_output_path = "logs.pdf"
         doc = SimpleDocTemplate(pdf_output_path, pagesize=letter, leftMargin=0.5*inch, rightMargin=0.5*inch, topMargin=0.5*inch, bottomMargin=0.5*inch)
         styles = getSampleStyleSheet()
-
         # Initialize list to store content
         content = []
-
+        extra_logs = []
         # index
         content.append(Paragraph("The following are hyperlinks to logs of each container.", styles["Heading1"]))
         for pair in data_stored:
+            if pair["header"] in ['dashboard-backend','myldap']:
+                continue
             content.append(Paragraph(f'<a href="#{pair["header"]}" color="blue">{pair["header"]}</a>', styles["Normal"]))
-            
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        for root, dirs, files in os.walk(os.path.join(current_dir, os.pardir)):
+            if 'log.txt' in files:
+                logs_file_path = os.path.join(root, 'log.txt')
+                with open(logs_file_path, 'r') as file:
+                    content.append(Paragraph('<a href="#iot-directory-log" color="blue">iot-directory-log</a>', styles["Normal"]))
+                    extra_logs.append(Paragraph(f'<b><a name=iot-directory-log></a>iot-directory-log</b>', styles["Heading1"]))
+                    extra_logs.append(Paragraph(file.read(), styles["Normal"]))
+                break  # Stop searching after finding the first occurrence
+        else:
+            print("")
         content.append(PageBreak())
         # Iterate over pairs
         for pair in data_stored:
+            if pair["header"] in ['dashboard-backend','myldap']:
+                continue
             header = pair["header"]
             string = pair["string"]
             strings = string.split("<br>")
-
             # Add header to content
             content.append(Paragraph(f'<b><a name={header}></a>{header}</b>', styles["Heading1"]))
-
             # Add normal string if it exists
             for substring in strings:
                 content.append(Paragraph(substring, styles["Normal"]))
             content.append(PageBreak())
-
+        for extra in extra_logs:
+            content.append(extra)
         # Add content to the PDF document
         doc.build(content)
-
         # Send the PDF file as a response
         response = send_file(pdf_output_path)
-
         return response
     
     
     
     return app
     
-
+    
+    
+    return app
+    
 if __name__ == "__main__":
     create_app().run(host='localhost', port=4080)
