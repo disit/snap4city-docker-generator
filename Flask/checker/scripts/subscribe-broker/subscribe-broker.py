@@ -43,7 +43,7 @@ def main():
     url = f"{data_json['url']}/iot-directory/api/contextbroker.php"
     url = url + "?token=" + accessToken(data_json)
     url = url + "&action=update&name=orion-1&kind=internal&path=&version=v2&visibility=&ip=orion-001&port=1026&protocol=ngsi&login=login&password=login"
-    url = url + f"&latitude={data_json['latitude']}&longitude={data_json['longitude']}&createdDate=2024-01-11+09%3A21%3A42&accesslink=orion-broker-filter-001&accessport=8443&apikey=null&sha=&urlnificallback=http%3A%2F%2Fnifi%3A1030%2Fingestngsi&services=%5B%5D&log_orion=0&nodered="
+    url = url + f"&latitude={data_json['latitude']}&longitude={data_json['longitude']}&createdDate=2024-01-11+09%3A21%3A42&accesslink=orionbrokerfilter-001&accessport=8443&apikey=null&sha=&urlnificallback=http%3A%2F%2Fnifi%3A1030%2Fingestngsi&services=%5B%5D&log_orion=0&nodered="
     header={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8'}
     print(url)
     response=requests.request("POST", url,headers=header)
