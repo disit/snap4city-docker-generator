@@ -6,7 +6,6 @@ chmod a+w nifi/extensions
 chmod a+w nifi/logs
 chmod 777 varnish/docker-entrypoint
 chmod u+x opensearch-conf/gen-certs.sh
-mkdir -p datamanager-conf
 #chmod a+w ckan-conf
 sysctl -w vm.max_map_count=262144
 

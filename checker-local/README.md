@@ -12,6 +12,8 @@ They all say Success or Failure
 
 For Kafka you will need to install a package -> `apt-get install kafkacat`; you might need admin privileges to install it
 
+To generate the pdf you need to install a Python package `reportlab`
+
 If this doesn't run be sure to update Python (3.9 minimum), Flask and mysql-connector-python for python (use apt-get and pip)
 
 You will also need docker (not sure which one is enough but 20.whatever wasn't good and 23 was) (again, use apt-get)
