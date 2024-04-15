@@ -218,6 +218,24 @@ def create_app():
         # Initialize list to store content
         content = []
         extra_logs = []
+        tests_out = None
+        extra_tests = []
+        
+        try:
+            with mysql.connector.connect(**db_conn_info) as conn:
+                cursor = conn.cursor(buffered=True)
+                query = '''WITH RankedEntries AS ( 
+                    SELECT *, ROW_NUMBER() OVER (PARTITION BY container ORDER BY datetime DESC) AS row_num FROM tests_results
+                    ) 
+                    SELECT * FROM RankedEntries WHERE row_num = 1;'''
+                cursor.execute(query)
+                conn.commit()
+                log_to_db('getting_tests', 'Tests results were read')
+                results = cursor.fetchall()
+                print(type(results), results, type(results[0][3]), results[0][3])
+                tests_out = results
+        except Exception as e:
+            print("Something went wrong because of",e)
         # index
         content.append(Paragraph("The following are hyperlinks to logs of each container.", styles["Heading1"]))
         for pair in data_stored:
@@ -234,9 +252,14 @@ def create_app():
                     extra_logs.append(Paragraph(f'<b><a name=iot-directory-log></a>iot-directory-log</b>', styles["Heading1"]))
                     extra_logs.append(Paragraph(file.read(), styles["Normal"]))
                 break  # Stop searching after finding the first occurrence
-        else:
-            print("")
+        for test in tests_out:
+            if not test:
+                break
+            content.append(Paragraph(f'<a href="#{test[3]}" color="blue">{test[3]}</a>', styles["Normal"]))
+            extra_tests.append(test)
         content.append(PageBreak())
+        
+        
         # Iterate over pairs
         for pair in data_stored:
             if pair["header"] in ['dashboard-backend','myldap']:
@@ -252,6 +275,10 @@ def create_app():
             content.append(PageBreak())
         for extra in extra_logs:
             content.append(extra)
+        content.append(PageBreak())
+        for test in extra_tests:
+            content.append(Paragraph(f'<b><a name="{test[3]}"></a>{test[3]}</b>', styles["Heading1"]))
+            content.append(Paragraph(test[2], styles["Normal"]))
         # Add content to the PDF document
         doc.build(content)
         # Send the PDF file as a response
@@ -262,9 +289,6 @@ def create_app():
     
     return app
     
-    
-    
-    return app
     
 if __name__ == "__main__":
     create_app().run(host='localhost', port=4080)
