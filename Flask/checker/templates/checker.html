@@ -259,6 +259,13 @@ function makeTable(containerdata) {
                     var content_of_id_cell = '<a target="_blank" href="/container/'+cellData+'">'+cellData+'</a>';
                     td.innerHTML = content_of_id_cell;
                 }
+                else if (index_of_below_array === 20) {
+                    var content_of_id_cell;
+                    if (cellData === "running")
+                        content_of_id_cell = cellData + '<span style="color: green">●</span>';
+                        else content_of_id_cell = cellData + '<span style="color: red">●</span>';
+                    td.innerHTML = content_of_id_cell;
+                }
                 else {
                     td.textContent = cellData;
                 }

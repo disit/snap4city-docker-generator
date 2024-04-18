@@ -15,10 +15,56 @@
     <defaultBackPressureObjectThreshold>10000</defaultBackPressureObjectThreshold>
     <defaultBackPressureDataSizeThreshold>1 GB</defaultBackPressureDataSizeThreshold>
     <processor>
+      <id>10001181-1ab2-1415-081e-c1e2abc17b46</id>
+      <versionedComponentId>dde87f18-6eed-3e14-94fc-7bb1c9c335a6</versionedComponentId>
+      <name>ControlRate</name>
+      <position x="3856.0" y="-352.0"/>
+      <styles/>
+      <comment/>
+      <class>org.apache.nifi.processors.standard.ControlRate</class>
+      <bundle>
+        <group>org.apache.nifi</group>
+        <artifact>nifi-standard-nar</artifact>
+        <version>1.16.2</version>
+      </bundle>
+      <maxConcurrentTasks>1</maxConcurrentTasks>
+      <schedulingPeriod>0 sec</schedulingPeriod>
+      <penalizationPeriod>30 sec</penalizationPeriod>
+      <yieldPeriod>1 sec</yieldPeriod>
+      <bulletinLevel>WARN</bulletinLevel>
+      <lossTolerant>false</lossTolerant>
+      <scheduledState>RUNNING</scheduledState>
+      <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
+      <executionNode>ALL</executionNode>
+      <runDurationNanos>0</runDurationNanos>
+      <retryCount>10</retryCount>
+      <backoffMechanism>PENALIZE_FLOWFILE</backoffMechanism>
+      <maxBackoffPeriod>10 mins</maxBackoffPeriod>
+      <property>
+        <name>Rate Control Criteria</name>
+        <value>flowfile count</value>
+      </property>
+      <property>
+        <name>Maximum Rate</name>
+        <value>60</value>
+      </property>
+      <property>
+        <name>Rate Controlled Attribute</name>
+      </property>
+      <property>
+        <name>Time Duration</name>
+        <value>1 min</value>
+      </property>
+      <property>
+        <name>Grouping Attribute</name>
+      </property>
+      <autoTerminatedRelationship>failure</autoTerminatedRelationship>
+    </processor>
+    <processor>
       <id>23b41aaf-1000-1181-6275-6bfdf0c2dcb7</id>
       <versionedComponentId>d3468eb0-3ec6-3550-9a59-c42285d942b5</versionedComponentId>
       <name>CheckRetries</name>
-      <position x="2392.0" y="-32.0"/>
+      <position x="2432.0" y="-376.0"/>
       <styles/>
       <comment/>
       <class>org.apache.nifi.processors.script.ExecuteScript</class>
@@ -77,10 +123,48 @@ if (flowFile != None):
       </property>
     </processor>
     <processor>
+      <id>27c0a28f-0186-1000-c4d9-0be6c812c3dc</id>
+      <versionedComponentId>94745410-d289-3408-ac0b-891baaebbc9a</versionedComponentId>
+      <name>RouteOnly time_slack&gt;0</name>
+      <position x="2496.0" y="768.0"/>
+      <styles/>
+      <comment/>
+      <class>org.apache.nifi.processors.standard.RouteOnAttribute</class>
+      <bundle>
+        <group>org.apache.nifi</group>
+        <artifact>nifi-standard-nar</artifact>
+        <version>1.16.2</version>
+      </bundle>
+      <maxConcurrentTasks>8</maxConcurrentTasks>
+      <schedulingPeriod>0 sec</schedulingPeriod>
+      <penalizationPeriod>30 sec</penalizationPeriod>
+      <yieldPeriod>1 sec</yieldPeriod>
+      <bulletinLevel>WARN</bulletinLevel>
+      <lossTolerant>false</lossTolerant>
+      <scheduledState>RUNNING</scheduledState>
+      <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
+      <executionNode>ALL</executionNode>
+      <runDurationNanos>0</runDurationNanos>
+      <retryCount>10</retryCount>
+      <backoffMechanism>PENALIZE_FLOWFILE</backoffMechanism>
+      <maxBackoffPeriod>10 mins</maxBackoffPeriod>
+      <property>
+        <name>Routing Strategy</name>
+        <value>Route to 'match' if any matches</value>
+      </property>
+      <property>
+        <name>ok</name>
+        <value>${
+time_slack:toNumber():ge(0)
+}</value>
+      </property>
+      <autoTerminatedRelationship>unmatched</autoTerminatedRelationship>
+    </processor>
+    <processor>
       <id>64151ab2-1000-1181-530a-00247fc934a1</id>
       <versionedComponentId>9446dbc6-eb56-3ca2-9417-e097a1c87993</versionedComponentId>
       <name>ControlRate</name>
-      <position x="2384.0" y="-304.0"/>
+      <position x="2424.0" y="-648.0"/>
       <styles/>
       <comment/>
       <class>org.apache.nifi.processors.standard.ControlRate</class>
@@ -215,7 +299,7 @@ if (flowFile != None):
       <id>1ab26415-0181-1000-9f87-087e5a4cc596</id>
       <versionedComponentId>b170abe1-8146-3c33-bdaa-c47fd5af5aa3</versionedComponentId>
       <name>ControlRate</name>
-      <position x="672.0" y="32.0"/>
+      <position x="568.0" y="40.0"/>
       <styles/>
       <comment/>
       <class>org.apache.nifi.processors.standard.ControlRate</class>
@@ -373,15 +457,15 @@ if (flowFile != None):
       </property>
       <property>
         <name>PREFIX</name>
-        <value>${Fiware-Service:notNull():ifElse(
+        <value>${Fiware-Service:notNull():ifElse( 
     ${Fiware-ServicePath:notNull():ifElse(
-        ${Fiware-Service:append('.'):append(${Fiware-ServicePath}):append('.')} ,
+        ${Fiware-Service:append('.'):append(${Fiware-ServicePath}):append('.')} , 
         ${Fiware-Servicepath:notNull():ifElse(
             ${Fiware-Service:append('.'):append( ${Fiware-Servicepath:append('.')} )} ,
             ${Fiware-Service:append('.')}
         )}
-	)} ,
-    ''
+	)} , 
+    ''  
 )}</value>
       </property>
       <property>
@@ -389,6 +473,116 @@ if (flowFile != None):
         <value>id</value>
       </property>
       <autoTerminatedRelationship>FAILURE_REALTIONSHIP</autoTerminatedRelationship>
+    </processor>
+    <processor>
+      <id>c3d33273-0188-1000-50fb-0714eb985386</id>
+      <versionedComponentId>231bb817-01b4-3a3d-9477-6e4680f7728b</versionedComponentId>
+      <name>CryptographicHashAttribute</name>
+      <position x="2760.0" y="-144.0"/>
+      <styles/>
+      <comment/>
+      <class>org.apache.nifi.processors.standard.CryptographicHashAttribute</class>
+      <bundle>
+        <group>org.apache.nifi</group>
+        <artifact>nifi-standard-nar</artifact>
+        <version>1.16.2</version>
+      </bundle>
+      <maxConcurrentTasks>1</maxConcurrentTasks>
+      <schedulingPeriod>0 sec</schedulingPeriod>
+      <penalizationPeriod>30 sec</penalizationPeriod>
+      <yieldPeriod>1 sec</yieldPeriod>
+      <bulletinLevel>WARN</bulletinLevel>
+      <lossTolerant>false</lossTolerant>
+      <scheduledState>RUNNING</scheduledState>
+      <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
+      <executionNode>ALL</executionNode>
+      <runDurationNanos>0</runDurationNanos>
+      <retryCount>10</retryCount>
+      <backoffMechanism>PENALIZE_FLOWFILE</backoffMechanism>
+      <maxBackoffPeriod>10 mins</maxBackoffPeriod>
+      <property>
+        <name>character_set</name>
+        <value>UTF-8</value>
+      </property>
+      <property>
+        <name>fail_when_empty</name>
+        <value>true</value>
+      </property>
+      <property>
+        <name>hash_algorithm</name>
+        <value>SHA3-256</value>
+      </property>
+      <property>
+        <name>missing_attr_policy</name>
+        <value>PROHIBIT</value>
+      </property>
+      <property>
+        <name>es_id</name>
+        <value>es_id</value>
+      </property>
+      <autoTerminatedRelationship>failure</autoTerminatedRelationship>
+    </processor>
+    <processor>
+      <id>10001181-1aaf-13b4-c948-2c7e683faf02</id>
+      <versionedComponentId>ec65ea77-0a0c-3f87-9f5c-4272c8b4ece0</versionedComponentId>
+      <name>CheckRetries</name>
+      <position x="3952.0" y="104.0"/>
+      <styles/>
+      <comment/>
+      <class>org.apache.nifi.processors.script.ExecuteScript</class>
+      <bundle>
+        <group>org.apache.nifi</group>
+        <artifact>nifi-scripting-nar</artifact>
+        <version>1.16.2</version>
+      </bundle>
+      <maxConcurrentTasks>1</maxConcurrentTasks>
+      <schedulingPeriod>0 sec</schedulingPeriod>
+      <penalizationPeriod>30 sec</penalizationPeriod>
+      <yieldPeriod>1 sec</yieldPeriod>
+      <bulletinLevel>WARN</bulletinLevel>
+      <lossTolerant>false</lossTolerant>
+      <scheduledState>RUNNING</scheduledState>
+      <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
+      <executionNode>ALL</executionNode>
+      <runDurationNanos>0</runDurationNanos>
+      <retryCount>10</retryCount>
+      <backoffMechanism>PENALIZE_FLOWFILE</backoffMechanism>
+      <maxBackoffPeriod>10 mins</maxBackoffPeriod>
+      <property>
+        <name>Script Engine</name>
+        <value>python</value>
+      </property>
+      <property>
+        <name>Script File</name>
+      </property>
+      <property>
+        <name>Script Body</name>
+        <value>retryAttrName = "retry.elastic"
+max = int(maxRetries.getValue())
+flowFile = session.get()
+
+if (flowFile != None):
+	retryAttr = flowFile.getAttribute( retryAttrName )
+	if( retryAttr == None ):
+		flowFile = session.putAttribute( flowFile , retryAttrName , '1' )
+		session.transfer( flowFile , REL_SUCCESS )
+	else:
+		retry = int(retryAttr)
+		if retry &lt;= max:
+			flowFile = session.putAttribute( flowFile , retryAttrName , str(retry+1) )
+			session.penalize( flowFile )
+			session.transfer( flowFile , REL_SUCCESS )
+		else:
+			flowFile = session.putAttribute( flowFile , "retry.failure" , "Max retries exceeded" )
+			session.transfer( flowFile , REL_FAILURE )</value>
+      </property>
+      <property>
+        <name>Module Directory</name>
+      </property>
+      <property>
+        <name>maxRetries</name>
+        <value>5</value>
+      </property>
     </processor>
     <processor>
       <id>01811000-23b4-1aaf-1e1d-132f25ab2bde</id>
@@ -515,6 +709,142 @@ if (flowFile != None):
       </property>
     </processor>
     <processor>
+      <id>c3d1064b-0188-1000-8083-1881e2bd5bf0</id>
+      <versionedComponentId>0f763ff5-833d-3118-bee9-d859433c19d1</versionedComponentId>
+      <name>Create_es_id_UpdateAttribute</name>
+      <position x="2144.0" y="-136.0"/>
+      <styles/>
+      <comment/>
+      <class>org.apache.nifi.processors.attributes.UpdateAttribute</class>
+      <bundle>
+        <group>org.apache.nifi</group>
+        <artifact>nifi-update-attribute-nar</artifact>
+        <version>1.16.2</version>
+      </bundle>
+      <maxConcurrentTasks>1</maxConcurrentTasks>
+      <schedulingPeriod>0 sec</schedulingPeriod>
+      <penalizationPeriod>30 sec</penalizationPeriod>
+      <yieldPeriod>1 sec</yieldPeriod>
+      <bulletinLevel>WARN</bulletinLevel>
+      <lossTolerant>false</lossTolerant>
+      <scheduledState>RUNNING</scheduledState>
+      <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
+      <executionNode>ALL</executionNode>
+      <runDurationNanos>0</runDurationNanos>
+      <retryCount>10</retryCount>
+      <backoffMechanism>PENALIZE_FLOWFILE</backoffMechanism>
+      <maxBackoffPeriod>10 mins</maxBackoffPeriod>
+      <property>
+        <name>Delete Attributes Expression</name>
+      </property>
+      <property>
+        <name>Store State</name>
+        <value>Do not store state</value>
+      </property>
+      <property>
+        <name>Stateful Variables Initial Value</name>
+      </property>
+      <property>
+        <name>canonical-value-lookup-cache-size</name>
+        <value>100</value>
+      </property>
+      <property>
+        <name>es_id</name>
+        <value>${serviceUri:append("/"):append(${date_time})}</value>
+      </property>
+    </processor>
+    <processor>
+      <id>251c108a-1000-116f-707c-69b8ecf62a77</id>
+      <versionedComponentId>1033ee7b-470c-397f-8d1d-6f843a18a49b</versionedComponentId>
+      <name>PutElasticsearchHttp</name>
+      <position x="3384.0" y="-144.0"/>
+      <styles/>
+      <comment/>
+      <class>org.apache.nifi.processors.elasticsearch.PutElasticsearchHttp</class>
+      <bundle>
+        <group>org.apache.nifi</group>
+        <artifact>nifi-elasticsearch-nar</artifact>
+        <version>1.16.2</version>
+      </bundle>
+      <maxConcurrentTasks>1</maxConcurrentTasks>
+      <schedulingPeriod>0 sec</schedulingPeriod>
+      <penalizationPeriod>30 sec</penalizationPeriod>
+      <yieldPeriod>1 sec</yieldPeriod>
+      <bulletinLevel>WARN</bulletinLevel>
+      <lossTolerant>false</lossTolerant>
+      <scheduledState>RUNNING</scheduledState>
+      <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
+      <executionNode>ALL</executionNode>
+      <runDurationNanos>0</runDurationNanos>
+      <retryCount>10</retryCount>
+      <backoffMechanism>PENALIZE_FLOWFILE</backoffMechanism>
+      <maxBackoffPeriod>10 mins</maxBackoffPeriod>
+      <property>
+        <name>elasticsearch-http-url</name>
+        <value>https://opensearch-n1:9200</value>
+      </property>
+      <property>
+        <name>SSL Context Service</name>
+        <value>03e54d47-017c-1000-02e3-e80e620c3d72</value>
+      </property>
+      <property>
+        <name>Character Set</name>
+        <value>UTF-8</value>
+      </property>
+      <property>
+        <name>Username</name>
+        <value>admin</value>
+      </property>
+      <property>
+        <name>Password</name>
+        <value>$#opensearch-admin-pwd#$</value>
+      </property>
+      <property>
+        <name>elasticsearch-http-connect-timeout</name>
+        <value>5 secs</value>
+      </property>
+      <property>
+        <name>elasticsearch-http-response-timeout</name>
+        <value>15 secs</value>
+      </property>
+      <property>
+        <name>proxy-configuration-service</name>
+      </property>
+      <property>
+        <name>elasticsearch-http-proxy-host</name>
+      </property>
+      <property>
+        <name>elasticsearch-http-proxy-port</name>
+      </property>
+      <property>
+        <name>proxy-username</name>
+      </property>
+      <property>
+        <name>proxy-password</name>
+      </property>
+      <property>
+        <name>put-es-id-attr</name>
+        <value>es_id</value>
+      </property>
+      <property>
+        <name>put-es-index</name>
+        <value>ot-device-state</value>
+      </property>
+      <property>
+        <name>put-es-type</name>
+        <value>_doc</value>
+      </property>
+      <property>
+        <name>put-es-batch-size</name>
+        <value>100</value>
+      </property>
+      <property>
+        <name>put-es-index-op</name>
+        <value>upsert</value>
+      </property>
+      <autoTerminatedRelationship>success</autoTerminatedRelationship>
+    </processor>
+    <processor>
       <id>7325f23c-4b6a-3b22-15df-ba11580464c7</id>
       <versionedComponentId>6dc0eccd-f3ad-3b65-a8bc-0059935e31b2</versionedComponentId>
       <name>ListenHTTP</name>
@@ -604,7 +934,7 @@ if (flowFile != None):
       <id>1aad35d4-0185-1000-c03b-af03fb6a85f2</id>
       <versionedComponentId>b01c5cfc-f115-30f8-96b9-51b19aded6a9</versionedComponentId>
       <name>RouteOnlyDateTimeIn24h</name>
-      <position x="2496.0" y="768.0"/>
+      <position x="2952.0" y="768.0"/>
       <styles/>
       <comment/>
       <class>org.apache.nifi.processors.standard.RouteOnAttribute</class>
@@ -619,7 +949,7 @@ if (flowFile != None):
       <yieldPeriod>1 sec</yieldPeriod>
       <bulletinLevel>WARN</bulletinLevel>
       <lossTolerant>false</lossTolerant>
-      <scheduledState>RUNNING</scheduledState>
+      <scheduledState>STOPPED</scheduledState>
       <schedulingStrategy>TIMER_DRIVEN</schedulingStrategy>
       <executionNode>ALL</executionNode>
       <runDurationNanos>0</runDurationNanos>
@@ -639,7 +969,7 @@ if (flowFile != None):
 				${date_time:contains("+"):ifElse(
 					"yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX" ,
 					"yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
-				)}
+				)} 
 		)},
     	"UTC")
     :toNumber()
@@ -652,7 +982,7 @@ if (flowFile != None):
       <id>016f1000-251c-108a-5062-a5eab49bf491</id>
       <versionedComponentId>9c5846a8-59b8-34f4-98fa-f3e2e26b3201</versionedComponentId>
       <name>PutElasticsearchHttp</name>
-      <position x="1768.0" y="-40.0"/>
+      <position x="1792.0" y="-440.0"/>
       <styles/>
       <comment/>
       <class>org.apache.nifi.processors.elasticsearch.PutElasticsearchHttp</class>
@@ -979,6 +1309,10 @@ if (flowFile != None):
         <value>timestamp</value>
       </property>
       <property>
+        <name>TIMESTAMP_THRESHOLD</name>
+        <value>24 h</value>
+      </property>
+      <property>
         <name>VALUE_FIELD_NAME</name>
         <value>value</value>
       </property>
@@ -1059,6 +1393,9 @@ if (flowFile != None):
         <value>1d</value>
       </property>
       <property>
+        <name>DEVICE_STATE_METRICS_ARRAYS</name>
+      </property>
+      <property>
         <name>deviceModel</name>
         <value>Service/features/properties/model</value>
       </property>
@@ -1080,9 +1417,19 @@ if (flowFile != None):
       </property>
     </processor>
     <funnel>
-      <id>01811003-6415-1ab2-a56e-1c48f5bae623</id>
-      <versionedComponentId>a473f712-e525-3813-ae82-6ec3f6dc7093</versionedComponentId>
-      <position x="2216.0" y="176.0"/>
+      <id>393959fc-0185-1000-8fe6-91d47952ca27</id>
+      <versionedComponentId>43e5eb2a-fefc-376e-a713-cdd21100af36</versionedComponentId>
+      <position x="2088.0" y="1064.0"/>
+    </funnel>
+    <funnel>
+      <id>10001185-1ab2-1415-f97b-72898a0b1e88</id>
+      <versionedComponentId>c9432bb9-0358-349c-a21a-913ce4e5e901</versionedComponentId>
+      <position x="4456.716616716616" y="-62.82317682317682"/>
+    </funnel>
+    <funnel>
+      <id>c3cff8b9-0188-1000-2daf-a8ec2c6aa1c6</id>
+      <versionedComponentId>889de656-50cd-366c-8fd8-973249bec6d1</versionedComponentId>
+      <position x="1840.0" y="-96.0"/>
     </funnel>
     <funnel>
       <id>b6e3c19e-017c-1000-31a1-a16bb6e53753</id>
@@ -1090,24 +1437,14 @@ if (flowFile != None):
       <position x="1064.0" y="1064.0"/>
     </funnel>
     <funnel>
-      <id>3ab458c1-0185-1000-436a-67894b142499</id>
-      <versionedComponentId>f4da38f8-4c52-398f-8e03-ab0eeba2886d</versionedComponentId>
-      <position x="1010.9630226745455" y="862.3641653844227"/>
-    </funnel>
-    <funnel>
       <id>016f1004-251c-108a-0353-0c3a82aa649f</id>
       <versionedComponentId>c2f25bea-6b3f-3f2b-870c-e4e42f2a0edf</versionedComponentId>
-      <position x="2912.0" y="152.0"/>
+      <position x="2928.0" y="-512.0"/>
     </funnel>
     <funnel>
-      <id>393959fc-0185-1000-8fe6-91d47952ca27</id>
-      <versionedComponentId>43e5eb2a-fefc-376e-a713-cdd21100af36</versionedComponentId>
-      <position x="2088.0" y="1064.0"/>
-    </funnel>
-    <funnel>
-      <id>1ab166f0-0181-1000-73e7-9e9cd497f516</id>
-      <versionedComponentId>faff271b-8865-39d4-bff6-362bcd48c26b</versionedComponentId>
-      <position x="1688.0" y="160.0"/>
+      <id>3ab458c1-0185-1000-436a-67894b142499</id>
+      <versionedComponentId>f4da38f8-4c52-398f-8e03-ab0eeba2886d</versionedComponentId>
+      <position x="952.0" y="864.0"/>
     </funnel>
     <funnel>
       <id>1ab1cc1f-0181-1000-5e9c-05db647333cb</id>
@@ -1115,14 +1452,24 @@ if (flowFile != None):
       <position x="1313.9818556263717" y="-132.07551039160165"/>
     </funnel>
     <funnel>
-      <id>e360a7c8-017a-1000-ea6d-f04d629dd3ff</id>
-      <versionedComponentId>3698bccb-750b-318c-a25c-3243164c3db4</versionedComponentId>
-      <position x="1736.0" y="640.0"/>
+      <id>01811003-6415-1ab2-a56e-1c48f5bae623</id>
+      <versionedComponentId>a473f712-e525-3813-ae82-6ec3f6dc7093</versionedComponentId>
+      <position x="2504.0" y="272.0"/>
     </funnel>
     <funnel>
       <id>7c666746-0184-1000-45d0-ee6b0716d08d</id>
       <versionedComponentId>25db2837-3798-321d-8cf6-619df1d263b6</versionedComponentId>
       <position x="3192.0" y="1112.0"/>
+    </funnel>
+    <funnel>
+      <id>1ab166f0-0181-1000-73e7-9e9cd497f516</id>
+      <versionedComponentId>faff271b-8865-39d4-bff6-362bcd48c26b</versionedComponentId>
+      <position x="1688.0" y="160.0"/>
+    </funnel>
+    <funnel>
+      <id>e360a7c8-017a-1000-ea6d-f04d629dd3ff</id>
+      <versionedComponentId>3698bccb-750b-318c-a25c-3243164c3db4</versionedComponentId>
+      <position x="1736.0" y="640.0"/>
     </funnel>
     <connection>
       <id>1ab28321-0181-1000-8991-ff9269262cce</id>
@@ -1167,6 +1514,28 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
+      <id>10001182-1ab2-1415-94ea-00a9fbed49a2</id>
+      <versionedComponentId>4ebce97d-dfd6-3c22-8e7a-4c57408eae21</versionedComponentId>
+      <name/>
+      <bendPoints/>
+      <labelIndex>1</labelIndex>
+      <zIndex>0</zIndex>
+      <sourceId>251c108a-1000-116f-707c-69b8ecf62a77</sourceId>
+      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
+      <sourceType>PROCESSOR</sourceType>
+      <destinationId>10001181-1aaf-13b4-c948-2c7e683faf02</destinationId>
+      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
+      <destinationType>PROCESSOR</destinationType>
+      <relationship>retry</relationship>
+      <relationship>failure</relationship>
+      <maxWorkQueueSize>10000</maxWorkQueueSize>
+      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
+      <flowFileExpiration>0 sec</flowFileExpiration>
+      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+      <partitioningAttribute/>
+      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+    </connection>
+    <connection>
       <id>1ab1e076-0181-1000-5e25-0c272db5b4a3</id>
       <versionedComponentId>d71bc87b-ccc4-3e93-b9db-f6b01c78b5fb</versionedComponentId>
       <name/>
@@ -1180,27 +1549,6 @@ if (flowFile != None):
       <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
       <destinationType>FUNNEL</destinationType>
       <relationship>failure</relationship>
-      <maxWorkQueueSize>1000000</maxWorkQueueSize>
-      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
-      <flowFileExpiration>0 sec</flowFileExpiration>
-      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
-      <partitioningAttribute/>
-      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
-    </connection>
-    <connection>
-      <id>1aaf3f9d-0185-1000-5397-8d0ce9439d59</id>
-      <versionedComponentId>cab92095-0f0d-30f2-ad1e-cfb5c5266d57</versionedComponentId>
-      <name/>
-      <bendPoints/>
-      <labelIndex>1</labelIndex>
-      <zIndex>0</zIndex>
-      <sourceId>1aad35d4-0185-1000-c03b-af03fb6a85f2</sourceId>
-      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
-      <sourceType>PROCESSOR</sourceType>
-      <destinationId>7c60437d-0184-1000-b990-1d3ed45f8bb7</destinationId>
-      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
-      <destinationType>PROCESSOR</destinationType>
-      <relationship>matched</relationship>
       <maxWorkQueueSize>1000000</maxWorkQueueSize>
       <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
       <flowFileExpiration>0 sec</flowFileExpiration>
@@ -1274,6 +1622,27 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
+      <id>251c108b-1000-116f-322e-fee2fe62e584</id>
+      <versionedComponentId>0d920b91-1048-3253-84ed-681c998eec27</versionedComponentId>
+      <name/>
+      <bendPoints/>
+      <labelIndex>1</labelIndex>
+      <zIndex>0</zIndex>
+      <sourceId>c3d33273-0188-1000-50fb-0714eb985386</sourceId>
+      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
+      <sourceType>PROCESSOR</sourceType>
+      <destinationId>251c108a-1000-116f-707c-69b8ecf62a77</destinationId>
+      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
+      <destinationType>PROCESSOR</destinationType>
+      <relationship>success</relationship>
+      <maxWorkQueueSize>10000</maxWorkQueueSize>
+      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
+      <flowFileExpiration>0 sec</flowFileExpiration>
+      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+      <partitioningAttribute/>
+      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+    </connection>
+    <connection>
       <id>64151ab6-1000-1181-efc8-c9b4e5a55a9a</id>
       <versionedComponentId>48ede171-b058-3f51-9d64-188621ff01f1</versionedComponentId>
       <name/>
@@ -1317,6 +1686,27 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
+      <id>27c8ea96-0186-1000-c02f-1329d07e5332</id>
+      <versionedComponentId>75a5f249-754f-3f41-bf32-3b401c14b1f1</versionedComponentId>
+      <name/>
+      <bendPoints/>
+      <labelIndex>1</labelIndex>
+      <zIndex>0</zIndex>
+      <sourceId>393959fc-0185-1000-8fe6-91d47952ca27</sourceId>
+      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
+      <sourceType>FUNNEL</sourceType>
+      <destinationId>27c0a28f-0186-1000-c4d9-0be6c812c3dc</destinationId>
+      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
+      <destinationType>PROCESSOR</destinationType>
+      <relationship/>
+      <maxWorkQueueSize>10000</maxWorkQueueSize>
+      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
+      <flowFileExpiration>0 sec</flowFileExpiration>
+      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+      <partitioningAttribute/>
+      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+    </connection>
+    <connection>
       <id>1ab17e54-0181-1000-bfbc-bd814bf02f3a</id>
       <versionedComponentId>7c9dfe10-c073-39b6-a9b5-d09b08388cc9</versionedComponentId>
       <name/>
@@ -1338,20 +1728,20 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
-      <id>2f7d94f2-0174-1000-baf0-454f30126c3b</id>
-      <versionedComponentId>549a967e-52a7-3fa9-9c0e-946fc2274d2b</versionedComponentId>
+      <id>10001184-1ab2-1415-9dbb-2970ea281826</id>
+      <versionedComponentId>53563dc4-5626-3eea-b1f9-43283182df52</versionedComponentId>
       <name/>
       <bendPoints/>
       <labelIndex>1</labelIndex>
       <zIndex>0</zIndex>
-      <sourceId>008a251c-016f-1000-3fe8-e32936159404</sourceId>
+      <sourceId>10001181-1ab2-1415-081e-c1e2abc17b46</sourceId>
       <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
       <sourceType>PROCESSOR</sourceType>
-      <destinationId>1aad35d4-0185-1000-c03b-af03fb6a85f2</destinationId>
+      <destinationId>251c108a-1000-116f-707c-69b8ecf62a77</destinationId>
       <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
       <destinationType>PROCESSOR</destinationType>
       <relationship>success</relationship>
-      <maxWorkQueueSize>100000</maxWorkQueueSize>
+      <maxWorkQueueSize>10000</maxWorkQueueSize>
       <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
       <flowFileExpiration>0 sec</flowFileExpiration>
       <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
@@ -1465,6 +1855,27 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
+      <id>10001183-1ab2-1415-f8bd-64cd1266e649</id>
+      <versionedComponentId>81e896c8-9c58-3b0a-b924-396793a8b3d9</versionedComponentId>
+      <name/>
+      <bendPoints/>
+      <labelIndex>1</labelIndex>
+      <zIndex>0</zIndex>
+      <sourceId>10001181-1aaf-13b4-c948-2c7e683faf02</sourceId>
+      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
+      <sourceType>PROCESSOR</sourceType>
+      <destinationId>10001181-1ab2-1415-081e-c1e2abc17b46</destinationId>
+      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
+      <destinationType>PROCESSOR</destinationType>
+      <relationship>success</relationship>
+      <maxWorkQueueSize>10000</maxWorkQueueSize>
+      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
+      <flowFileExpiration>0 sec</flowFileExpiration>
+      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+      <partitioningAttribute/>
+      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+    </connection>
+    <connection>
       <id>39397546-0185-1000-7e10-2b4ed1c4a554</id>
       <versionedComponentId>7a5a9158-74e7-3497-9688-9fb41370a389</versionedComponentId>
       <name/>
@@ -1486,6 +1897,27 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
+      <id>10001186-1ab2-1415-a026-fc556f32e622</id>
+      <versionedComponentId>e6ba25e2-2366-3300-8a92-6d506c2550d6</versionedComponentId>
+      <name/>
+      <bendPoints/>
+      <labelIndex>1</labelIndex>
+      <zIndex>0</zIndex>
+      <sourceId>10001181-1aaf-13b4-c948-2c7e683faf02</sourceId>
+      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
+      <sourceType>PROCESSOR</sourceType>
+      <destinationId>10001185-1ab2-1415-f97b-72898a0b1e88</destinationId>
+      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
+      <destinationType>FUNNEL</destinationType>
+      <relationship>failure</relationship>
+      <maxWorkQueueSize>10000</maxWorkQueueSize>
+      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
+      <flowFileExpiration>0 sec</flowFileExpiration>
+      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+      <partitioningAttribute/>
+      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+    </connection>
+    <connection>
       <id>0143fd5d-0181-1000-ac9b-14134acf4091</id>
       <versionedComponentId>69f3ce98-1492-3ab5-b2a8-833f05e039a3</versionedComponentId>
       <name/>
@@ -1497,9 +1929,9 @@ if (flowFile != None):
       <sourceId>03fcba02-017c-1000-10b5-1b63ebcd9871</sourceId>
       <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
       <sourceType>PROCESSOR</sourceType>
-      <destinationId>016f1000-251c-108a-5062-a5eab49bf491</destinationId>
+      <destinationId>c3cff8b9-0188-1000-2daf-a8ec2c6aa1c6</destinationId>
       <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
-      <destinationType>PROCESSOR</destinationType>
+      <destinationType>FUNNEL</destinationType>
       <relationship>device state</relationship>
       <maxWorkQueueSize>100000</maxWorkQueueSize>
       <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
@@ -1551,18 +1983,19 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
-      <id>54875fe7-0185-1000-d8ca-41f89b387dd3</id>
+      <id>c3d34879-0188-1000-c5f1-bc0e6a4c6443</id>
+      <versionedComponentId>ef553201-29b6-367d-9cd1-8c332332e5d8</versionedComponentId>
       <name/>
       <bendPoints/>
       <labelIndex>1</labelIndex>
       <zIndex>0</zIndex>
-      <sourceId>393959fc-0185-1000-8fe6-91d47952ca27</sourceId>
+      <sourceId>c3d1064b-0188-1000-8083-1881e2bd5bf0</sourceId>
       <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
-      <sourceType>FUNNEL</sourceType>
-      <destinationId>1aad35d4-0185-1000-c03b-af03fb6a85f2</destinationId>
+      <sourceType>PROCESSOR</sourceType>
+      <destinationId>c3d33273-0188-1000-50fb-0714eb985386</destinationId>
       <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
       <destinationType>PROCESSOR</destinationType>
-      <relationship/>
+      <relationship>success</relationship>
       <maxWorkQueueSize>10000</maxWorkQueueSize>
       <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
       <flowFileExpiration>0 sec</flowFileExpiration>
@@ -1613,6 +2046,27 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
+      <id>27c8d686-0186-1000-cdc8-86fadd27b6d1</id>
+      <versionedComponentId>d55ac7ec-c573-3190-82a9-0040e6c8225d</versionedComponentId>
+      <name/>
+      <bendPoints/>
+      <labelIndex>1</labelIndex>
+      <zIndex>0</zIndex>
+      <sourceId>008a251c-016f-1000-3fe8-e32936159404</sourceId>
+      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
+      <sourceType>PROCESSOR</sourceType>
+      <destinationId>27c0a28f-0186-1000-c4d9-0be6c812c3dc</destinationId>
+      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
+      <destinationType>PROCESSOR</destinationType>
+      <relationship>success</relationship>
+      <maxWorkQueueSize>10000</maxWorkQueueSize>
+      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
+      <flowFileExpiration>0 sec</flowFileExpiration>
+      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+      <partitioningAttribute/>
+      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+    </connection>
+    <connection>
       <id>e360fabd-017a-1000-cfce-bb7dab32b543</id>
       <versionedComponentId>2def2e7d-b412-32e0-bbe4-c253eb97f2c5</versionedComponentId>
       <name/>
@@ -1634,6 +2088,48 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
+      <id>27c877f2-0186-1000-4cb8-1f7ae1e81389</id>
+      <versionedComponentId>9e08afa8-a3b7-3dd2-9e8c-3a3ed368437d</versionedComponentId>
+      <name/>
+      <bendPoints/>
+      <labelIndex>1</labelIndex>
+      <zIndex>0</zIndex>
+      <sourceId>27c0a28f-0186-1000-c4d9-0be6c812c3dc</sourceId>
+      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
+      <sourceType>PROCESSOR</sourceType>
+      <destinationId>7c60437d-0184-1000-b990-1d3ed45f8bb7</destinationId>
+      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
+      <destinationType>PROCESSOR</destinationType>
+      <relationship>matched</relationship>
+      <maxWorkQueueSize>100000</maxWorkQueueSize>
+      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
+      <flowFileExpiration>1h</flowFileExpiration>
+      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+      <partitioningAttribute/>
+      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+    </connection>
+    <connection>
+      <id>c3d072a9-0188-1000-2823-1f6fb4ca2cd4</id>
+      <versionedComponentId>09988749-6dc2-3fc2-91f1-ebb6882aa905</versionedComponentId>
+      <name/>
+      <bendPoints/>
+      <labelIndex>1</labelIndex>
+      <zIndex>0</zIndex>
+      <sourceId>c3cff8b9-0188-1000-2daf-a8ec2c6aa1c6</sourceId>
+      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
+      <sourceType>FUNNEL</sourceType>
+      <destinationId>016f1000-251c-108a-5062-a5eab49bf491</destinationId>
+      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
+      <destinationType>PROCESSOR</destinationType>
+      <relationship/>
+      <maxWorkQueueSize>10000</maxWorkQueueSize>
+      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
+      <flowFileExpiration>0 sec</flowFileExpiration>
+      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+      <partitioningAttribute/>
+      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+    </connection>
+    <connection>
       <id>040a2a1c-017c-1000-b176-8c5add3782ef</id>
       <versionedComponentId>85339ad3-5cb6-32d4-bad6-b80f1702a9d7</versionedComponentId>
       <name/>
@@ -1647,6 +2143,27 @@ if (flowFile != None):
       <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
       <destinationType>FUNNEL</destinationType>
       <relationship>SUCCESS_RELATIONSHIP</relationship>
+      <maxWorkQueueSize>10000</maxWorkQueueSize>
+      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
+      <flowFileExpiration>0 sec</flowFileExpiration>
+      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+      <partitioningAttribute/>
+      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+    </connection>
+    <connection>
+      <id>c3d266f7-0188-1000-dc1b-b3d51c02eafa</id>
+      <versionedComponentId>98c54a03-19b9-394f-8e71-da25045412f1</versionedComponentId>
+      <name/>
+      <bendPoints/>
+      <labelIndex>1</labelIndex>
+      <zIndex>0</zIndex>
+      <sourceId>c3cff8b9-0188-1000-2daf-a8ec2c6aa1c6</sourceId>
+      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
+      <sourceType>FUNNEL</sourceType>
+      <destinationId>c3d1064b-0188-1000-8083-1881e2bd5bf0</destinationId>
+      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
+      <destinationType>PROCESSOR</destinationType>
+      <relationship/>
       <maxWorkQueueSize>10000</maxWorkQueueSize>
       <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
       <flowFileExpiration>0 sec</flowFileExpiration>
@@ -1791,7 +2308,7 @@ if (flowFile != None):
       </property>
       <property>
         <name>ADDITIONAL_QUERY_STRING</name>
-        <value>realtime=false&amp;apikey=$#superservicemap-api-key#$</value>
+        <value>realtime=false</value>
       </property>
     </controllerService>
     <controllerService>
