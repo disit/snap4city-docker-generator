@@ -8,6 +8,47 @@
 <script>
     var test_results;
     var test_results_divs = {};
+    //TODO ask the db
+    const lookupTable = {
+        'bashboard-backend': 'Dashboard',
+        'certbot': 'Authorization and Authentication',
+        'dashboard-builder': 'Dashboard',
+        'dashboard-cron': 'Dashboard',
+        'geoserver': 'HLT',
+        'geoserver-db': 'Knowledge Base',
+        'heatmap-api': 'HLT',
+        'heatmap2geoserver': 'HLT',
+        'iot-discovery': 'Dashboard',
+        'iot-fiware-api': 'Dashboard',
+        'iot-fiware-harvester': 'Dashboard',
+        'iotapp-*': 'Process Logic',
+        'kafka': 'Real Time Dash',
+        'keycloak': 'Authorization and Authentication',
+        'ldap-server': 'Authorization and Authentication',
+        'mongo-*': 'Broker',
+        'myldap': 'Authorization and Authentication',
+        'nifi': 'Data Storage',
+        'od-build-api': 'HLT',
+        'od-get-api': 'HLT',
+        'od-insert-api': 'HLT',
+        'od-postgis': 'Knowledge Base',
+        'opensearch-dashboards': 'Data Storage',
+        'opensearch-n*': 'Data Storage',
+        'orion-*': 'Broker',
+        'orionbrokerfilter-': 'Broker',
+        'personaldata': 'Dashboard',
+        'proxy': 'System',
+        'servicemap': 'Knowledge Base',
+        'solr-kb': 'Knowledge Base',
+        'synoptics': 'Real Time Dash',
+        'varnish': 'Data Storage',
+        'virtuoso-kb': 'Knowledge Base',
+        'wsserver': 'Real Time Dash',
+        'zookeeper': 'Real Time Dash',
+        'checker': 'BIG BRAIN TIME',
+        'app': 'ALSO BIG BRAIN TIME BUT DIFFERENT'
+      };
+
     function smartSleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -36,6 +77,7 @@ function getcontainers(){
       type: 'POST',
       success: function(response) {
         //unsafe but works
+        //console.log(response);
         makeTable(response);
         
       },
@@ -261,7 +303,7 @@ function makeTable(containerdata) {
                 }
                 else if (index_of_below_array === 20) {
                     var content_of_id_cell;
-                    if (cellData === "running")
+                    if (cellData === "running" != (elements[6] === "mysql:latest"))
                         content_of_id_cell = cellData + '<span style="color: green">●</span>';
                         else content_of_id_cell = cellData + '<span style="color: red">●</span>';
                     td.innerHTML = content_of_id_cell;
@@ -326,8 +368,39 @@ function makeTable(containerdata) {
         return 0;
     });
     
-    const table = createTable(headerData, containerdata);
-    tableContainer.appendChild(table);
+    
+
+    //const table = createTable(headerData, containerdata);
+
+
+    const categorizedData = {};
+
+    containerdata.forEach(item => {
+        const name = item.Name;
+        let category = 'Unknown';
+        for (const key in lookupTable) {
+            if (name.startsWith(key.replace('*', ''))) {
+            category = lookupTable[key];
+            break;
+            }
+        }
+        if (!categorizedData[category]) {
+            categorizedData[category] = [];
+        }
+        categorizedData[category].push(item);
+    });
+
+    //console.log(categorizedData);
+    jQuery.each(categorizedData, function (i, val) {
+        if (i != "Unknown") {
+        const name_of_table = document.createElement("p");
+        name_of_table.innerHTML = i;
+        tableContainer.appendChild(name_of_table);
+        tableContainer.appendChild(createTable(headerData, val));
+        }
+        else console.log("Skipped unmanaged containers");
+    });
+    //tableContainer.appendChild(table);
 }
 </script>
 <label for="freezecontainers">Stop containers refresh</label>
@@ -336,19 +409,21 @@ function makeTable(containerdata) {
     <input type="submit" class="btn btn-info" value="Generate pdf with all container logs (might take several seconds)" />
 </form>
 <div id="output" class="main">
+    
     <br>
     
      
-    <div id="draggable" class="ui-widget-content">
-      <p>Console Log (draggable)</p>
-      <p class="ui-widget-header" id="see_logs"></p>
     
-    
-                     
-    </div>
     <div id="table-container">
 
     </div>
+    <div id="draggable" class="ui-widget-content">
+        <p>Console Log (draggable)</p>
+        <p class="ui-widget-header" id="see_logs"></p>
+      
+      
+                       
+      </div>
     <div id="complex_tests">
         <table class="table table-striped table-bordered">
             <thead class="thead-dark">

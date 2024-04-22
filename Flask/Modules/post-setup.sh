@@ -124,11 +124,11 @@ echo add dashboard
 curl --insecure -u admin:$#opensearch-admin-pwd#$ -XPOST "http://localhost:5601/api/saved_objects/_import?overwrite=true" -H "osd-xsrf: true" -H "securitytenant: global" --form file=@osd-dashboard.ndjson
 echo
 
-echo add geoserver workspace Snap4City
-curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>Snap4City</name></workspace>"  http://localhost/geoserver/rest/workspaces
+echo add geoserver workspace Snap4City - if this command fails, it might be because this machine is not able to resolve its own name\; consider using localhost in such a case
+curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>Snap4City</name></workspace>"  $#base-url#$/geoserver/rest/workspaces
 
-echo add geoserver workspace traffic
-curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>traffic</name></workspace>"  http://localhost/geoserver/rest/workspaces
+echo add geoserver workspace traffic - if this command fails, it might be because this machine is not able to resolve its own name\; consider using localhost in such a case
+curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>traffic</name></workspace>"  $#base-url#$/geoserver/rest/workspaces
 
 echo rebooting services
 docker-compose restart opensearch-dashboards wsserver iot-fiware-harvester varnish proxy

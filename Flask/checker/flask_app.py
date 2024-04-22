@@ -60,6 +60,22 @@ def create_app():
             log_to_db('asking_containers', "POST wasn't used in the request")
             return False
         
+    @app.route("/get_container_categories", methods=['POST','GET'])
+    def get_container_categories():
+        if request.method in ["POST", "GET"]:
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    cursor = conn.cursor(buffered=True)
+                    # to run malicious code, malicious code must be present in the db or the machine in the first place
+                    query = '''SELECT * FROM checker.component_to_category;'''
+                    cursor.execute(query)
+                    conn.commit()
+                    results = cursor.fetchall()
+                    return render_template("checker.html",extra=results)
+            except Exception as e:
+                print("Something went wrong because of",e)
+                return render_template("error_showing.html", r = e)
+        
     @app.route("/run_test", methods=['POST','GET'])
     def run_test():
         if request.method == "POST":
