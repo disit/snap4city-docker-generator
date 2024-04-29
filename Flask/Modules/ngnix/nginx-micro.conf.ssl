@@ -155,6 +155,13 @@ server {
                 proxy_pass "http://geoserver:8080/geoserver";
                 client_max_body_size 50M;
         }
+        
+        location  /whatif-router/ {
+                proxy_pass "http://servicemap:8080/whatif-router/";
+        }
+        location  /trafficflowmanager/ {
+                proxy_pass "http://servicemap:8080/trafficflowmanager/";
+        }
 }
 
 server {
@@ -163,20 +170,8 @@ server {
 
         server_name servicemap.local;
 
-                        location  /ServiceMap/ {
+        location  /ServiceMap/ {
                 proxy_pass "http://servicemap:8080/ServiceMap/";
-        }
-        location  /whatif-router/ {
-                proxy_pass "http://servicemap:8080/whatif-router/";
-        }
-        location  /trafficflowmanager/ {
-                proxy_pass "http://servicemap:8080/trafficflowmanager/";
-        }
-        location  /whatif-router/ {
-                proxy_pass "http://servicemap:8080/whatif-router/";
-        }
-        location  /trafficflowmanager/ {
-                proxy_pass "http://servicemap:8080/trafficflowmanager/";
         }
         location  /ServiceMap/api/v1/iot/ {
                 proxy_pass "http://servicemap:8080/iot/";

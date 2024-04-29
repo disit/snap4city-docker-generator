@@ -26,9 +26,10 @@ try:
     password=sys.argv[2]
     synoptics=sys.argv[3]
 except Exception as E:
-    print("Operation failed due to",E)
-    print("Are you sure you gave the correct number of parameters? (username, password, test the synoptics)")
-    exit(1)
+    print("Proceeding with default parameters due to",E)
+    username = "userareamanager"
+    password = "Mdn!hkH"
+    synoptics = True
 
 def getTokenViaUserCredentials():
     """Get the authentication token from keycloak. Uses global variables to ease programming

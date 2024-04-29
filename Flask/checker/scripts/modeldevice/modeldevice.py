@@ -13,8 +13,9 @@ try:
     username=sys.argv[1]
     password=sys.argv[2]
 except Exception as E:
-    print("Operation failed due to",E)
-    exit(1)
+    print("Proceeding with default parameters due to",E)
+    username = "userareamanager"
+    password = "Mdn!hkH"
 
 def main():
     try:

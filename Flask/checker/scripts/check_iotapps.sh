@@ -7,5 +7,5 @@ for ((i=1; i<=count; i++)); do
 	port_number=$(($i+1879))
 	url="http://localhost:$port_number/iotapp/iotapp-$formatted_number/"
 	result=$(curl -LI $url -o /dev/null -w '%{http_code}\n' -s)
-	echo $url answered $result, and it should be 200 \<br\>
+	echo $url answered $result, and it should be 200 \<br\>\<\\br\>
 done

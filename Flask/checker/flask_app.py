@@ -14,6 +14,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.'''
 import subprocess
 from flask import Flask, jsonify, render_template, request, send_file
+import requests
 import mysql.connector
 import json
 import os
@@ -40,11 +41,39 @@ def create_app():
             with mysql.connector.connect(**db_conn_info) as conn:
                 cursor = conn.cursor(buffered=True)
                 # to run malicious code, malicious code must be present in the db or the machine in the first place
-                query = '''SELECT *,GetHighContrastColor(button_color) AS high_contrast_color FROM checker.complex_tests;'''
+                query = '''SELECT complex_tests.*, GetHighContrastColor(button_color), COALESCE(categories.category, "System") as category FROM checker.complex_tests left join category_test on id = category_test.test left join categories on categories.idcategories = category_test.category;'''
                 cursor.execute(query)
                 conn.commit()
                 results = cursor.fetchall()
-                return render_template("checker.html",extra=results)
+                return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data())
+        except Exception as e:
+            print("Something went wrong because of",e)
+            return render_template("error_showing.html", r = e)
+        
+    @app.route("/get_data_from_source")
+    def get_additional_data():
+        if request.method == "GET":
+            try:
+                response = requests.get(request.args.to_dict()['url_of_resource'])
+                response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
+                return response.text
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching URL: {e}")
+                return None
+        else:
+            return "<html>You didn't use a GET.</html>"
+    
+    @app.route("/get_complex_test_buttons")
+    def get_complex_test_buttons():
+        try:
+            with mysql.connector.connect(**db_conn_info) as conn:
+                cursor = conn.cursor(buffered=True)
+                # to run malicious code, malicious code must be present in the db or the machine in the first place
+                query = '''SELECT complex_tests.*, GetHighContrastColor(button_color), COALESCE(categories.category, "System") as category FROM checker.complex_tests left join category_test on id = category_test.test left join categories on categories.idcategories = category_test.category;'''
+                cursor.execute(query)
+                conn.commit()
+                results = cursor.fetchall()
+                return results
         except Exception as e:
             print("Something went wrong because of",e)
             return render_template("error_showing.html", r = e)
@@ -62,19 +91,30 @@ def create_app():
         
     @app.route("/get_container_categories", methods=['POST','GET'])
     def get_container_categories():
-        if request.method in ["POST", "GET"]:
-            try:
-                with mysql.connector.connect(**db_conn_info) as conn:
-                    cursor = conn.cursor(buffered=True)
-                    # to run malicious code, malicious code must be present in the db or the machine in the first place
-                    query = '''SELECT * FROM checker.component_to_category;'''
-                    cursor.execute(query)
-                    conn.commit()
-                    results = cursor.fetchall()
-                    return render_template("checker.html",extra=results)
-            except Exception as e:
-                print("Something went wrong because of",e)
-                return render_template("error_showing.html", r = e)
+        try:
+            with mysql.connector.connect(**db_conn_info) as conn:
+                cursor = conn.cursor(buffered=True)
+                query = '''SELECT * FROM checker.component_to_category;'''
+                cursor.execute(query)
+                conn.commit()
+                results = cursor.fetchall()
+                return results
+        except Exception as e:
+            print("Something went wrong because of",e)
+            return render_template("error_showing.html", r = e)
+    
+    def get_extra_data():
+        try:
+            with mysql.connector.connect(**db_conn_info) as conn:
+                cursor = conn.cursor(buffered=True)
+                query = '''SELECT category, resource_address FROM checker.extra_resources join categories on categories.idcategories = extra_resources.id_category;'''
+                cursor.execute(query)
+                conn.commit()
+                results = cursor.fetchall()
+                return results
+        except Exception as e:
+            print("Something went wrong because of",e)
+            return "Error in get extra data!"
         
     @app.route("/run_test", methods=['POST','GET'])
     def run_test():

@@ -19,8 +19,10 @@ try:
     password=sys.argv[2]
     device=sys.argv[3]
 except Exception as E:
-    print("Operation failed due to",E)
-    exit(1)
+    print("Probably won't work (create a device called defaultDevice with a value called testValue), but proceeding with default parameters due to",E)
+    username = "userareamanager"
+    password = "Mdn!hkH"
+    device="defaultDevice"
 
 
 def getTokenViaUserCredentials(username,password):
