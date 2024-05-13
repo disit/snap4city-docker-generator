@@ -235,11 +235,45 @@ def create_app():
             out = '<input type="button" name="db-success" id="db-success" value="Success! Click to reload" class="form-control" onclick="location.reload()"/>'
         return err+out
     
+    
+    @app.route("/get_complex_tests", methods=["GET"])
+    def get_complex_tests():
+        if request.method == "GET":
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    cursor = conn.cursor(buffered=True)
+                    query = '''WITH RankedEntries AS ( 
+                        SELECT *, ROW_NUMBER() OVER (PARTITION BY container ORDER BY datetime DESC) AS row_num FROM tests_results
+                        ) 
+                        SELECT * FROM RankedEntries WHERE row_num = 1;'''
+                    cursor.execute(query)
+                    conn.commit()
+                    log_to_db('getting_tests', 'Tests results were read')
+                    results = cursor.fetchall()
+                    return jsonify(results)
+            except Exception as e:
+                print("Something went wrong because of",e)
+                return render_template("error_showing.html", r = e)
+        else: 
+            log_to_db('getting_tests', "POST wasn't used in the request")
+            return "False"
+    
     @app.route("/container/<container_id>")
     def get_container_logs(container_id):
-        r = '<br>'.join(subprocess.run('docker logs '+container_id, shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
+        r = '<br>'.join(subprocess.run('docker logs '+container_id+" --tail 1000", shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
         container_name = subprocess.run('docker ps -a -f id='+container_id+' --format "{{.Names}}"', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n')[0]
         return render_template('log_show.html', container_id = container_id, r = r, container_name=container_name)
+    
+    @app.route("/get_summary_status")
+    def get_summary_status():
+        try:
+            with mysql.connector.connect(**db_conn_info) as conn:
+                cursor = conn.cursor(buffered=True)
+                cursor.execute('''SELECT * FROM summary_status;''')
+                results = cursor.fetchall()
+                return jsonify(results)
+        except Exception as e:
+            print("Something went wrong during db logging because of",e)
     
     def get_container_data(do_not_jsonify=False):
         containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]

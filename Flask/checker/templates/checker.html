@@ -15,13 +15,12 @@
     var iframes = {};
     var button_data = [
         {%for element in extra%}
-        {'data':`<document><input type="button" name="{{element[1]}}" id="{{element[1]}}" value="{{element[1]}}" class="form-control" onclick="runComplexTests(this)" style="background: {{element[4]}}; color: {{element[6]}}"/>
-                <div>{{element[5]|safe}}</div>
+        {'data':`<div class="row align-items-start"><div class="col"><input type="button" name="{{element[1]}}" id="{{element[1]}}" value="{{element[1]}}" class="form-control" onclick="runComplexTests(this)" style="background: {{element[4]}}; color: {{element[6]}}"/>
+                <div>{{element[5]|safe}}</div></div>
                 {%if element[3] != None%}
                 {% for element_2 in element[3].split(';') %}{% set parts = element_2.split(':') %}
-                    <input type="{{ parts[0] }}" id="{{ parts[2] }}-{{element[1]}}" name="{{ parts[2] }}" placeholder="{{parts[1]}}" class="form-control">
-                {% endfor %}{%endif%}
-                <div id="{{element[1]}}-result"></div></document>`, 'type':`{{element[7]|safe}}`},
+                    <input type="{{ parts[0] }}" id="{{ parts[2] }}-{{element[1]}}" name="{{ parts[2] }}" placeholder="{{parts[1]}}" class="form-control"></div>{% endfor %}{%endif%}
+                <div class="col" id="{{element[1]}}-result">No data yet...</div></div>`, 'type':`{{element[7]|safe}}`},
         {%endfor%}
     ];
 
@@ -47,7 +46,7 @@
                 showTestResults();
                 cg = colorGenerator();
                 }
-            await smartSleep(120000);
+            await smartSleep(30000);
         }
     });
     function getcontainers(){
@@ -108,6 +107,31 @@
             logging(exception_var);
         }
     };
+
+    function get_complex_tests(){
+        try {
+            $.ajax({
+                url: 'get_complex_tests',
+                type: 'GET',
+                success: function(response) {
+                    for (const element of response) {
+                        try {
+                        document.getElementById(element[3]+'-result').innerHTML=element[2];
+                        } catch (exception_var) {
+                            logging(exception_var);
+                        }
+                    }
+                    logging(response);
+                },
+                error: function(error) {
+                    logging(error);
+                }
+            });
+        }
+        catch (exception_var) {
+            logging(exception_var);
+        }
+    }
 
     function runTests(container) {
         try {
@@ -190,6 +214,32 @@
         document.getElementById("see_logs").innerHTML += logging_str + '<br>';
     }
 
+    async function getSummary() {
+        await smartSleep(3000);
+        try {
+            $.ajax({
+                url: 'get_summary_status',
+                type: 'GET',
+                success: function(response) {
+                    for (const element of response) {
+                        try {
+                        document.getElementById(element[0]+'-status').innerHTML=element[0]+' - '+element[1];
+                        } catch (exception_var) {
+                            logging(exception_var);
+                        }
+                    }
+                    logging(response);
+                },
+                error: function(error) {
+                    logging(error);
+                }
+            });
+        }
+        catch (exception_var) {
+            logging(exception_var);
+        }
+    }
+
     function getExtraData(url_of_resource, destination_element) {
         try {
         // Make AJAX request using jQuery
@@ -215,7 +265,7 @@
       
       function renderContentInIframe(content, destination_element) {
         var iframe = document.createElement('iframe');
-        iframe.setAttribute("style", "width: 100%; height: 60%;");
+        iframe.setAttribute("style", "width: 100%; height: 450px;");
         destination_element.appendChild(iframe);
         var doc = iframe.contentWindow.document;
         doc.open();
@@ -343,11 +393,11 @@
             rebootbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Reboot" class="btn btn-primary" onclick="rebootContainer('`+elements[3]+`')"/>`;
             row.appendChild(rebootbutton);
             var testsbutton = document.createElement("td");
-            testsbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Ping the port..." class="btn btn-info" onclick="runTests('`+elements[3]+`')"/>`;
+            testsbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Ping the port..." class="btn btn-info" onclick="runTests('`+elements[12]+`')"/>`;
             row.appendChild(testsbutton);
             tbody.appendChild(row);
             var testresults = document.createElement("td");
-            testresults.setAttribute('id',row.childNodes[6].innerHTML);
+            testresults.setAttribute('id',elements[3]+'-result');
             row.appendChild(testresults);
 
             tbody.appendChild(row);
@@ -362,7 +412,7 @@
         table.appendChild(tbody);
         const box = document.createElement("div");
         box.setAttribute("class", "p-5 text-center");
-        box.setAttribute("style", "border-radius: 5rem; background-color: "+cg.next().value)
+        box.setAttribute("style", "border-radius: 3rem; background-color: "+cg.next().value)
         const name_of_table = document.createElement("h1");
         name_of_table.setAttribute("class", "text-body-emphasis");
         name_of_table.innerHTML = name_of_table_value;
@@ -416,26 +466,48 @@
         if (i != "Unknown") {
             const box = document.createElement("div");
             box.setAttribute("class", "p-5 text-center");
-            box.setAttribute("style", "border-radius: 5rem; background-color: "+cg.next().value)
+            box.setAttribute("style", "border-radius: 3rem; background-color: "+cg.next().value);
+            box.setAttribute("id",i);
+            const centerer = document.createElement("div");
+            centerer.setAttribute("style", "text-align: center");
             const name_of_table = document.createElement("h1");
-            name_of_table.setAttribute("class", "text-body-emphasis");
+            name_of_table.setAttribute("class", "btn btn-dark btn-lg");
+            name_of_table.setAttribute("style", "text-align: center");
+            name_of_table.setAttribute("onclick", "collapse_category('"+i+"')");
+            name_of_table.setAttribute("id", i+"-status");
             name_of_table.innerHTML = i;
-            box.appendChild(name_of_table);
+            centerer.appendChild(name_of_table);
+            tableContainer.appendChild(centerer);
             box.appendChild(createTable(headerData, val, i));
             const parser = new DOMParser();
             extra_data_locations.filter(innerArray => innerArray[0] === i).forEach(innerArray => {
                 getExtraData(innerArray[1], box);
             });
             if (add_complex_test_table_depending_on_category(i)) {
-                box.appendChild(parser.parseFromString(add_complex_test_table_depending_on_category(i), 'text/html').firstChild);
+                const complex_tests = document.createElement("div");
+                complex_tests.setAttribute("style", "background-color: white;");
+                complex_tests.innerHTML=add_complex_test_table_depending_on_category(i);
+                box.appendChild(complex_tests);
             }
             tableContainer.appendChild(box);
             }
             else console.log("Skipped unmanaged containers");
             
     });
+    getSummary();
+    get_complex_tests();
     //tableContainer.appendChild(table);
 }
+
+function collapse_category(category_element_id) {
+    element=document.getElementById(category_element_id);
+    if (element.style.display === "none") {
+        element.style.display = "block";
+    } else {
+        element.style.display = "none";
+    }
+  };
+
 
 function add_complex_test_table_depending_on_category(category) {
     var final_str = "";
