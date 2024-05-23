@@ -1,44 +1,48 @@
 # Execution of the service
 To run the app, use the following command in the CLI in the folder of this readme -> `waitress-serve --port 4080 --call flask_app:create_app`
 
+To install the python packages you will need Pip. In this page it is assumed such an utility can be accessed with `pip`
+
+In order to run the app, you'll need both Flask and Waitress: `pip install flask waitress`
+
 You might change the port to something else if you want, it doesn't matter as long as you don't pick something else in use
 
-The current db on this machine is listening on 3344
-you might also change it; but don't use the standard 3306; the snap4city database container already uses it and there will be a conflict
+The application assumes that a MySQL server is listening on localhost:3344; if that is not the case, change the db_configuration json.
 
-You need to change the port in the flask_app.py file, there is one single instance
+If you intend to use the port 3306, remember that the Snap4City database is also using the same port; if you do not want to use the same server it is advised to have the MySQL server for Snap4Sentinel be accessible someplace else
 
 They all say Success or Failure
 
 For Kafka you will need to install a package -> `apt-get install kafkacat`; you might need admin privileges to install it
 
-To generate the pdf you need to install a Python package `reportlab`
+To generate the pdf you'll need to install the ReportLab package: `pip install reportlab`
 
-If this doesn't run be sure to update Python (3.9 minimum), Flask and mysql-connector-python for python (use apt-get and pip)
+To send a telegram message, you need to install the Telegram package: `pip install telegram`
 
-You will also need docker (not sure which one is enough but 20.whatever wasn't good and 23 was) (again, use apt-get)
+To schedule the background healthchecks, you need to install the Apscheduler package: `pip install apscheduler`
+
+To connect to the MySQL database, you need to install the mysql-connector-python package: `pip install mysql-connector-python`
+
+If this doesn't run be sure to update Python (3.9 minimum), Flask and  for python (use apt-get and pip)
 
 # Using the service
 
-The service opens the 4080 port (or whichever you picked if you changed it earlier) and you can reach it by going to [http://localhost:4080/](http://localhost:4080/)
+The service opens the 4080 port (or whichever you picked if you used another port) and you can reach it by going to [http://localhost:4080/](http://localhost:4080/). You are free to proxy the service behind whatever you like.
 
-The top part shows a console which outputs logs (which you can drag around) and a checkbox allowing for automatic refreshes (once every 15 seconds).
+The user interface mainly consists of multiple labels which are a summary of a category of multiple containers/processes. Next to each category, a summary status is shown. Clicking the label will open, an subsequentially close, the category into a more detailed control panel. For each container, you may see the current status and resources, you may see the logs of the container and restart/ping the port.
+Below the containers, you will see advanced tests which can determine if the platform is working as intended. Below these tests, there's a log window which outputs the current results, and below that, if applicable, more resources are shown.
+
+The navbar offers 3 functions, besides giving information; you may produce a detailed log of the platform as a pdf, you might temporarely stop/restart the periodic update of the status and you might ask for an immediate update
 
 Logs are the sum of the standard out and the standard error; errors are shown in red.
 
-The timing of the updates isn't synchronised to toggling the checkbox so any change might take less than 15 seconds.
-
-Then you will see the list of the containers running on the machine; the list is taken in real time and lists all containers running, even those which have nothing to do with Snap4City
+Then you will see the list of the containers running on the machine; the list is taken in real time and lists all containers running, even those which have nothing to do with Snap4City; these not belonging to the native platform are listed in the unknown category
 
 Of course if no functionality is set for a given container, then the button will not work even if not present
 
 You might click a container ID (third column) to see the logs of the chosen container; it will open a new tab in the browser
 
-The log window doesn't update; if you need to see the newest logs, just refresh the webpage
-
 The last columns of the table are the button for restarting the container, the button for checking if a container is alive/healthy and the latter shows the result of the previous operation (if any)
-
-After this table, there is an addition table which shows a list of operations which are activated by clicking the relative button
 
 Some operations require additional data; said data can be inserted in the input fields below the button.
 

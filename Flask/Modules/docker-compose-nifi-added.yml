@@ -2,7 +2,7 @@ version: "3"
 services:
   nifi:
     container_name: nifi
-    image: apache/nifi:1.16.2
+    image: disitlab/snap4nifi:v0-1.16.2
     hostname: $#node_name#$
     environment:
       - NIFI_CLUSTER_IS_NODE=true

@@ -22,6 +22,14 @@ from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import telegram
+import asyncio
+from apscheduler.schedulers.background import BackgroundScheduler
+
+API_TOKEN = 'replaceme'
 
 # edit this block according to your mysql server's configuration
 db_conn_info = {
@@ -32,9 +40,77 @@ db_conn_info = {
         "database": "checker",
         "auth_plugin": 'mysql_native_password'
     }
+
+def send_telegram(chat_id, message):
+    bot = telegram.Bot(token=API_TOKEN)
+    asyncio.run(bot.send_message(chat_id=chat_id, text=message))
+    return
+
+def send_email(sender_email, sender_password, receiver_email, subject, message):
+    smtp_server = 'replaceme'
+    smtp_port = 587 # may be changed
+    server = smtplib.SMTP(smtp_server, smtp_port)
+    server.starttls()
+    server.login(sender_email, sender_password)
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(message, 'plain'))
+    server.send_message(msg)
+    server.quit()
+    return
+
+def isalive():
+    #send_email("support@snap4.eu", "b2d!xcaZD/ZbVpR", ["forgothowtoreddid@gmail.com"], "Is alive", "Platform is alive")
+    #send_telegram(-4111023179, "Platform is alive")
+    return
+
+def auto_alert_status():
+    print("begin!")
+    result_of_operations = ""
+    containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
+    containers_stats = [b for b in (subprocess.run('docker stats --format json -a --no-stream', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
+    containers_merged = []
+    for container_stats in containers_stats:
+        for container_ps in containers_ps:
+            for key1, value1 in json.loads(container_stats).items():
+                for key2, value2 in json.loads(container_ps).items():
+                    if key1 == "Name" and key2 == "Names":
+                        if value1 == value2:
+                            containers_merged.append({**json.loads(container_ps), **json.loads(container_stats)})
+    try:
+        with mysql.connector.connect(**db_conn_info) as conn:
+            cursor = conn.cursor(buffered=True)
+            query = '''SELECT * FROM checker.component_to_category;'''
+            cursor.execute(query)
+            conn.commit()
+            results = cursor.fetchall()
+    except Exception as e:
+        result_of_operations+="Can't reach db"
+    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in [a[0].replace("*","") for a in results]) and c["State"] != "Running"]
+    containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["certbot"]) and c["State"] != "Exited"]
+    problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not
+    if len(problematic_containers):
+        result_of_operations+=str(problematic_containers)
+    if len(result_of_operations) > 0:
+        try:
+            send_email("sender", "sender password", "receiver", "subject", "text of mail")
+            send_telegram("chat_id", "text of telegram password")
+        except Exception as E:
+            print(E)
+    
+scheduler = BackgroundScheduler()
+scheduler.add_job(auto_alert_status, trigger='interval', minutes=1)
+scheduler.add_job(isalive, 'cron', hour=8, minute=0)
+scheduler.add_job(isalive, 'cron', hour=20, minute=0)
+#scheduler.start()
+auto_alert_status()
 def create_app():
     app = Flask(__name__)
     app.secret_key = b'\x8a\x17\x93kT\xc0\x0b6;\x93\xfdp\x8bLl\xe6u\xa9\xf5x'
+    send_messages = True
+
     @app.route("/")
     def main_page():
         try:
@@ -45,11 +121,14 @@ def create_app():
                 cursor.execute(query)
                 conn.commit()
                 results = cursor.fetchall()
+                #send_email("sender", "sender password", "receiver", "subject", "text of mail")
+                #send_telegram( chat_id, "text of telegram password")
                 return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data())
         except Exception as e:
             print("Something went wrong because of",e)
             return render_template("error_showing.html", r = e)
-        
+
+
     @app.route("/get_data_from_source")
     def get_additional_data():
         if request.method == "GET":
@@ -88,7 +167,7 @@ def create_app():
         else:
             log_to_db('asking_containers', "POST wasn't used in the request")
             return False
-        
+
     @app.route("/get_container_categories", methods=['POST','GET'])
     def get_container_categories():
         try:
@@ -107,7 +186,7 @@ def create_app():
         try:
             with mysql.connector.connect(**db_conn_info) as conn:
                 cursor = conn.cursor(buffered=True)
-                query = '''SELECT category, resource_address FROM checker.extra_resources join categories on categories.idcategories = extra_resources.id_category;'''
+                query = '''SELECT category, resource_address, resource_description, resource_information FROM checker.extra_resources join categories on categories.idcategories = extra_resources.id_category;'''
                 cursor.execute(query)
                 conn.commit()
                 results = cursor.fetchall()

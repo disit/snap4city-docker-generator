@@ -1,13 +1,12 @@
-version: "3.8"
 services:
   app:
     container_name: app
     build: 
       context: ./Flask
       tags:
-        - fabriziomereu/snap4city_installation_generator:rel.1.7.4
+        #- fabriziomereu/snap4city_installation_generator:rel.1.7.5
         - fabriziomereu/snap4city_installation_generator:unstable
-    image: fabriziomereu/snap4city_installation_generator:dev.1.7.4
+    image: fabriziomereu/snap4city_installation_generator:dev.1.8.0
     links:
       - db
     ports:

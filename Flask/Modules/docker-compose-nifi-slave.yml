@@ -2,7 +2,7 @@ version: "3.2"
 services:
   nifi:
     container_name: nifi
-    image: apache/nifi:1.16.2
+    image: disitlab/snap4nifi:v0-1.16.2
     hostname: $#node_name#$
     environment:
       - NIFI_CLUSTER_IS_NODE=true
@@ -42,7 +42,7 @@ $#extra_hosts#$
       #- opensearch-n1:192.168.1.60
       #- kafka:192.168.1.60
     volumes:
-      - ./nifi/extensions:/opt/nifi/nifi-current/extensions
+      #- ./nifi/extensions:/opt/nifi/nifi-current/extensions
       - ./nifi/conf:/opt/nifi/nifi-current/conf
       - ./nifi/logs:/opt/nifi/nifi-current/logs
     restart: unless-stopped

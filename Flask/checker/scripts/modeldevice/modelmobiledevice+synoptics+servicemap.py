@@ -133,7 +133,7 @@ def disconnect():
     print('Disconnected from server')
 
 def main():
-    """Creates a model, then creates a device based on the model, then delegates the device to another user ,then sends data to the model, and finally checks if the data can be accessed with both the servicemap and the synoptics
+    """Creates a model, then creates a device based on the model, then delegates the device to another user, then sends data to the model, and finally checks if the data can be accessed with both the servicemap and the synoptics
     """    
     access_token = accessToken(config)
     model_name = datetime.now().strftime("%Y%m%dT%H%M%S")
@@ -168,6 +168,8 @@ def main():
             sio.disconnect()
             access_token_delegated = accessTokenDelegated(config)
             readDelegateDevice(uriDelegateDevice, config, access_token_delegated, string_value)
+            readDelegateDevice2(uriDelegateDevice, config, access_token_delegated, string_value)
+            readDelegateDevice3(uriDelegateDevice, config, access_token_delegated, string_value)
             if str(latest_data)==string_value:
                 print("Data was received from synoptics")
                 print("position detected:",position, "- should be",i*1.0,"and",i*1.5)
@@ -197,8 +199,82 @@ def readDelegateDevice(serviceuri, conf, token, value_read):
         "Content-Type": "application/json",
         "Authorization": "Bearer "+ token
     }
-
+    # conf["base-url"] + '/superservicemap/api/v1/iot-search/?serviceUri='+ serviceuri
+    # conf["base-url"] + '/superservicemap/api/v1/iot-search/time-range/?serviceUri='+ serviceuri +'&fromTime=5-minute'
     url = conf["base-url"] + '/superservicemap/api/v1/?serviceUri='+ serviceuri +'&realtime=true&appID=iotapp'
+
+    response = requests.get(url, headers=headers)
+    num = int(value_read)
+    if response.status_code == 200:
+        if value_read==response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"]:
+            print("Servicemap: read expected value")
+            #print("whole thing:",response.json())
+            if [num*1.5,num] == response.json()["Service"]["features"][0]["geometry"]["coordinates"]:
+                print("Servicemap: position of device detected as intended.")
+            else:
+                print("Position of device was not detected as intended.")
+                print("Should be [",num*1.5,"",num,"], was",response.json()["Service"]["features"][0]["geometry"]["coordinates"])
+        else:
+            print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
+        #print("Request was successful.")
+        #print("Response:")
+        #print(response.json())
+    else:
+        print("Servicemap: [ERROR] request failed with status code:",response.status_code)
+        print("Response:")
+        print(response.text)
+        
+def readDelegateDevice2(serviceuri, conf, token, value_read):
+    """Reads data from a delegated device, then checks if the data read is the data expected
+
+    Args:
+        serviceuri (str): The base url used
+        conf (dict): Dictionary holding the data, see data/conf.json
+        token (str): Authentication token for keycloak
+        value_read (str): Value to check against the value received
+    """    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer "+ token
+    }
+    url = conf["base-url"] + '/superservicemap/api/v1/iot-search/?serviceUri='+ serviceuri
+
+    response = requests.get(url, headers=headers)
+    num = int(value_read)
+    if response.status_code == 200:
+        if value_read==response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"]:
+            print("Servicemap: read expected value")
+            #print("whole thing:",response.json())
+            if [num*1.5,num] == response.json()["Service"]["features"][0]["geometry"]["coordinates"]:
+                print("Servicemap: position of device detected as intended.")
+            else:
+                print("Position of device was not detected as intended.")
+                print("Should be [",num*1.5,"",num,"], was",response.json()["Service"]["features"][0]["geometry"]["coordinates"])
+        else:
+            print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
+        #print("Request was successful.")
+        #print("Response:")
+        #print(response.json())
+    else:
+        print("Servicemap: [ERROR] request failed with status code:",response.status_code)
+        print("Response:")
+        print(response.text)
+        
+def readDelegateDevice3(serviceuri, conf, token, value_read):
+    """Reads data from a delegated device, then checks if the data read is the data expected
+
+    Args:
+        serviceuri (str): The base url used
+        conf (dict): Dictionary holding the data, see data/conf.json
+        token (str): Authentication token for keycloak
+        value_read (str): Value to check against the value received
+    """    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer "+ token
+    }
+    # conf["base-url"] + '/superservicemap/api/v1/iot-search/?serviceUri='+ serviceuri
+    url = conf["base-url"] + '/superservicemap/api/v1/iot-search/time-range/?serviceUri='+ serviceuri +'&fromTime=5-minute'
 
     response = requests.get(url, headers=headers)
     num = int(value_read)

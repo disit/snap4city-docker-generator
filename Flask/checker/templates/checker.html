@@ -1,24 +1,27 @@
 {% extends "main.html" %}
-{% block title %}DeMoTeC{% endblock %}
+{% block title %}SnapSentinel{% endblock %}
 {% block head %}
 {{ super() }}
 
 {% endblock %}
 {% block content %}
 <script>
+    var donotupdate = false;
     var test_results;
     var test_results_divs = {};
     const extra_data_locations = [
-        {%for item in extra_data%}['{{item[0]}}', '{{item[1]}}'],
+        {%for item in extra_data%}['{{item[0]}}', '{{item[1]}}', '{{item[2]}}', '{{item[3]}}'],
         {% endfor %}
     ];
     var iframes = {};
+    var opened_categories = new Set();
+    var logs_for_categories = {};
+    var stored_pings_results = {};
     var button_data = [
         {%for element in extra%}
         {'data':`<div class="row align-items-start"><div class="col"><input type="button" name="{{element[1]}}" id="{{element[1]}}" value="{{element[1]}}" class="form-control" onclick="runComplexTests(this)" style="background: {{element[4]}}; color: {{element[6]}}"/>
                 <div>{{element[5]|safe}}</div></div>
-                {%if element[3] != None%}
-                {% for element_2 in element[3].split(';') %}{% set parts = element_2.split(':') %}
+                {%if element[3] != None%}{% for element_2 in element[3].split(';') %}{% set parts = element_2.split(':') %}
                     <input type="{{ parts[0] }}" id="{{ parts[2] }}-{{element[1]}}" name="{{ parts[2] }}" placeholder="{{parts[1]}}" class="form-control"></div>{% endfor %}{%endif%}
                 <div class="col" id="{{element[1]}}-result">No data yet...</div></div>`, 'type':`{{element[7]|safe}}`},
         {%endfor%}
@@ -29,6 +32,17 @@
         {% endfor %}'nothing': 'nothing'
     };
 
+    function toggleUpdate() {
+        if (donotupdate) {
+            document.getElementById("buttonForUpdates").innerHTML = "Stop containers refresh";
+            donotupdate = false;
+        }
+        else {
+            document.getElementById("buttonForUpdates").innerHTML = "Resume containers refresh";
+            donotupdate = true;
+        }
+    }
+
     function smartSleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -38,22 +52,44 @@
     } );
     
     $(document).ready(async function askcontainers() {
-    
         while (1) {
-            if (!document.getElementById("freezecontainers").checked) {
-                getcontainers();
-                testsResults();
-                showTestResults();
-                cg = colorGenerator();
+            if (!donotupdate) {
+                update_routine();
                 }
-            await smartSleep(30000);
+            await smartSleep(120000);
         }
     });
+
+
+    function update_routine() {
+        getcontainers();
+        testsResults();
+        showTestResults();
+        document.getElementById("last-update").innerHTML = "Last update: " + new Date().toLocaleString();
+        cg = colorGenerator();
+        var buttons = document.querySelectorAll('input[type="button"]');
+        buttons.forEach(button => {
+            let parent = button.parentElement;
+            for (let i = 1; i < 5 && parent; i++) {
+              parent = parent.parentElement;
+            }
+            if (parent && (parent.id !== "" && parent.id !== "Unknown") && button.value.startsWith("Ping")) {
+              button.click();
+            }
+          });
+          //store logs between updates maybe
+          var logs = document.querySelectorAll('p');
+          logs.forEach(current_log => {
+            if (current_log.id.endsWith("logs"))
+            logs_for_categories[current_log.id]=current_log.innerHTML;
+          });
+    }
+
     function getcontainers(){
         
         try {
         $.ajax({
-        url: 'read_containers',
+        url: './read_containers',
         type: 'POST',
         success: function(response) {
             //unsafe but works
@@ -71,10 +107,11 @@
         }
         
     };
-    function rebootContainer(containerID) {
+    async function rebootContainer(containerID, element) {
+        element.value = "Restarting...";
         try {
             $.ajax({
-                url: 'reboot_container',
+                url: './reboot_container',
                 data: {id: containerID},
                 type: 'POST',
                 success: function(response) {
@@ -88,14 +125,17 @@
         catch (exception_var) {
             logging(exception_var);
         }
+        //make it look like the operation takes some time if it is too fast
+        await smartSleep(500 + 50 * Math.sqrt(-2 * Math.log(Math.random())) * Math.cos(2 * Math.PI * Math.random()));
+        element.value = "Restart";
     };
     function testsResults() {
         try {
             $.ajax({
-                url: 'tests_results',
+                url: './tests_results',
                 type: 'POST',
                 success: function(response) {
-                    logging("tests results obtained",response);
+                    logging("Tests results obtained: " + response);
                     setTestResults(response);
                     },
                 error: function(error) {
@@ -111,7 +151,7 @@
     function get_complex_tests(){
         try {
             $.ajax({
-                url: 'get_complex_tests',
+                url: './get_complex_tests',
                 type: 'GET',
                 success: function(response) {
                     for (const element of response) {
@@ -133,14 +173,18 @@
         }
     }
 
-    function runTests(container) {
+    async function runTests(container, element) {
+        element.value = "Pinging the port...";
         try {
             $.ajax({
-                url: 'run_test',
+                url: './run_test',
                 type: 'POST',
                 data: {container: container},
                 success: function(response) {
-                    logging("test was ran",response);
+                    if (response==="") response = "No test was found for this component."; 
+                    logging("test was ran with result"+response, element.parentElement.parentElement.parentElement.parentElement.parentElement.id+'-logs');
+                    test_results[container] = response;
+                    stored_pings_results[container] = response;
                     document.getElementById(container+'-result').innerHTML=response;
                 },
                 error: function(error) {
@@ -151,12 +195,15 @@
         catch (exception_var) {
             logging(exception_var);
         }
+        //make it look like the operation takes some time if it is too fast
+        await smartSleep(500 + 50 * Math.sqrt(-2 * Math.log(Math.random())) * Math.cos(2 * Math.PI * Math.random()));
+        element.value = "Ping the port...";
     }
 
     function load_db() {
         try {
             $.ajax({
-                url: 'load_db',
+                url: './load_db',
                 type: 'POST',
                 success: function(response) {
                     logging(response);
@@ -173,6 +220,8 @@
 
     function runComplexTests(test_element) {
         try {
+            var oldtext = test_element.value;
+            test_element.value = "Running " + test_element.value;
             let test_family = test_element.parentElement.querySelectorAll('input');
             let test_name = test_family[0].value;
             let dict_to_be_sent = {};
@@ -180,7 +229,7 @@
             test_family.forEach(el => {dict_to_be_sent[el.name]=el.value});
             delete dict_to_be_sent[test_element.name];
             $.ajax({
-                url: 'run_test_complex',
+                url: './run_test_complex',
                 type: 'POST',
                 data: dict_to_be_sent,
                 success: function(response) {
@@ -191,6 +240,7 @@
                     logging(error);
                 }
             });
+            test_element.value = oldtext;
         }
         catch (exception_var) {
             logging(exception_var);
@@ -209,16 +259,20 @@
         }
     };
 
-    function logging(logging_str) {
+    function logging(logging_str, log_destination="see_logs") {
+        if (log_destination==="") log_destination = "see_logs";
         console.log(logging_str);
-        document.getElementById("see_logs").innerHTML += logging_str + '<br>';
+        document.getElementById(log_destination).innerHTML += new Date().toLocaleString() + ' - ' + logging_str + '<br>';
+        document.getElementById("see_logs").innerHTML += new Date().toLocaleString() + ' - ' + logging_str + '<br>';
     }
 
+    const buttons = document.querySelectorAll('input[type="button"]');
+
     async function getSummary() {
-        await smartSleep(3000);
+        await smartSleep(1000);
         try {
             $.ajax({
-                url: 'get_summary_status',
+                url: './get_summary_status',
                 type: 'GET',
                 success: function(response) {
                     for (const element of response) {
@@ -242,17 +296,14 @@
 
     function getExtraData(url_of_resource, destination_element) {
         try {
-        // Make AJAX request using jQuery
         $.ajax({
-          url: "get_data_from_source",
+          url: "./get_data_from_source",
           method: "GET",
           data: {url_of_resource: url_of_resource},
           success: function(response) {
-            // If the request was successful, render the content in an iframe
             renderContentInIframe(response, destination_element);
           },
           error: function(xhr, status, error) {
-            // If the request failed, render an error message in an iframe
             var errorHtml = "<p>Error: Unable to fetch data from "+url_of_resource+" due to "+error+" with status "+status+"</p>";
             renderContentInIframe(errorHtml, destination_element);
           }
@@ -310,7 +361,7 @@
     }
     
     function makeTable(containerdata) {
-        const headerData = ["Disk Data I/0", "CPU%", "ContainerID (click for container-logs)", "Image", "Mem%", "Mem Used / Mem Max", "Container Name", "Network I/O", "Ports", "Running for / Exited since", "Size", "Status", "Reboot", "Is alive test", "Last tests results"];
+        const headerData = ["Disk Data I/0", "CPU%", "ContainerID (click for container-logs)", "Image", "Mem%", "Mem Used / Mem Max", "Container Name", "Network I/O", "Ports", "Running for / Exited since", "Size", "Status", "Restart", "Is alive test", "Last tests results"];
         //const rowData = containerdata.split('\n');
         //rowData.pop();
         /*
@@ -339,7 +390,8 @@
 
     function createTable(headerData, rowData, name_of_table_value) {
         const table = document.createElement("table");
-        table.setAttribute("class", "table  table-striped table-bordered")
+        table.setAttribute("class", "table  table-striped table-bordered");
+        table.setAttribute("style", "table-layout: fixed;")
         const thead = document.createElement("thead");
         thead.setAttribute("class", "thead-dark");
         const tbody = document.createElement("tbody");
@@ -360,7 +412,7 @@
             elements.forEach(cellData => {
                 const td = document.createElement("td");
                 if (index_of_below_array === 3) {
-                    var content_of_id_cell = '<a target="_blank" href="/container/'+cellData+'">'+cellData+'</a>';
+                    var content_of_id_cell = '<a target="_blank" href="./container/'+cellData+'">'+cellData+'</a>';
                     td.innerHTML = content_of_id_cell;
                 }
                 else if (index_of_below_array === 20) {
@@ -390,14 +442,14 @@
             
             
             var rebootbutton = document.createElement("td");
-            rebootbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Reboot" class="btn btn-primary" onclick="rebootContainer('`+elements[3]+`')"/>`;
+            rebootbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Restart" class="btn btn-primary" onclick="rebootContainer('`+elements[12]+`', this)"/>`;
             row.appendChild(rebootbutton);
             var testsbutton = document.createElement("td");
-            testsbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Ping the port..." class="btn btn-info" onclick="runTests('`+elements[12]+`')"/>`;
+            testsbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Ping the port..." class="btn btn-info" onclick="runTests('`+elements[12]+`', this)"/>`;
             row.appendChild(testsbutton);
             tbody.appendChild(row);
             var testresults = document.createElement("td");
-            testresults.setAttribute('id',elements[3]+'-result');
+            testresults.setAttribute('id',elements[12]+'-result');
             row.appendChild(testresults);
 
             tbody.appendChild(row);
@@ -463,11 +515,15 @@
     
     const cg = colorGenerator();
     jQuery.each(categorizedData, function (i, val) {
-        if (i != "Unknown") {
+        if (true) {
             const box = document.createElement("div");
             box.setAttribute("class", "p-5 text-center");
             box.setAttribute("style", "border-radius: 3rem; background-color: "+cg.next().value);
             box.setAttribute("id",i);
+            if (opened_categories.has(i)) box.style.display = "block"; else box.style.display = "none";
+            
+            //box.setAttribute("style", "display: none;");
+            //correctVisibility(box);
             const centerer = document.createElement("div");
             centerer.setAttribute("style", "text-align: center");
             const name_of_table = document.createElement("h1");
@@ -490,6 +546,12 @@
                 box.appendChild(complex_tests);
             }
             tableContainer.appendChild(box);
+            const category_logs = document.createElement("p");
+            category_logs.setAttribute("id", i+"-logs");
+            category_logs.setAttribute("class", "ui-widget-header");
+            category_logs.setAttribute("style", "text-align: left;");
+            box.appendChild(category_logs);
+            if (logs_for_categories[i+"-logs"]) category_logs.innerHTML=logs_for_categories[i+"-logs"];
             }
             else console.log("Skipped unmanaged containers");
             
@@ -503,8 +565,10 @@ function collapse_category(category_element_id) {
     element=document.getElementById(category_element_id);
     if (element.style.display === "none") {
         element.style.display = "block";
+        opened_categories.add(category_element_id);
     } else {
         element.style.display = "none";
+        opened_categories.delete(category_element_id);
     }
   };
 
@@ -527,25 +591,61 @@ function* colorGenerator() {
     }
   }
 </script>
-<label for="freezecontainers">Stop containers refresh</label>
-<input type="checkbox" id="freezecontainers">
-<form action="generate_pdf" method="POST">
-    <input type="submit" class="btn btn-info" value="Generate pdf with all container logs (might take several seconds)" />
-</form>
-<div id="output" class="main">
-    
-    <br>
-    
-     
-    
-    <div id="table-container">
 
+
+<nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light">
+  <div class="collapse navbar-collapse container-fluid" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="navbar-brand">$#base-hostname#$</a>
+      </li>
+    </ul>
+
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <form action="generate_pdf" method="POST">
+             <input type="submit" class="btn btn-info" value="Generate full logs" />
+        </form>
+      </li>
+    </ul>
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="navbar-brand">SnapSentinel: Platform Process Monitoring and Control</a>
+      </li>
+    </ul>
+    <ul class="navbar-nav mr-auto">
+        <li class="nav-item"  style="padding-right: 0.5em;">
+          <button id="buttonForUpdates" class="btn btn-danger" onClick="toggleUpdate()">Stop refresh</label>
+        </li>
+        <li class="nav-item">
+          <button id="updatenow" class="btn btn-danger" onClick="update_routine()">Refresh now</label>
+        </li>
+      <li class="nav-item">
+        <div id="last-update" class="nav-link"></div>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<div id="output" class="main">
+    <br>
+    <div id="table-container">
     </div>
-    <div id="draggable" class="ui-widget-content">
-        <p>Console Log (draggable)</p>
-        <p class="ui-widget-header" id="see_logs"></p>
-      </div>
 </div>
+    <div id="notDraggable" class="ui-widget-content">
+        <p>Console Log</p>
+        <p class="ui-widget-header" id="see_logs"></p>
+    </div>
+
+<nav class="navbar sticky-bottom bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="mailto: replaceme">Supporto? Mandaci una mail!</a>
+    <a class="navbar-brand" href="#">
+      <img src="./{{ url_for('static', filename = 'snap4.png') }}" alt="Logo" width="80px" height="45px" class="d-inline-block align-text-top">
+    </a>
+  </div>
+  
+</nav>
 <style>
     table th, table td {
       max-width: 200px;
