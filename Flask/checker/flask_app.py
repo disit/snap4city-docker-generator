@@ -31,6 +31,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 API_TOKEN = 'replaceme'
 
+greendot = """<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>"""
+reddot = """<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>"""
+
 # edit this block according to your mysql server's configuration
 db_conn_info = {
         "user": "root",
@@ -47,7 +50,7 @@ def send_telegram(chat_id, message):
     return
 
 def send_email(sender_email, sender_password, receiver_email, subject, message):
-    smtp_server = 'replaceme'
+    smtp_server = 'smtps.aruba.it'
     smtp_port = 587 # may be changed
     server = smtplib.SMTP(smtp_server, smtp_port)
     server.starttls()
@@ -62,13 +65,11 @@ def send_email(sender_email, sender_password, receiver_email, subject, message):
     return
 
 def isalive():
-    #send_email("support@snap4.eu", "b2d!xcaZD/ZbVpR", ["forgothowtoreddid@gmail.com"], "Is alive", "Platform is alive")
-    #send_telegram(-4111023179, "Platform is alive")
+    send_email("support@snap4.eu", "b2d!xcaZD/ZbVpR", "forgothowtoreddid@gmail.com", "SnapSentinel-Test is alive", "Platform is alive")
+    send_telegram(-4111023179, "Platform is alive")
     return
 
 def auto_alert_status():
-    print("begin!")
-    result_of_operations = ""
     containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
     containers_stats = [b for b in (subprocess.run('docker stats --format json -a --no-stream', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
     containers_merged = []
@@ -87,29 +88,70 @@ def auto_alert_status():
             conn.commit()
             results = cursor.fetchall()
     except Exception as e:
-        result_of_operations+="Can't reach db"
-    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in [a[0].replace("*","") for a in results]) and c["State"] != "Running"]
-    containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["certbot"]) and c["State"] != "Exited"]
+        send_alerts("Can't reach db, auto alert 1")
+        return
+    categories = [a[0].replace("*","") for a in results]
+    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in categories) and c["State"] != "running"]
+    containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["certbot"]) and c["State"] != "exited"]
     problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not
-    if len(problematic_containers):
-        result_of_operations+=str(problematic_containers)
-    if len(result_of_operations) > 0:
+    containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) -set([n["Names"] for n in problematic_containers]))
+    names_of_problematic_containers = [n["Names"] for n in problematic_containers]
+    if len(names_of_problematic_containers) > 0:
         try:
-            send_email("sender", "sender password", "receiver", "subject", "text of mail")
-            send_telegram("chat_id", "text of telegram password")
-        except Exception as E:
-            print(E)
+            with mysql.connector.connect(**db_conn_info) as conn:
+                cursor = conn.cursor(buffered=True)
+                values = [f"{val}%" for val in names_of_problematic_containers]
+                values = [''.join([i for i in values if not i.isdigit()])]
+                conditions = ' OR '.join(['component LIKE %s'] * len(values))
+                query = f'SELECT category FROM component_to_category WHERE {conditions};'
+                cursor.execute(query, values)
+                conn.commit()
+                results = cursor.fetchall()
+                values = ', '.join([f"'{val}'" for val in [a[0] for a in results]])
+                update_problematic_categories_query=f"UPDATE `checker`.`summary_status` SET `status` = %s WHERE `category` in ({values});"
+                cursor.execute(update_problematic_categories_query, [reddot])
+                conn.commit()
+                update_healthy_categories_query=f"UPDATE `checker`.`summary_status` SET `status` = %s WHERE `category` not in ({values});"
+                cursor.execute(update_healthy_categories_query, [greendot])
+                conn.commit()
+                send_alerts("There are problems with the containers: "+str(problematic_containers))
+                return
+        except Exception as e:
+            print(e)
+            send_alerts("Can't reach db, auto alert 2")
+            return
+    else:
+        try:
+            with mysql.connector.connect(**db_conn_info) as conn:
+                cursor = conn.cursor(buffered=True)
+                update_healthy_categories_query=f"UPDATE `checker`.`summary_status` SET `status` = %s;"
+                cursor.execute(update_healthy_categories_query, [greendot])
+                conn.commit()
+                return
+        except Exception as e:
+            print(e)
+            send_alerts("Can't reach db, auto alert 3")
+            return
+
+    
+def send_alerts(message):
+    try:
+        print(message)
+        send_email("support@snap4.eu", "b2d!xcaZD/ZbVpR", "forgothowtoreddid@gmail.com", "SnapSentinel-Test is in trouble!", message)
+        send_telegram("chat_id", message)
+    except Exception as E:
+        print(E)
+    
     
 scheduler = BackgroundScheduler()
-scheduler.add_job(auto_alert_status, trigger='interval', minutes=1)
+scheduler.add_job(auto_alert_status, trigger='interval', minutes=15)
 scheduler.add_job(isalive, 'cron', hour=8, minute=0)
 scheduler.add_job(isalive, 'cron', hour=20, minute=0)
-#scheduler.start()
+scheduler.start()
 auto_alert_status()
 def create_app():
     app = Flask(__name__)
     app.secret_key = b'\x8a\x17\x93kT\xc0\x0b6;\x93\xfdp\x8bLl\xe6u\xa9\xf5x'
-    send_messages = True
 
     @app.route("/")
     def main_page():
@@ -156,6 +198,21 @@ def create_app():
         except Exception as e:
             print("Something went wrong because of",e)
             return render_template("error_showing.html", r = e)
+        
+    @app.route("/container_is_okay", methods=['POST'])
+    def make_category_green():
+        if request.method == "POST":
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    cursor = conn.cursor(buffered=True)
+                    update_categories_query=f"""UPDATE `checker`.`summary_status` SET `status` = %s WHERE (`category` = '{request.form.to_dict()['container']}');"""
+                    cursor.execute(update_categories_query, [greendot])
+                    conn.commit()
+                    return "👌"
+            except Exception as e:
+                print(e)
+                send_alerts("Can't reach db")
+                return "There was a problem: "+e, 500
         
     @app.route("/read_containers", methods=['POST','GET'])
     def check():

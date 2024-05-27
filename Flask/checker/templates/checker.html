@@ -277,11 +277,16 @@
                 success: function(response) {
                     for (const element of response) {
                         try {
-                        document.getElementById(element[0]+'-status').innerHTML=element[0]+' - '+element[1];
-                        } catch (exception_var) {
-                            logging(exception_var);
-                        }
+                            document.getElementById(element[0]+'-status').innerHTML=element[0]+' - '+element[1];
+                            } catch (e) {
+                            if (e instanceof TypeError) {
+                                return;
+                            }
+                            else {
+                                logging(exception_var);
+                            }
                     }
+                }
                     logging(response);
                 },
                 error: function(error) {
@@ -299,9 +304,9 @@
         $.ajax({
           url: "./get_data_from_source",
           method: "GET",
-          data: {url_of_resource: url_of_resource},
+          data: {url_of_resource: url_of_resource[1]},
           success: function(response) {
-            renderContentInIframe(response, destination_element);
+            renderContentInIframe(response, destination_element, url_of_resource[3]);
           },
           error: function(xhr, status, error) {
             var errorHtml = "<p>Error: Unable to fetch data from "+url_of_resource+" due to "+error+" with status "+status+"</p>";
@@ -314,9 +319,12 @@
       }
     }
       
-      function renderContentInIframe(content, destination_element) {
+      function renderContentInIframe(content, destination_element, description_data) {
         var iframe = document.createElement('iframe');
         iframe.setAttribute("style", "width: 100%; height: 450px;");
+        var description = document.createElement('div');
+        description.innerHTML = description_data;
+        destination_element.appendChild(description);
         destination_element.appendChild(iframe);
         var doc = iframe.contentWindow.document;
         doc.open();
@@ -537,7 +545,7 @@
             box.appendChild(createTable(headerData, val, i));
             const parser = new DOMParser();
             extra_data_locations.filter(innerArray => innerArray[0] === i).forEach(innerArray => {
-                getExtraData(innerArray[1], box);
+                getExtraData(innerArray, box);
             });
             if (add_complex_test_table_depending_on_category(i)) {
                 const complex_tests = document.createElement("div");
