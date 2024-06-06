@@ -9,17 +9,22 @@
     var donotupdate = false;
     var test_results;
     var test_results_divs = {};
+	var data_tables = {};
     const extra_data_locations = [
         {%for item in extra_data%}['{{item[0]}}', '{{item[1]}}', '{{item[2]}}', '{{item[3]}}'],
         {% endfor %}
     ];
+	var less_columns = false;
+	
+	var dict_of_hidden_columns = {};
+	var container_rows = {};
     var iframes = {};
-    var opened_categories = new Set();
+    var closed_categories = new Set();
     var logs_for_categories = {};
     var stored_pings_results = {};
     var button_data = [
         {%for element in extra%}
-        {'data':`<div class="row align-items-start"><div class="col"><input type="button" name="{{element[1]}}" id="{{element[1]}}" value="{{element[1]}}" class="form-control" onclick="runComplexTests(this)" style="background: {{element[4]}}; color: {{element[6]}}"/>
+        {'data':`<div class="row align-items-start"><div class="col"><input type="button" name="{{element[1]}}" id="{{element[1]}}" value="{{element[1]}}" class="form-control" onclick="runComplexTests(this, '{{element[7]}}')" style="background: {{element[4]}}; color: {{element[6]}}"/>
                 <div>{{element[5]|safe}}</div></div>
                 {%if element[3] != None%}{% for element_2 in element[3].split(';') %}{% set parts = element_2.split(':') %}
                     <input type="{{ parts[0] }}" id="{{ parts[2] }}-{{element[1]}}" name="{{ parts[2] }}" placeholder="{{parts[1]}}" class="form-control"></div>{% endfor %}{%endif%}
@@ -28,7 +33,7 @@
     ];
 
     const lookupTable = {
-        {%for item in categories%}'{{item[0]}}': '{{item[1]}}',
+        {%for item in categories%}'{{item[0]}}': ['{{item[1]}}','{{item[2]|safe}}','{{item[3]|safe}}'],
         {% endfor %}'nothing': 'nothing'
     };
 
@@ -40,6 +45,10 @@
         else {
             document.getElementById("buttonForUpdates").innerHTML = "Resume containers refresh";
             donotupdate = true;
+            //after 30 minutes, resume updates in case user forgot to turn them on
+            smartSleep(1800000);
+            document.getElementById("buttonForUpdates").innerHTML = "Stop containers refresh";
+            donotupdate = false;
         }
     }
 
@@ -59,30 +68,33 @@
             await smartSleep(120000);
         }
     });
+	
+	
 
 
     function update_routine() {
         getcontainers();
         testsResults();
         showTestResults();
-        document.getElementById("last-update").innerHTML = "Last update: " + new Date().toLocaleString();
+		$("table[id^='table-']").DataTable();
+		document.getElementById("last-update").innerHTML = "Last update: " + new Date().toLocaleString();
         cg = colorGenerator();
         var buttons = document.querySelectorAll('input[type="button"]');
         buttons.forEach(button => {
             let parent = button.parentElement;
             for (let i = 1; i < 5 && parent; i++) {
-              parent = parent.parentElement;
+                parent = parent.parentElement;
             }
-            if (parent && (parent.id !== "" && parent.id !== "Unknown") && button.value.startsWith("Ping")) {
-              button.click();
+            if (parent && (parent.id !== "" && parent.id !== "Unknown") && button.value.startsWith("Check")) {
+                button.click();
             }
-          });
-          //store logs between updates maybe
-          var logs = document.querySelectorAll('p');
-          logs.forEach(current_log => {
+        });
+        //store logs between updates maybe
+        var logs = document.querySelectorAll('p');
+        logs.forEach(current_log => {
             if (current_log.id.endsWith("logs"))
             logs_for_categories[current_log.id]=current_log.innerHTML;
-          });
+        });
     }
 
     function getcontainers(){
@@ -99,7 +111,8 @@
         },
         error: function(error) {
             logging(error);
-        }
+        },
+        timeout: 7000
         });
         }
         catch (exception_var) {
@@ -108,19 +121,21 @@
         
     };
     async function rebootContainer(containerID, element) {
-        element.value = "Restarting...";
-        try {
-            $.ajax({
-                url: './reboot_container',
-                data: {id: containerID},
-                type: 'POST',
-                success: function(response) {
-                    logging(containerID+' was rebooted!');
-                },
-                error: function(error) {
-                    logging(error);
-                }
-            });
+        if (confirm('You are about to reboot a container: this action requires additional confirmation')) {
+            element.value = "Restarting...";
+            try {
+                $.ajax({
+                    url: './reboot_container',
+                    data: {id: containerID},
+                    type: 'POST',
+                    success: function(response) {
+                        logging(containerID+' was rebooted!', element.parentElement.parentElement.parentElement.parentElement.parentElement.id+'-logs');
+                    },
+                    error: function(error) {
+                        logging(error);
+                    },
+                    timeout: 7000
+                });
         }
         catch (exception_var) {
             logging(exception_var);
@@ -128,6 +143,11 @@
         //make it look like the operation takes some time if it is too fast
         await smartSleep(500 + 50 * Math.sqrt(-2 * Math.log(Math.random())) * Math.cos(2 * Math.PI * Math.random()));
         element.value = "Restart";
+        } else {
+            // Do nothing!
+            return;
+        }
+        
     };
     function testsResults() {
         try {
@@ -140,7 +160,8 @@
                     },
                 error: function(error) {
                     logging(error);
-                }
+                },
+                timeout: 7000
             });
         }
         catch (exception_var) {
@@ -158,14 +179,15 @@
                         try {
                         document.getElementById(element[3]+'-result').innerHTML=element[2];
                         } catch (exception_var) {
-                            logging(exception_var);
+                            logging("Error in obtaining complex tests: "+ exception_var + ' - ' + element);
                         }
                     }
                     logging(response);
                 },
                 error: function(error) {
                     logging(error);
-                }
+                },
+                timeout: 7000
             });
         }
         catch (exception_var) {
@@ -173,8 +195,27 @@
         }
     }
 
-    async function runTests(container, element) {
-        element.value = "Pinging the port...";
+    async function runTests(container, element, location) {
+
+        const currentTime = Date.now();
+        const button = event.target;
+
+        // Initialize the last execution time if it doesn't exist
+        if (!button.lastExecutionTime) {
+            button.lastExecutionTime = 0;
+        }
+
+        // Check if 3 seconds have passed since the last execution
+        if (currentTime - button.lastExecutionTime >= 3000) {
+
+            // Update the last execution time
+            button.lastExecutionTime = currentTime;
+        } else {
+            alert("You cannot perform this action, wait a few seconds.");
+            return;
+        }
+
+        element.value = "Checking the port...";
         try {
             $.ajax({
                 url: './run_test',
@@ -182,14 +223,15 @@
                 data: {container: container},
                 success: function(response) {
                     if (response==="") response = "No test was found for this component."; 
-                    logging("test was ran with result"+response, element.parentElement.parentElement.parentElement.parentElement.parentElement.id+'-logs');
+                    logging("<b>" + element.name + "</b> had its port checked and the result was: "+response, location+'-logs');
                     test_results[container] = response;
                     stored_pings_results[container] = response;
-                    document.getElementById(container+'-result').innerHTML=response;
+                    //document.getElementById(container+'-result').innerHTML=response;
                 },
                 error: function(error) {
                     logging(error);
-                }
+                },
+                timeout: 7000
             });
         }
         catch (exception_var) {
@@ -197,7 +239,7 @@
         }
         //make it look like the operation takes some time if it is too fast
         await smartSleep(500 + 50 * Math.sqrt(-2 * Math.log(Math.random())) * Math.cos(2 * Math.PI * Math.random()));
-        element.value = "Ping the port...";
+        element.value = "Check the port...";
     }
 
     function load_db() {
@@ -210,7 +252,8 @@
                 },
                 error: function(error) {
                     logging(error);
-                }
+                },
+                timeout: 7000
             });
         }
         catch (exception_var) {
@@ -218,14 +261,31 @@
         }
     }
 
-    function runComplexTests(test_element) {
+    async function runComplexTests(test_element, category) {
+        const currentTime = Date.now();
+        const button = event.target;
+
+        // Initialize the last execution time if it doesn't exist
+        if (!button.lastExecutionTime) {
+            button.lastExecutionTime = 0;
+        }
+
+        // Check if 3 seconds have passed since the last execution
+        if (currentTime - button.lastExecutionTime >= 3000) {
+
+            // Update the last execution time
+            button.lastExecutionTime = currentTime;
+        } else {
+            alert("You cannot perform this action, wait a few seconds.");
+            return;
+        }
         try {
-            var oldtext = test_element.value;
+            var oldtext = test_element.name;
             test_element.value = "Running " + test_element.value;
             let test_family = test_element.parentElement.querySelectorAll('input');
             let test_name = test_family[0].value;
             let dict_to_be_sent = {};
-            dict_to_be_sent['test_name'] = test_name;
+            dict_to_be_sent['test_name'] = oldtext;
             test_family.forEach(el => {dict_to_be_sent[el.name]=el.value});
             delete dict_to_be_sent[test_element.name];
             $.ajax({
@@ -233,18 +293,22 @@
                 type: 'POST',
                 data: dict_to_be_sent,
                 success: function(response) {
-                    logging("test was ran",response);
-                    document.getElementById(test_name+'-result').innerHTML=response;
+                    logging(category + " - Complex test was ran: "+response, category+"-logs");
+                    
+                    document.getElementById(oldtext+'-result').innerHTML=response;
                 },
                 error: function(error) {
-                    logging(error);
-                }
+                    logging(oldtext + " - " + error.statusText ,category+"-logs");
+                },
+                timeout: 7000
             });
-            test_element.value = oldtext;
         }
         catch (exception_var) {
             logging(exception_var);
         }
+        
+        await smartSleep(500 + 50 * Math.sqrt(-2 * Math.log(Math.random())) * Math.cos(2 * Math.PI * Math.random()));
+        test_element.value = oldtext;
     }
 
     function setTestResults(results) {
@@ -261,9 +325,8 @@
 
     function logging(logging_str, log_destination="see_logs") {
         if (log_destination==="") log_destination = "see_logs";
-        console.log(logging_str);
         document.getElementById(log_destination).innerHTML += new Date().toLocaleString() + ' - ' + logging_str + '<br>';
-        document.getElementById("see_logs").innerHTML += new Date().toLocaleString() + ' - ' + logging_str + '<br>';
+        if (log_destination!="see_logs")document.getElementById("see_logs").innerHTML += new Date().toLocaleString() + ' - ' + logging_str + '<br>';
     }
 
     const buttons = document.querySelectorAll('input[type="button"]');
@@ -291,7 +354,8 @@
                 },
                 error: function(error) {
                     logging(error);
-                }
+                },
+                timeout: 7000
             });
         }
         catch (exception_var) {
@@ -311,7 +375,8 @@
           error: function(xhr, status, error) {
             var errorHtml = "<p>Error: Unable to fetch data from "+url_of_resource+" due to "+error+" with status "+status+"</p>";
             renderContentInIframe(errorHtml, destination_element);
-          }
+          },
+          timeout: 7000
         });
       }
       catch (exception_var) {
@@ -342,7 +407,7 @@
             test_results.forEach((element)=> {
             
             try {
-                document.getElementById(element[3]).innerHTML=element[2];
+                document.getElementById(element[3]+'-result').innerHTML=element[2];
             }
             catch (exception_var) {
                 logging('An orphan test with the name '+element[3]+' gave a result of: ' +element[2]);
@@ -369,7 +434,7 @@
     }
     
     function makeTable(containerdata) {
-        const headerData = ["Disk Data I/0", "CPU%", "ContainerID (click for container-logs)", "Image", "Mem%", "Mem Used / Mem Max", "Container Name", "Network I/O", "Ports", "Running for / Exited since", "Size", "Status", "Restart", "Is alive test", "Last tests results"];
+        const headerData = ["I/O" ,"CPU%", "Command", "ContainerID (click for container-logs)", "Created at", "ID", "Image", "Labels", "Local Volumes", "Mem%", "Mem Used / Mem Max", "Mounts", "Container Name", "Names", "Network I/O", "Networks", "PIDs", "Ports", "Running for / Exited since", "Size", "State", "Status", "Restart", "Is alive test", "Last test results", "Contacts", "Location", "Toggle update for this component"];
         //const rowData = containerdata.split('\n');
         //rowData.pop();
         /*
@@ -398,8 +463,9 @@
 
     function createTable(headerData, rowData, name_of_table_value) {
         const table = document.createElement("table");
+        table.setAttribute("id", "table-"+name_of_table_value.replace(/\s+/g, ''));
         table.setAttribute("class", "table  table-striped table-bordered");
-        table.setAttribute("style", "table-layout: fixed;")
+        table.setAttribute("style", "table-layout: fixed; background-color: white;");
         const thead = document.createElement("thead");
         thead.setAttribute("class", "thead-dark");
         const tbody = document.createElement("tbody");
@@ -414,7 +480,13 @@
         thead.appendChild(headerRow);
 
         rowData.forEach(rowValues => {
+			if (container_rows[rowValues["Name"]]) {
+				console.log("shouldn't update", rowValues["Name"]);
+				tbody.appendChild(container_rows[rowValues["Name"]]);
+				return;
+			}
             const row = document.createElement("tr");
+            row.setAttribute("name", rowValues["Name"]);            
             var elements = Object.values(rowValues);
             var index_of_below_array = 0;
             elements.forEach(cellData => {
@@ -436,35 +508,67 @@
                 row.appendChild(td);
                 index_of_below_array = index_of_below_array + 1;
             });
-            
+            /*
             row.removeChild(row.childNodes[21]);
             row.removeChild(row.childNodes[16]);
             row.removeChild(row.childNodes[15]);
             row.removeChild(row.childNodes[13]);
             row.removeChild(row.childNodes[11]);
+            row.removeChild(row.childNodes[10]);
             row.removeChild(row.childNodes[8]);
             row.removeChild(row.childNodes[7]);
             row.removeChild(row.childNodes[5]);
             row.removeChild(row.childNodes[4]);
             row.removeChild(row.childNodes[2]);
-            
+            row.removeChild(row.childNodes[0]);
+            */
             
             var rebootbutton = document.createElement("td");
-            rebootbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Restart" class="btn btn-primary" onclick="rebootContainer('`+elements[12]+`', this)"/>`;
+            rebootbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Restart" class="btn btn-primary" onclick="rebootContainer('`+elements[12]+`', this, '`+name_of_table_value+`')"/>`;
             row.appendChild(rebootbutton);
             var testsbutton = document.createElement("td");
-            testsbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Ping the port..." class="btn btn-info" onclick="runTests('`+elements[12]+`', this)"/>`;
+            testsbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Check the port..." class="btn btn-info" onclick="runTests('`+elements[12]+`', this, '`+name_of_table_value+`')"/>`;
             row.appendChild(testsbutton);
             tbody.appendChild(row);
             var testresults = document.createElement("td");
             testresults.setAttribute('id',elements[12]+'-result');
-            row.appendChild(testresults);
 
+            var some_value;
+                for (const key in lookupTable) {
+                    if (rowValues["Name"].startsWith(key.replace('*', ''))) {
+                        some_value = lookupTable[key];
+                    break;
+                    }
+                }
+            if (!some_value) some_value = ["","Failure to retrieve contacts", "Failure to retrieve location"];
+            
+
+            var in_case_of_problems = document.createElement("td");
+            in_case_of_problems.innerHTML=some_value[1];
+            
+            var location_of_component = document.createElement("td");
+            location_of_component.innerHTML=some_value[2];
+            in_case_of_problems.innerHTML=some_value[1];
+
+            row.appendChild(testresults);
+            row.appendChild(in_case_of_problems);
+            row.appendChild(location_of_component);
+            
+			var do_not_update_this_td = document.createElement("td");
+			var do_not_update_this = document.createElement("input");
+			do_not_update_this.setAttribute("onclick", "toggle_update_this_line(this)");
+			do_not_update_this.setAttribute("class", "btn btn-info");
+			do_not_update_this.setAttribute("type", "button");
+			do_not_update_this.setAttribute("value", "Stop this component from refreshing");
+			do_not_update_this_td.appendChild(do_not_update_this);
+			row.appendChild(do_not_update_this_td);
+			//container_rows[rowValues["Name"]]=row;
             tbody.appendChild(row);
             testresults.innerHTML=test_results_divs[row.childNodes[6].innerHTML];
             if (testresults.innerHTML == "undefined") {
                 testresults.innerHTML = "No tests found";
             }
+
             
         });
 
@@ -483,6 +587,7 @@
 
     
     const tableContainer = document.getElementById("table-container");
+	tableContainer.setAttribute("style", "display: flex; flex-wrap: wrap;")
     tableContainer.innerText="";
     containerdata.sort((a, b) => {
         const nameA = a.Name.toUpperCase();
@@ -509,7 +614,7 @@
         let category = 'Unknown';
         for (const key in lookupTable) {
             if (name.startsWith(key.replace('*', ''))) {
-            category = lookupTable[key];
+            category = lookupTable[key][0];
             break;
             }
         }
@@ -522,27 +627,37 @@
     //console.log(categorizedData);
     
     const cg = colorGenerator();
-    jQuery.each(categorizedData, function (i, val) {
+	var something = Object.keys(categorizedData).sort();
+	document.getElementById("category_menu").innerHTML="";
+    jQuery.each(something, function (item, val_2) {
         if (true) {
+			var val = categorizedData[val_2];
+			var i = val_2;
             const box = document.createElement("div");
             box.setAttribute("class", "p-5 text-center");
             box.setAttribute("style", "border-radius: 3rem; background-color: "+cg.next().value);
             box.setAttribute("id",i);
-            if (opened_categories.has(i)) box.style.display = "block"; else box.style.display = "none";
+            //if (!closed_categories.has(i)) box.style.display = "block"; else box.style.display = "none";
             
             //box.setAttribute("style", "display: none;");
             //correctVisibility(box);
             const centerer = document.createElement("div");
-            centerer.setAttribute("style", "text-align: center");
+            //centerer.setAttribute("style", "text-align: center");
+			centerer.setAttribute("name", i);
             const name_of_table = document.createElement("h1");
-            name_of_table.setAttribute("class", "btn btn-dark btn-lg");
-            name_of_table.setAttribute("style", "text-align: center");
-            name_of_table.setAttribute("onclick", "collapse_category('"+i+"')");
+            name_of_table.setAttribute("class", "btn btn-light btn-lg");
+            name_of_table.setAttribute("onclick", "collapse_category('"+i+"', this)");
             name_of_table.setAttribute("id", i+"-status");
             name_of_table.innerHTML = i;
-            centerer.appendChild(name_of_table);
+			var menupage = document.getElementById("category_menu");
+			menupage.appendChild(name_of_table);
+            //centerer.appendChild(name_of_table);
+            var div_for_category_name = document.createElement("h1");
+            div_for_category_name.innerHTML=i;
             tableContainer.appendChild(centerer);
+            box.appendChild(div_for_category_name);
             box.appendChild(createTable(headerData, val, i));
+            let a = 'table-'+i.replace(/\s+/g, '');
             const parser = new DOMParser();
             extra_data_locations.filter(innerArray => innerArray[0] === i).forEach(innerArray => {
                 getExtraData(innerArray, box);
@@ -553,11 +668,11 @@
                 complex_tests.innerHTML=add_complex_test_table_depending_on_category(i);
                 box.appendChild(complex_tests);
             }
-            tableContainer.appendChild(box);
+            centerer.appendChild(box);
             const category_logs = document.createElement("p");
             category_logs.setAttribute("id", i+"-logs");
             category_logs.setAttribute("class", "ui-widget-header");
-            category_logs.setAttribute("style", "text-align: left;");
+            category_logs.setAttribute("style", "text-align: left; min-height: 250px;");
             box.appendChild(category_logs);
             if (logs_for_categories[i+"-logs"]) category_logs.innerHTML=logs_for_categories[i+"-logs"];
             }
@@ -566,20 +681,50 @@
     });
     getSummary();
     get_complex_tests();
+    data_tables=$("table[id^='table-']").DataTable(dict_of_hidden_columns);
+	//if (less_columns) [0, 2, 4, 5, 6, 7, 8, 11, 13, 15, 16, 17, 19].forEach(function(index) {data_tables.column(index).visible(false)});
+        
     //tableContainer.appendChild(table);
 }
 
-function collapse_category(category_element_id) {
+function toggle_update_this_line(component) {
+	if (container_rows[component.parentElement.parentElement.getAttribute("name")]) {
+		delete container_rows[component.parentElement.parentElement.getAttribute("name")];
+		component.value = "Stop refresh";
+	}
+	else {
+		component.value = "Resume refresh";
+		container_rows[component.parentElement.parentElement.getAttribute("name")] = component.parentElement.parentElement;
+	}
+	console.log("flipped", component.parentElement.parentElement.getAttribute("name"));
+}
+
+function collapse_category(category_element_id, button) {
     element=document.getElementById(category_element_id);
     if (element.style.display === "none") {
+		button.className="btn btn-light btn-lg";
         element.style.display = "block";
-        opened_categories.add(category_element_id);
+        closed_categories.delete(category_element_id);
     } else {
+		button.className="btn btn-dark btn-lg";
         element.style.display = "none";
-        opened_categories.delete(category_element_id);
+        closed_categories.add(category_element_id);
     }
   };
 
+
+function toggle_hide_extra_columns(button) {
+	less_columns = !less_columns;
+	if (less_columns) {
+		button.innerHTML = "Show additional columns";
+		dict_of_hidden_columns={columnDefs:[{target: 0, visible: false},{target: 2, visible: false},{target: 4, visible: false},{target: 5, visible: false},{target: 6, visible: false},{target: 7, visible: false},{target: 8, visible: false},{target: 11, visible: false},{target: 13, visible: false},{target: 15, visible: false},{target: 16, visible: false},{target: 17, visible: false},{target: 19, visible: false}]};
+	}
+	else {
+		dict_of_hidden_columns={retrieve: true};
+		button.innerHTML = "Hide additional columns";
+	}
+	update_routine();
+}
 
 function add_complex_test_table_depending_on_category(category) {
     var final_str = "";
@@ -605,7 +750,7 @@ function* colorGenerator() {
   <div class="collapse navbar-collapse container-fluid" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item active">
-        <a class="navbar-brand">$#base-hostname#$</a>
+        <a class="navbar-brand">$#base-url#$</a>
       </li>
     </ul>
 
@@ -625,8 +770,11 @@ function* colorGenerator() {
         <li class="nav-item"  style="padding-right: 0.5em;">
           <button id="buttonForUpdates" class="btn btn-danger" onClick="toggleUpdate()">Stop refresh</label>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" style="padding-right: 0.5em;">
           <button id="updatenow" class="btn btn-danger" onClick="update_routine()">Refresh now</label>
+        </li>
+        <li class="nav-item">
+          <button id="toggle_columns" class="btn btn-danger" onClick="toggle_hide_extra_columns(this)">Hide unimportant columns</label>
         </li>
       <li class="nav-item">
         <div id="last-update" class="nav-link"></div>
@@ -637,8 +785,11 @@ function* colorGenerator() {
 
 <div id="output" class="main">
     <br>
-    <div id="table-container">
+	<div id="category_menu" class="category_menu">
+		
     </div>
+    <div id="table-container">
+		
 </div>
     <div id="notDraggable" class="ui-widget-content">
         <p>Console Log</p>
@@ -655,6 +806,15 @@ function* colorGenerator() {
   
 </nav>
 <style>
+	.category_menu {
+		display: flex;
+		justify-content: space-evenly;
+	}
+
+    .tooltip-inner {
+        user-select: text;
+      }
+
     table th, table td {
       max-width: 200px;
       overflow: auto;

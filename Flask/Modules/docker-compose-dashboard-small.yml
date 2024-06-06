@@ -23,7 +23,7 @@ services:
   dashboard-builder:
     container_name: dashboard-builder
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v7.7.2
+    image: disitlab/dashboard-builder:v8.2
     #build: ./build/dashboard-builder
     ports:
       - "70:80"
@@ -41,6 +41,7 @@ services:
        - ./ownership-conf/config.php:/var/www/html/ownership-api/config.php
        - ./ownership-conf/logs:/ownership-logs
        - ./multiservicemap-conf:/var/www/html/MultiServiceMap/conf
+       - ./iotapp-api-conf/config.php:/var/www/html/snap4city-application-api/config.php
        - dashboard-img:/var/www/html/dashboardSmartCity/img
        - datatable-uploads:/var/www/html/processloader/DataTableManager/files
        - poitable-uploads:/var/www/html/processloader/POIManager/files
@@ -224,7 +225,7 @@ services:
   kafka:
     container_name: kafka
     restart: unless-stopped
-    image: bitnami/kafka:latest
+    image: bitnami/kafka:3.3.2
 
     logging:
       driver: "json-file"

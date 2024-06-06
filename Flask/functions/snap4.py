@@ -666,8 +666,9 @@ def adjust_dashboard_menu_dump(iot_app_amount, add_checker=False): #make iotapps
         return None
     str_to_add='DELETE FROM Dashboard.MainMenuSubmenus WHERE text LIKE "IoT Application nodered%";\n'
     str_to_add+='INSERT INTO Dashboard.MainMenuSubmenus (menu,linkUrl,linkid,icon,text,privileges,userType,externalApp,openMode,iconColor,pageTitle,menuorder,organizations) VALUES '
-    for i in range(iot_app_amount):
-        str_to_add+='''('''+str(1035)+''','$#base-protocol#$://$#base-hostname#$/iotapp/iotapp-'''+str(i+1).zfill(3)+'''/','iotapp-'''+str(i+1).zfill(3)+"','fa fa-file-code-o','IoT Application nodered "+str(i+1).zfill(3)+"','[\\'RootAdmin\\', \\'AreaManager\\']','any','yes','iframe','#FFFFFF','IoT Application nodered "+str(i+1).zfill(3)+'''', '''+str(i)+''', '[\\'Organization\\',\\'DISIT\\',\\'Other\\']'),\n'''
+    ## removed the code to add iotapps to the menu, there should be a manager for that now
+    #for i in range(iot_app_amount):
+    #    str_to_add+='''('''+str(1035)+''','$#base-protocol#$://$#base-hostname#$/iotapp/iotapp-'''+str(i+1).zfill(3)+'''/','iotapp-'''+str(i+1).zfill(3)+"','fa fa-file-code-o','IoT Application nodered "+str(i+1).zfill(3)+"','[\\'RootAdmin\\', \\'AreaManager\\']','any','yes','iframe','#FFFFFF','IoT Application nodered "+str(i+1).zfill(3)+'''', '''+str(i)+''', '[\\'Organization\\',\\'DISIT\\',\\'Other\\']'),\n'''
     if add_checker:
         str_to_add+='''('1035', '/iotapp/iotapp-001/ui/#!/0', 'sanity-components', 'fa fa-file-code-o', 'Check components', '[\\'RootAdmin\\']', 'any', 'yes', 'iframe', '#ffffff', 'Check components', '0', '*'),\n'''
         str_to_add+='''('1156', '/phpldapadmin/', 'myLDAP', 'fa fa-users', 'User Role Management', '''+"'[\\'RootAdmin\\']'"+''', 'any', 'yes', 'iframe', '#f44242', 'User Role Management', '3', '*'),\n'''

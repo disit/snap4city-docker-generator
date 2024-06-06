@@ -125,7 +125,7 @@ services:
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
   kafka:
-    image: bitnami/kafka:latest
+    image: bitnami/kafka:3.3.2
     ports:
       - "9000:9000"
       - "9092:9092"
@@ -186,7 +186,7 @@ services:
 
 #KBSSM ################################################################
   servicemap:
-    image: disitlab/servicemap:v5.8.2
+    image: disitlab/servicemap:v5.8.5
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
       - ./servicemap-conf:/root/servicemap

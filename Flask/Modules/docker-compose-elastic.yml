@@ -36,8 +36,8 @@ services:
       target: 9090
     restart: unless-stopped
     volumes:
-      #- ./nifi/conf:/opt/nifi/nifi-current/conf:rw
-      - ./nifi/extensions:/opt/nifi/nifi-current/extensions:rw
+      - ./nifi/conf:/opt/nifi/nifi-current/conf:rw
+      #- ./nifi/extensions:/opt/nifi/nifi-current/extensions:rw
       - ./nifi/logs:/opt/nifi/nifi-current/logs
     depends_on:
       - varnish

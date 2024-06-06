@@ -28,6 +28,7 @@ from email.mime.text import MIMEText
 import telegram
 import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
+import base64
 
 API_TOKEN = 'replaceme'
 
@@ -91,8 +92,8 @@ def auto_alert_status():
         send_alerts("Can't reach db, auto alert 1")
         return
     categories = [a[0].replace("*","") for a in results]
-    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in categories) and c["State"] != "running"]
-    containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["certbot"]) and c["State"] != "exited"]
+    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in categories) and (c["State"] != "running" or "unhealthy" in c["Status"])]
+    containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["62149183138_certbot_1"]) and c["State"] != "exited"]
     problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not
     containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) -set([n["Names"] for n in problematic_containers]))
     names_of_problematic_containers = [n["Names"] for n in problematic_containers]
@@ -137,7 +138,7 @@ def auto_alert_status():
 def send_alerts(message):
     try:
         print(message)
-        send_email("support@snap4.eu", "b2d!xcaZD/ZbVpR", "forgothowtoreddid@gmail.com", "SnapSentinel-Test is in trouble!", message)
+        #send_email("support@snap4.eu", "b2d!xcaZD/ZbVpR", "forgothowtoreddid@gmail.com", "SnapSentinel-Test is in trouble!", message)
         send_telegram("chat_id", message)
     except Exception as E:
         print(E)
@@ -222,7 +223,7 @@ def create_app():
             #log_to_db('asking_containers', 'docker ps --format json -a resulted in: '+containers)
             return containers
         else:
-            log_to_db('asking_containers', "POST wasn't used in the request")
+            log_to_db('asking_containers', "POST wasn't used in the request", request)
             return False
 
     @app.route("/get_container_categories", methods=['POST','GET'])
@@ -270,13 +271,13 @@ def create_app():
                         query_1 = 'insert into tests_results (datetime, result, container, command) values (now(), %s, %s, %s);'
                         cursor.execute(query_1,(command_ran, request.form.to_dict()['container'],r[0],))
                         conn.commit()
-                        log_to_db('test_ran', "result was "+command_ran)
-                    return jsonify(results)
+                        log_to_db('test_ran', "result was "+command_ran, request)
+                    return jsonify(total_result)
             except Exception as e:
                 print("Something went wrong during tests running because of",e)
                 return render_template("error_showing.html", r = e)
         else:
-            log_to_db('asking_containers', "POST wasn't used in the request")
+            log_to_db('asking_containers', "POST wasn't used in the request", request)
             return "False"
         
     @app.route("/run_test_complex", methods=['POST','GET'])
@@ -306,13 +307,13 @@ def create_app():
                         query_1 = 'insert into tests_results (datetime, result, container, command) values (now(), %s, %s, %s);'
                         cursor.execute(query_1,(string_used, test_name,r[0],))
                         conn.commit()
-                        log_to_db('test_ran', "result was "+string_used)
+                        log_to_db('test_ran', "result was "+string_used, request)
                     return jsonify(total_result)
             except Exception as e:
                 print("Something went wrong during tests running because of",e)
                 return render_template("error_showing.html", r = e)
         else:
-            log_to_db('asking_containers', "POST wasn't used in the request")
+            log_to_db('asking_containers', "POST wasn't used in the request", request)
             return "False"
         
     @app.route("/reboot_container", methods=['POST','GET'])
@@ -320,10 +321,10 @@ def create_app():
         if request.method == "POST":
             result = subprocess.run('docker restart '+request.form.to_dict()['id'], shell=True, capture_output=True, text=True, encoding="utf_8").stdout
             # insert way to make result clearer here
-            log_to_db('rebooting_containers', 'docker restart '+request.form.to_dict()['id']+' resulted in: '+result)
+            log_to_db('rebooting_containers', 'docker restart '+request.form.to_dict()['id']+' resulted in: '+result, request)
             return result
         else: 
-            log_to_db('rebooting_containers', "POST wasn't used in the request")
+            log_to_db('rebooting_containers', "POST wasn't used in the request", request)
             return "False"
         
     @app.route("/tests_results", methods=['POST','GET'])
@@ -338,25 +339,30 @@ def create_app():
                         SELECT * FROM RankedEntries WHERE row_num = 1;'''
                     cursor.execute(query)
                     conn.commit()
-                    log_to_db('getting_tests', 'Tests results were read')
+                    log_to_db('getting_tests', 'Tests results were read', request)
                     results = cursor.fetchall()
                     return jsonify(results)
             except Exception as e:
                 print("Something went wrong because of",e)
                 return render_template("error_showing.html", r = e)
         else: 
-            log_to_db('getting_tests', "POST wasn't used in the request")
+            log_to_db('getting_tests', "POST wasn't used in the request", request)
             return "False"
         
     # this is only called serverside
-    def log_to_db(table, log):
+    def log_to_db(table, log, request=None):
+        if (request):
+            user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
+            user = user[:user.find(":")] 
+        else:
+            user = "Unidentified user"
         try:
             with mysql.connector.connect(**db_conn_info) as conn:
                 cursor = conn.cursor(buffered=True)
-                cursor.execute('''INSERT INTO `{}` (date, log) VALUES (NOW(),'{}')'''.format(table, log.replace("'","''")))
+                cursor.execute('''INSERT INTO `{}` (date, log, perpetrator) VALUES (NOW(),'{}','{}')'''.format(table, log.replace("'","''"), user))
                 conn.commit()
         except Exception as e:
-            print("Something went wrong during db logging because of",e)
+            print("Something went wrong during db logging because of",e, "in",table)
             
     @app.route("/load_db",methods=['POST'])
     def load_db():
@@ -384,14 +390,14 @@ def create_app():
                         SELECT * FROM RankedEntries WHERE row_num = 1;'''
                     cursor.execute(query)
                     conn.commit()
-                    log_to_db('getting_tests', 'Tests results were read')
+                    log_to_db('getting_tests', 'Tests results were read', request)
                     results = cursor.fetchall()
                     return jsonify(results)
             except Exception as e:
                 print("Something went wrong because of",e)
                 return render_template("error_showing.html", r = e)
         else: 
-            log_to_db('getting_tests', "POST wasn't used in the request")
+            log_to_db('getting_tests', "POST wasn't used in the request", request)
             return "False"
     
     @app.route("/container/<container_id>")
@@ -452,7 +458,7 @@ def create_app():
                     SELECT * FROM RankedEntries WHERE row_num = 1;'''
                 cursor.execute(query)
                 conn.commit()
-                log_to_db('getting_tests', 'Tests results were read')
+                log_to_db('getting_tests', 'Tests results were read', request)
                 results = cursor.fetchall()
                 tests_out = results
         except Exception as e:

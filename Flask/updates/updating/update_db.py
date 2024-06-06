@@ -62,12 +62,23 @@ def check_column_existence(host, username, password, database, table_name1, colu
         result = cursor.fetchone()
 
         if result:
-            print("Up to date")
+            print("Not the third one")
         else:
             apply_updates(3, connection)
             return
+            
+        cursor.execute(f"SHOW TABLES FROM `Dashboard` LIKE 'fileextensions'")
+        result = cursor.fetchone()
 
+        if result:
+            print("Up to date")
+        else:
+            apply_updates(4, connection)
+            return
+        
         connection.close()
+        
+        
     except mysql.connector.Error as error:
         print("Error:", error)
 
