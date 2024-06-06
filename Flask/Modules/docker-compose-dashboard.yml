@@ -358,7 +358,7 @@ services:
 volumes:
   dashboarddb:
   dashboard-img:
-  zkdata:
+#  zkdata:
   kafka:
   datatable-uploads:
   poitable-uploads:
