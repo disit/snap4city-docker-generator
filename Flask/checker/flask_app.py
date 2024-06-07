@@ -13,7 +13,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.'''
 import subprocess
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file, Response
 import requests
 import mysql.connector
 import json
@@ -214,6 +214,27 @@ def create_app():
                 print(e)
                 send_alerts("Can't reach db")
                 return "There was a problem: "+e, 500
+        
+        
+    @app.route('/forward', methods=['GET', 'POST', 'PUT', 'DELETE'])
+    def forward_request():
+        # Forward the incoming request to the target URL
+        response = requests.request(
+            method=request.method,
+            url=request.form.to_dict()['forward_to'],
+            headers={key: value for key, value in request.headers if key != 'Host'},
+            data=request.get_data(),
+            cookies=request.cookies,
+            allow_redirects=False)
+
+        # Create a response object to send back to the client
+        forwarded_response = Response(
+            response.content,
+            status=response.status_code,
+            headers=dict(response.headers)
+        )
+
+        return forwarded_response
         
     @app.route("/read_containers", methods=['POST','GET'])
     def check():

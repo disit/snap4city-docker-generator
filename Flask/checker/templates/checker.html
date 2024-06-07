@@ -169,6 +169,27 @@
         }
     };
 
+    function sendRequest(method) {
+        const url = './forward';
+        let options = {
+            url: url,
+            method: method,
+            success: function(data, textStatus, jqXHR) {
+                return data;
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                $('#response').text(`Error: ${textStatus}\n${errorThrown}`);
+            }
+        };
+
+        if (method === 'POST' || method === 'PUT') {
+            options.contentType = 'application/json';
+            options.data = JSON.stringify({ key: 'value' });
+        }
+
+        $.ajax(options);
+    }
+
     function get_complex_tests(){
         try {
             $.ajax({

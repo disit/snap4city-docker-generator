@@ -295,8 +295,6 @@ services:
     
     volumes:
       - kafka:/bitnami/kafka
-    depends_on:
-      - zookeeper
 
   od-insert-api:
     container_name: od-insert-api

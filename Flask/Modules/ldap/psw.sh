@@ -6,4 +6,4 @@ cp /ldif_files/psw_update.ldif /ldif_files/psw_update_fixed.ldif
 sed -i "s@shaPSW@$psw@" "/ldif_files/psw_update_fixed.ldif"
 ldapmodify -H ldapi:// -Y EXTERNAL -f /ldif_files/psw_update_fixed.ldif
 rm /ldif_files/psw_update_fixed.ldif
-ldappasswd -H ldap://localhost -x -D "cn=admin,dc=ldap,dc=organization,dc=com" -w secret -a secret -s $psw
+#ldappasswd -H ldap://localhost -x -D "cn=admin,dc=ldap,dc=organization,dc=com" -w secret -a secret -s $psw
