@@ -1,0 +1,15 @@
+{
+    "requirement": "DISABLED",
+    "displayName": "First Broker Login IdP Account verification options",
+    "description": "Method with which to verity the existing account",
+    "requirementChoices": [
+        "REQUIRED",
+        "ALTERNATIVE",
+        "DISABLED",
+        "CONDITIONAL"
+    ],
+    "configurable": false,
+    "authenticationFlow": true,
+    "level": 2,
+    "index": 2
+}

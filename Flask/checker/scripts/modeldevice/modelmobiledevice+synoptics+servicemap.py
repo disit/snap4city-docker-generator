@@ -31,36 +31,13 @@ except Exception as E:
     password = "Mdn!hkH"
     synoptics = True
 
-def getTokenViaUserCredentials():
-    """Get the authentication token from keycloak. Uses global variables to ease programming
-
-    Returns:
-        dict: The response from the keycloak service
-    """ 
-    payload = {
-        'f': 'json',
-        'client_id': 'js-kpi-client',
-        'grant_type': 'password',
-        'username': username,
-        'password': password
-    }
-
-    header = {
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-
-    urlToken = config['base-url']+"/auth/realms/master/protocol/openid-connect/token"
-    response = requests.request("POST", urlToken, data=payload, headers=header)
-    token = response.json()
-    return token
-
 @sio.event
 def connect():
     """Connect to synoptics with the auth token
     """
     globals()['async_check']=0
-    token = getTokenViaUserCredentials()
-    sio.emit("authenticate",token['access_token'])
+    token = accessToken(config)
+    sio.emit("authenticate",token)
 
 @sio.event
 def authenticate(data):
@@ -138,15 +115,12 @@ def main():
     access_token = accessToken(config)
     model_name = datetime.now().strftime("%Y%m%dT%H%M%S")
     device_name = datetime.now().strftime("%Y%m%dT%H%M%S")
-    
     with open('latest-model.txt', 'w') as f:
         f.write(model_name+'model')
     with open('latest-device.txt', 'w') as f:
         f.write(device_name+'device')
     createModel(config, access_token)
-    
     createDevice(config, access_token, get_latest_device())
-
     uriDelegateDevice = delegateDevice(device_name+'device', config, access_token)
     if synoptics == "True":
         nData = 5
@@ -156,20 +130,17 @@ def main():
             print('\n')
             string_value = str(i)
             sendData(config, accessToken(config), get_latest_device(), string_value)
-            
             print("Waiting", str(sleep), "seconds")
             time.sleep(sleep)
-            
             time.sleep(sleep)
             sio.connect(url=config['base-url'],socketio_path='synoptics/socket.io',transports='websocket')
-            
             print("Waiting another", str(sleep), "seconds")
             sio.wait()
             sio.disconnect()
             access_token_delegated = accessTokenDelegated(config)
-            readDelegateDevice(uriDelegateDevice, config, access_token_delegated, string_value)
-            readDelegateDevice2(uriDelegateDevice, config, access_token_delegated, string_value)
-            readDelegateDevice3(uriDelegateDevice, config, access_token_delegated, string_value)
+            readDelegateDevice(uriDelegateDevice, config, access_token, string_value)
+            readDelegateDevice2(uriDelegateDevice, config, access_token, string_value)
+            readDelegateDevice3(uriDelegateDevice, config, access_token, string_value)
             if str(latest_data)==string_value:
                 print("Data was received from synoptics")
                 print("position detected:",position, "- should be",i*1.0,"and",i*1.5)
@@ -512,7 +483,7 @@ def deletemodel(modelname, access_token, base_url):
                         print("Connected successfully but an error occourred while deleting the model. JSON of response:",response.json())
                     return
                 elif (response.status_code == 401):
-                    print("\nUnauthorized, accessToken: " + accessToken(config))
+                    print("\nUnauthorized, accessToken: " + access_token)
                     return
                 else:
                     print("\nSomething else went wrong: " + response.content)
@@ -520,7 +491,7 @@ def deletemodel(modelname, access_token, base_url):
         print("Model to be deleted wasn't found among", str(response.json()["recordsTotal"]),"received")
         return
     elif (response.status_code == 401):
-        print("\nUnauthorized, accessToken: " + accessToken(config))
+        print("\nUnauthorized, accessToken: " + access_token)
     else:
         print("\nSomething else went wrong: " + response.content)
     return

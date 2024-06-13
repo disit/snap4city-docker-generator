@@ -1,0 +1,10 @@
+{
+    "name": "Last Name",
+    "identityProviderAlias": "spid",
+    "identityProviderMapper": "spid-user-attribute-idp-mapper",
+    "config": {
+        "syncMode": "INHERIT",
+        "user.attribute": "lastName",
+        "attribute.name": "familyName"
+    }
+}

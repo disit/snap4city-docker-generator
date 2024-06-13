@@ -31,6 +31,12 @@
 
     <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="LDAP" class="form-control ip-field" required="" id="$#LDAP#$">
     <br>
+    <label for="$#kibanauser-password#$">Password for Opensearch</label>
+
+    <input type="password" name="kibanauser-password" class="form-control ip-field" required="" id="$#kibanauser-password#$">
+    <br>
+
+    
     <label for="$#dashboard#$">IP address of the main service (Dashboard)</label>
 
     <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="dashboard" class="form-control ip-field" required="" id="$#dashboard#$">
@@ -59,11 +65,14 @@ document.getElementById('placeholderlist').addEventListener('change', function()
             }
 
             document.getElementById('$#ip_field_opensearch-1#$').value=b.find(element => element.includes("$#ip-nifi#$"))[1];
+            document.getElementById('$#kibanauser-password#$').value=b.find(element => element.includes("$#kibanauser-password#$"))[1];
             document.getElementById('$#dashboard#$').value=b.find(element => element.includes("$#ip-0#$"))[1];
             //if the ldap server host is a string, we can assume it is located where we can find the dashboard
             if (b.find(element => element.includes("$#ldap-server-host#$"))[1] === "ldap-server")
-            document.getElementById('$#LDAP#$').value=b.find(element => element.includes("$#ip-0#$"))[1]
-            else document.getElementById('$#LDAP#$').value=b.find(element => element.includes("$#ldap-server-host#$"))[1];;
+            document.getElementById('$#LDAP#$').value=b.find(element => element.includes("$#ip-0#$"))[1];
+            else document.getElementById('$#LDAP#$').value=b.find(element => element.includes("$#ldap-server-host#$"))[1];
+
+
 
         	}
 

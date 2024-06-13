@@ -1,0 +1,10 @@
+{
+    "name": "Tax Id",
+    "identityProviderAlias": "cieid",
+    "identityProviderMapper": "cieid-user-attribute-idp-mapper",
+    "config": {
+        "syncMode": "INHERIT",
+        "user.attribute": "spid-fiscalNumber",
+        "attribute.name": "fiscalNumber"
+    }
+}

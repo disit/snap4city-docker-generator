@@ -96,9 +96,12 @@ server {
         location  /superservicemap/ {
                 proxy_pass "http://servicemap:8080/superservicemap/rest/";
         }
-        location /auth/ {
-                proxy_pass "http://keycloak:8088/auth/";
-        }
+    location /auth/ {
+            proxy_pass "http://keycloak:8080/auth/";
+			proxy_set_header Host $host;
+			proxy_set_header X-Forwarded-For $proxy_protocol_addr;
+            proxy_set_header X-Forwarded-Proto $scheme;
+    }
         location /datamanager/ {
                 proxy_pass "http://personaldata:8080/datamanager/";
         }

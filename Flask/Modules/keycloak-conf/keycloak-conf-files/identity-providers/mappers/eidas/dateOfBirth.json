@@ -1,0 +1,10 @@
+{
+    "name": "Date of Birth",
+    "identityProviderAlias": "eidas",
+    "identityProviderMapper": "spid-user-attribute-idp-mapper",
+    "config": {
+        "syncMode": "INHERIT",
+        "user.attribute": "spid-dateOfBirth",
+        "attribute.name": "dateOfBirth"
+    }
+}

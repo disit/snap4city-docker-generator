@@ -1,0 +1,10 @@
+{
+    "name": "Default Ou",
+    "identityProviderAlias": "eidas",
+    "identityProviderMapper": "hardcoded-attribute-idp-mapper",
+    "config": {
+        "syncMode": "IMPORT",
+        "attribute": "ou",
+        "attribute.value": "Organization"
+    }
+}

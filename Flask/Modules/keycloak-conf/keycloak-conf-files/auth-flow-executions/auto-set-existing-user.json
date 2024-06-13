@@ -1,0 +1,13 @@
+{
+    "requirement": "REQUIRED",
+    "displayName": "Automatically set existing user",
+    "requirementChoices": [
+        "REQUIRED",
+        "ALTERNATIVE",
+        "DISABLED"
+    ],
+    "configurable": false,
+    "providerId": "idp-auto-link",
+    "level": 2,
+    "index": 1
+}

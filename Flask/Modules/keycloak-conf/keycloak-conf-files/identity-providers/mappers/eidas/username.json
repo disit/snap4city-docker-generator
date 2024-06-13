@@ -1,0 +1,9 @@
+{
+    "name": "User Name",
+    "identityProviderAlias": "eidas",
+    "identityProviderMapper": "spid-saml-username-idp-mapper",
+    "config": {
+        "template": "${ATTRIBUTE.spidCode}",
+        "syncMode": "INHERIT"
+    }
+}

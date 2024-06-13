@@ -1,0 +1,9 @@
+{
+    "name": "Default Group ProcessLoader",
+    "identityProviderAlias": "eidas",
+    "identityProviderMapper": "oidc-hardcoded-group-idp-mapper",
+    "config": {
+        "syncMode": "IMPORT",
+        "group": "/ProcessLoader"
+    }
+}

@@ -686,12 +686,16 @@ def add_file_model_definition():
     str_to_add = '''\nINSERT INTO `iotdb`.`model` (`id`, `name`, `description`, `devicetype`, `kind`, `producer`, `frequency`, `attributes`, `contextbroker`, `protocol`, `format`, `healthiness_criteria`, `healthiness_value`, `kgenerator`, `edgegateway_type`, `organization`, `visibility`, `subnature`, `static_attributes`) VALUES ('2', '', 'fileModel', 'file', 'sensor', 'DISIT', '600', '[{\"value_name\":\"dateObserved\",\"data_type\":\"string\",\"value_type\":\"timestamp\",\"editable\":\"0\",\"value_unit\":\"timestamp\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"originalfilename\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"newfileid\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"language\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"description\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"filesize\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"},{\"value_name\":\"filetype\",\"data_type\":\"string\",\"value_type\":\"description\",\"editable\":\"0\",\"value_unit\":\"text\",\"healthiness_criteria\":\"refresh_rate\",\"healthiness_value\":\"300\"}]', 'orion-1', 'ngsi', 'json', 'refresh_rate', '300', 'normal', '', 'Organization', 'public', '', '[]');'''
     return str_to_add
 
+def add_keycloak_final_configuration(placeholders, destination_path):
+    copy("./Modules/keycloak-conf", destination_path)
+    placeholders_in_folder(placeholders, destination_path)
+
 def adjust_profiledb_dump(iot_app_amount): # assigns iotapps to user (defaults to user area manager)
     if iot_app_amount == 0:
         return None
     str_to_add='INSERT INTO profiledb.`ownership` VALUES '
     for i in range(iot_app_amount):
-        str_to_add+='''("'''+str(i+1)+'''",'userareamanager',"'''+'iotapp-'+str(i+1).zfill(3)+'''",'AppID',"iotapp-'''+str(i+1).zfill(3)+'''",'http://$#base-hostname#$/iotapp/'''+str(i+1).zfill(3)+'''/','{\"type\":\"advanced\",\"image\":\"snap4city-nodered-adv\",\"iotappids\":[]}',NULL,'2019-02-19 09:15:00',NULL,NULL),'''
+        str_to_add+='''("'''+str(i+1)+'''",'userareamanager',"'''+'iotapp-'+str(i+1).zfill(3)+'''",'AppID',"iotapp-'''+str(i+1).zfill(3)+'''",'http://$#base-hostname#$/iotapp/iotapp-'''+str(i+1).zfill(3)+'''/','{\"type\":\"advanced\",\"image\":\"snap4city-nodered-adv\",\"iotappids\":[]}',NULL,'2019-02-19 09:15:00',NULL,NULL),'''
     str_to_add = str_to_add[:-1]  # remove the last comma
     str_to_add+=';\n'
     return str_to_add

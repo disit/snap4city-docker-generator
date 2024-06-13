@@ -1,0 +1,44 @@
+{
+   "config":{
+      "groups.dn":[
+         "dc=ldap,dc=organization,dc=com"
+      ],
+      "group.name.ldap.attribute":[
+         "cn"
+      ],
+      "group.object.classes":[
+         "posixGroup"
+      ],
+      "membership.ldap.attribute":[
+         "memberUid"
+      ],
+      "membership.attribute.type":[
+         "DN"
+      ],
+      "membership.user.ldap.attribute":[
+         "cn"
+      ],
+      "groups.ldap.filter":[
+
+      ],
+      "mode":[
+         "LDAP_ONLY"
+      ],
+      "user.groups.retrieve.strategy":[
+         "LOAD_GROUPS_BY_MEMBER_ATTRIBUTE"
+      ],
+      "memberof.ldap.attribute":[
+         "memberOf"
+      ],
+	   "preserve.group.inheritance": [
+         "false"
+      ],
+	   "groups.path": [
+         "/"
+      ],
+      "client.id":null
+   },
+   "name":"Group Mapper",
+   "providerId":"group-ldap-mapper",
+   "providerType":"org.keycloak.storage.ldap.mappers.LDAPStorageMapper"
+}

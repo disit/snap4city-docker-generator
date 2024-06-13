@@ -1,0 +1,9 @@
+{
+    "name": "Default Role",
+    "identityProviderAlias": "spid",
+    "identityProviderMapper": "oidc-hardcoded-role-idp-mapper",
+    "config": {
+        "syncMode": "IMPORT",
+        "role": "Manager"
+    }
+}

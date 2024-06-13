@@ -1,0 +1,14 @@
+{
+    "requirement": "DISABLED",
+    "displayName": "Review Profile",
+    "alias": "review profile config",
+    "requirementChoices": [
+        "REQUIRED",
+        "ALTERNATIVE",
+        "DISABLED"
+    ],
+    "configurable": true,
+    "providerId": "idp-review-profile",
+    "level": 0,
+    "index": 0
+}

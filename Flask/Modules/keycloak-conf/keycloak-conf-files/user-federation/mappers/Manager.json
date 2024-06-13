@@ -1,0 +1,41 @@
+{
+   "config":{
+      "roles.dn":[
+         "dc=ldap,dc=organization,dc=com"
+      ],
+      "role.name.ldap.attribute":[
+         "cn"
+      ],
+      "role.object.classes":[
+         "organizationalRole"
+      ],
+      "membership.ldap.attribute":[
+         "roleOccupant"
+      ],
+      "membership.attribute.type":[
+         "DN"
+      ],
+      "membership.user.ldap.attribute":[
+         "cn"
+      ],
+      "roles.ldap.filter":[
+
+      ],
+      "mode":[
+         "LDAP_ONLY"
+      ],
+      "user.roles.retrieve.strategy":[
+         "LOAD_ROLES_BY_MEMBER_ATTRIBUTE"
+      ],
+      "memberof.ldap.attribute":[
+         "memberOf"
+      ],
+      "use.realm.roles.mapping":[
+         "true"
+      ],
+      "client.id":null
+   },
+   "name":"Manager",
+   "providerId":"role-ldap-mapper",
+   "providerType":"org.keycloak.storage.ldap.mappers.LDAPStorageMapper"
+}

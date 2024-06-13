@@ -537,6 +537,7 @@ def create_app():
                         snap4.copy('./Modules/iotapp+/flows.json', './Output/'+token+'/'+ips[0]+'/iotapp-001/flows.json')
                         snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/iotapp-001/flows.json', fine_as_is)
                     snap4.make_iotapp_yaml('docker-compose-iotapp.yml','./Output/'+token+'/'+ips[0]+'/', i+1, fine_as_is, 1880+i)
+                snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[0]+'/keycloak-conf')
                 snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps'],),1880,fine_as_is)
                 #snap4.make_apache_proxy_conf_micro('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps'],),1880,fine_as_is)
                 snap4.make_sql_micro('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', 'orion-001', int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
@@ -614,6 +615,7 @@ esac
                     else:
                         snap4.make_iotapp_yaml('docker-compose-iotapp.yml','./Output/'+token+'/'+ips[1]+'/', i+1, fine_as_is, 1880+i)
                 #make_apache_proxy_conf_normal('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
+                snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[0]+'/keycloak-conf')
                 snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
                 snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
                 snap4.make_multiple_brokers(fine_as_is['# of Iot-Brokers'],'./Output/'+token+'/'+ips[1],'docker-compose-iotobsf-normal.yml',fine_as_is)
@@ -678,6 +680,7 @@ esac
                     snap4.make_iotapp_folder('./Modules/iotapp-id','./Output/'+token+'/'+ips[3],i+1, fine_as_is)
                     snap4.make_iotapp_yaml('docker-compose-iotapp.yml','./Output/'+token+'/'+ips[3]+'/', i+1, fine_as_is, 1880+i)
                 #make_apache_proxy_conf_small('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
+                snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[1]+'/keycloak-conf')
                 descriptor=post['$#Time#$']+'-'+post['# of IoT-Apps']+'-'+iotbrokers+'-'
                 snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
                 snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
@@ -738,6 +741,7 @@ esac
                     snap4.make_ldif('./Output/'+token+'/'+ips[1]+'/ldap', 'default.ldif', ['1000'], ['orion-1'])
                 elif int(iotbrokers) == 2:
                     snap4.make_ldif('./Output/'+token+'/'+ips[1]+'/ldap', 'default.ldif', ['1000','1001'], ['orion-1','orion-2'],2)
+                snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[1]+'/keycloak-conf')
                 descriptor=post['$#Time#$']+'-'+post['# of IoT-Apps']+'-'+iotbrokers+'-'+fine_as_is['# of ServiceMaps']+'-'
                 snap4.make_nifi_conf('./Output/'+token+'/'+ips[2]+'/nifi/conf/flow.xml.gz',int(iotbrokers),fine_as_is)
                 snap4.make_multiple_brokers(iotbrokers,'./Output/'+token+'/'+ips[3],'docker-compose-iotobsf-datacitysmall.yml',fine_as_is)
@@ -794,6 +798,7 @@ esac
                     snap4.make_ngnix_dcs('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is,fine_as_is['# of ServiceMaps'])
 
             elif modello == "DataCityMedium":
+                snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[1]+'/keycloak-conf')
                 descriptor=post['$#Time#$']+'-IoT'+post['# of IoT-Apps']+'-IoB'+post['# of Iot-Broker servers']+'-SVM'+post['# of ServiceMaps']+'-OSN'+post['# of Nifi nodes']+'-NIFI'+post['# of Nifi nodes']+'-VIRT'+post['# of ServiceMaps']+'-'
                 list_iotapp=[value for (key,value) in sorted(detailed_ips.items()) if "iotapp" in key]
                 list_nifi=[value for (key,value) in sorted(detailed_ips.items()) if "nifi" in key]
@@ -888,6 +893,7 @@ esac
                     snap4.make_ngnix_dcm(fine_as_is, './Output/'+token+'/'+ips[0]+'/nginx-proxy-conf', int(post['# of IoT-Apps']), list_iotapp, list_virtuoso, ips[1], list_opensearch[0], ips[4], 1880, list_broker)
 
             elif modello == "DataCityLarge":
+                snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[0]+'/keycloak-conf')
                 #todo review ips, empty apache, ngnix config
                 descriptor=post['$#Time#$']+'-IoT'+post['# of IoT-Apps']+'-IoB'+post['# of Iot-Broker servers']+'-SVM'+post['# of ServiceMaps']+'-OSN'+post['# of Opensearch nodes']+'-NIFI'+post['# of Nifi nodes']+'-VIRT'+post['# of ServiceMaps']+'-'
                 list_iotapp=[value for (key,value) in sorted(detailed_ips.items()) if "iotapp" in key]

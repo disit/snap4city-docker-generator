@@ -1,0 +1,9 @@
+{
+    "name": "Default Role",
+    "identityProviderAlias": "eidas",
+    "identityProviderMapper": "oidc-hardcoded-role-idp-mapper",
+    "config": {
+        "syncMode": "IMPORT",
+        "role": "Manager"
+    }
+}

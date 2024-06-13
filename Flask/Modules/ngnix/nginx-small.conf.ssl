@@ -96,6 +96,9 @@ server {
         }
         location /auth/ {
                 proxy_pass "http://$#ip-1#$:8088/auth/";
+                proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-For $proxy_protocol_addr;
+                proxy_set_header X-Forwarded-Proto $scheme;
         }
         location /datamanager/ {
                 proxy_pass "http://personaldata:8080/datamanager/";

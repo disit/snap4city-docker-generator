@@ -1,0 +1,13 @@
+{
+    "requirement": "DISABLED",
+    "displayName": "Confirm link existing account",
+    "requirementChoices": [
+        "REQUIRED",
+        "ALTERNATIVE",
+        "DISABLED"
+    ],
+    "configurable": false,
+    "providerId": "idp-confirm-link",
+    "level": 2,
+    "index": 1
+}

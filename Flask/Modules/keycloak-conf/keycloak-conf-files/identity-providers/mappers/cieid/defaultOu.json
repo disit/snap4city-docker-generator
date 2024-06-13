@@ -1,0 +1,10 @@
+{
+    "name": "Default Ou",
+    "identityProviderAlias": "cieid",
+    "identityProviderMapper": "hardcoded-attribute-idp-mapper",
+    "config": {
+        "syncMode": "IMPORT",
+        "attribute": "ou",
+        "attribute.value": "Organization"
+    }
+}

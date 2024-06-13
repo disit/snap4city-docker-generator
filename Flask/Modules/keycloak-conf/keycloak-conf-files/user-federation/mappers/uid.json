@@ -1,0 +1,28 @@
+{
+   "config":{
+      "user.model.attribute":[
+         "uid"
+      ],
+      "ldap.attribute":[
+         "uid"
+      ],
+      "read.only":[
+         "true"
+      ],
+      "always.read.value.from.ldap":[
+         "false"
+      ],
+      "is.mandatory.in.ldap":[
+         "false"
+      ],
+      "attribute.default.value":[
+
+      ],
+      "is.binary.attribute":[
+         "false"
+      ]
+   },
+   "name":"uid",
+   "providerId":"user-attribute-ldap-mapper",
+   "providerType":"org.keycloak.storage.ldap.mappers.LDAPStorageMapper"
+}

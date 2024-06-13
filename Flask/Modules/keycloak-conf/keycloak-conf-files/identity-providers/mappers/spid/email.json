@@ -1,0 +1,10 @@
+{
+    "name": "Email",
+    "identityProviderAlias": "spid",
+    "identityProviderMapper": "spid-user-attribute-idp-mapper",
+    "config": {
+        "syncMode": "INHERIT",
+        "user.attribute": "email",
+        "attribute.name": "email"
+    }
+}

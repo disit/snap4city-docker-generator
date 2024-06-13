@@ -13,7 +13,7 @@ server {
         location  /ServiceMap/api/v1/iot/ {
                 proxy_pass "http://servicemap:8080/iot/";
         }
-                                        location  /ServiceMap/ {
+        location  /ServiceMap/ {
                 proxy_pass "http://servicemap:8080/ServiceMap/";
         }
         
@@ -110,7 +110,10 @@ server {
                 proxy_pass "http://servicemap:8080/superservicemap/rest/";
         }
         location /auth/ {
-                proxy_pass "http://$#ip-1#$:8088/auth/";
+                proxy_pass "http://$#ip-2#$:8088/auth/";
+                proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-For $proxy_protocol_addr;
+		proxy_set_header X-Forwarded-Proto $scheme;
         }
         location /datamanager/ {
                 proxy_pass "http://personaldata:8080/datamanager/";

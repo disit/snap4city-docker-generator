@@ -1,0 +1,9 @@
+{
+    "name": "User Name",
+    "identityProviderAlias": "cieid",
+    "identityProviderMapper": "cieid-saml-username-idp-mapper",
+    "config": {
+        "template": "${ATTRIBUTE.fiscalNumber}",
+        "syncMode": "INHERIT"
+    }
+}

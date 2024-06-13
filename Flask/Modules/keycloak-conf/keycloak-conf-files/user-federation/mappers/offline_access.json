@@ -1,0 +1,6 @@
+{
+"config":{"role":["offline_access"]},
+"name":"offline_acces",
+"providerId":"hardcoded-ldap-role-mapper",
+"providerType":"org.keycloak.storage.ldap.mappers.LDAPStorageMapper"
+}

@@ -1,0 +1,9 @@
+{
+    "name": "User Name",
+    "identityProviderAlias": "spid",
+    "identityProviderMapper": "spid-saml-username-idp-mapper",
+    "config": {
+        "template": "${ATTRIBUTE.fiscalNumber}",
+        "syncMode": "INHERIT"
+    }
+}

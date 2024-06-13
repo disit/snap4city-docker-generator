@@ -109,3 +109,7 @@ echo
 
 echo fixing openldap admin password
 kubectl -n snap4k8s exec deployment/ldap-server -- bash /ldif_files/psw.sh
+
+
+echo "fixing keycloak (for this to work, the system must be able to recognize its own hostname)"
+python3 keycloak-conf/keycloak-rest.py $#base-url#$/auth admin $#keycloak-admin-pwd#$

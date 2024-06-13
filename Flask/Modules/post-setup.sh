@@ -139,3 +139,10 @@ echo rebooting services
 docker-compose restart opensearch-dashboards wsserver iot-fiware-harvester varnish proxy
 echo fixing openldap admin password
 docker-compose exec ldap-server bash /ldif_files/psw.sh
+
+
+echo "fixing keycloak data - if this command fails, it might be because this machine is not able to resolve its own name; consider using localhost in such a case"
+cd ..
+python3 keycloak-conf/keycloak-rest.py $#base-url#$/auth admin $#keycloak-admin-pwd#$
+python3 keycloak-conf/keycloak-step-2.py
+
