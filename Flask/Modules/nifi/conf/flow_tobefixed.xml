@@ -125,7 +125,11 @@ if (flowFile != None):
     <processor>
       <id>27c0a28f-0186-1000-c4d9-0be6c812c3dc</id>
       <versionedComponentId>94745410-d289-3408-ac0b-891baaebbc9a</versionedComponentId>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
       <name>RouteOnly time_slack&gt;0 and realtime=true</name>
+=======
+      <name>RouteOnly time_slack&gt;0</name>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       <position x="2496.0" y="768.0"/>
       <styles/>
       <comment/>
@@ -156,8 +160,11 @@ if (flowFile != None):
         <name>ok</name>
         <value>${
 time_slack:toNumber():ge(0)
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
 :and( ${realtime:notNull()
   :and( ${realtime:equals("true")} ) } )
+=======
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
 }</value>
       </property>
       <autoTerminatedRelationship>unmatched</autoTerminatedRelationship>
@@ -399,7 +406,11 @@ time_slack:toNumber():ge(0)
       </property>
       <property>
         <name>STATIC_AUGMENT_PERFORMED_UPDATES</name>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
         <value>{"value_name":"__location","value_type":"location","realtime":"true"}</value>
+=======
+        <value>{"value_name":"__location","value_type":"location"}</value>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       </property>
       <property>
         <name>longitude/value</name>
@@ -480,7 +491,11 @@ time_slack:toNumber():ge(0)
       <id>c3d33273-0188-1000-50fb-0714eb985386</id>
       <versionedComponentId>231bb817-01b4-3a3d-9477-6e4680f7728b</versionedComponentId>
       <name>CryptographicHashAttribute</name>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
       <position x="2760.0" y="-145.54792022705078"/>
+=======
+      <position x="2760.0" y="-144.0"/>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       <styles/>
       <comment/>
       <class>org.apache.nifi.processors.standard.CryptographicHashAttribute</class>
@@ -714,7 +729,11 @@ if (flowFile != None):
       <id>c3d1064b-0188-1000-8083-1881e2bd5bf0</id>
       <versionedComponentId>0f763ff5-833d-3118-bee9-d859433c19d1</versionedComponentId>
       <name>Create_es_id_UpdateAttribute</name>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
       <position x="2144.0" y="-137.54792022705078"/>
+=======
+      <position x="2144.0" y="-136.0"/>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       <styles/>
       <comment/>
       <class>org.apache.nifi.processors.attributes.UpdateAttribute</class>
@@ -1287,6 +1306,7 @@ if (flowFile != None):
         <name>DEFAULT_OWNERSHIP_PROPERTIES</name>
       </property>
       <property>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
         <name>SERVICE_URI_PREFIX_FROM_ATTRIBUTE</name>
         <value/>
       </property>
@@ -1295,6 +1315,8 @@ if (flowFile != None):
         <value/>
       </property>
       <property>
+=======
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
         <name>DEVICE_ID_NAME</name>
         <value>id</value>
       </property>
@@ -1331,12 +1353,17 @@ if (flowFile != None):
         <value>Service/features/properties/realtimeAttributes</value>
       </property>
       <property>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
         <name>EXTRACT_ENRICHMENT_ATTRIBUTES</name>
         <value>realtime</value>
       </property>
       <property>
         <name>LATLON_PRIORITY</name>
         <value>Flow file content object property first.</value>
+=======
+        <name>LATLON_PRIORITY</name>
+        <value>Enrichment source response property first.</value>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       </property>
       <property>
         <name>ENRICHMENT_LAT_LON_PATH</name>
@@ -1348,7 +1375,11 @@ if (flowFile != None):
       </property>
       <property>
         <name>INNER_LAT_LON_CONFIG</name>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
         <value>{ "latitudeFields":["latitude/value"] , "longitudeFields":["longitude/value"] }</value>
+=======
+        <value/>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       </property>
       <property>
         <name>ENRICHMENT_BEHAVIOR</name>
@@ -1388,7 +1419,11 @@ if (flowFile != None):
       </property>
       <property>
         <name>ATTEMPT_STRING_VALUES_PARSING</name>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
         <value>No</value>
+=======
+        <value>Yes</value>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       </property>
       <property>
         <name>ORIGINAL_FLOW_FILE_ATTRIBUTES_AUG</name>
@@ -1431,6 +1466,7 @@ if (flowFile != None):
       </property>
     </processor>
     <funnel>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
       <id>1ab166f0-0181-1000-73e7-9e9cd497f516</id>
       <versionedComponentId>faff271b-8865-39d4-bff6-362bcd48c26b</versionedComponentId>
       <position x="1688.0" y="160.0"/>
@@ -1439,6 +1475,16 @@ if (flowFile != None):
       <id>016f1004-251c-108a-0353-0c3a82aa649f</id>
       <versionedComponentId>c2f25bea-6b3f-3f2b-870c-e4e42f2a0edf</versionedComponentId>
       <position x="2928.0" y="-512.0"/>
+=======
+      <id>393959fc-0185-1000-8fe6-91d47952ca27</id>
+      <versionedComponentId>43e5eb2a-fefc-376e-a713-cdd21100af36</versionedComponentId>
+      <position x="2088.0" y="1064.0"/>
+    </funnel>
+    <funnel>
+      <id>10001185-1ab2-1415-f97b-72898a0b1e88</id>
+      <versionedComponentId>c9432bb9-0358-349c-a21a-913ce4e5e901</versionedComponentId>
+      <position x="4456.716616716616" y="-62.82317682317682"/>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
     </funnel>
     <funnel>
       <id>c3cff8b9-0188-1000-2daf-a8ec2c6aa1c6</id>
@@ -1446,6 +1492,7 @@ if (flowFile != None):
       <position x="1840.0" y="-96.0"/>
     </funnel>
     <funnel>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
       <id>01811003-6415-1ab2-a56e-1c48f5bae623</id>
       <versionedComponentId>a473f712-e525-3813-ae82-6ec3f6dc7093</versionedComponentId>
       <position x="2504.0" y="272.0"/>
@@ -1461,14 +1508,22 @@ if (flowFile != None):
       <position x="3192.0" y="1112.0"/>
     </funnel>
     <funnel>
+=======
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       <id>b6e3c19e-017c-1000-31a1-a16bb6e53753</id>
       <versionedComponentId>38640177-c012-3ca9-9852-25161df1b924</versionedComponentId>
       <position x="1064.0" y="1064.0"/>
     </funnel>
     <funnel>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
       <id>e360a7c8-017a-1000-ea6d-f04d629dd3ff</id>
       <versionedComponentId>3698bccb-750b-318c-a25c-3243164c3db4</versionedComponentId>
       <position x="1736.0" y="640.0"/>
+=======
+      <id>016f1004-251c-108a-0353-0c3a82aa649f</id>
+      <versionedComponentId>c2f25bea-6b3f-3f2b-870c-e4e42f2a0edf</versionedComponentId>
+      <position x="2928.0" y="-512.0"/>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
     </funnel>
     <funnel>
       <id>3ab458c1-0185-1000-436a-67894b142499</id>
@@ -1481,9 +1536,30 @@ if (flowFile != None):
       <position x="1313.9818556263717" y="-132.07551039160165"/>
     </funnel>
     <funnel>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
       <id>10001185-1ab2-1415-f97b-72898a0b1e88</id>
       <versionedComponentId>c9432bb9-0358-349c-a21a-913ce4e5e901</versionedComponentId>
       <position x="4456.716616716616" y="-62.82317682317682"/>
+=======
+      <id>01811003-6415-1ab2-a56e-1c48f5bae623</id>
+      <versionedComponentId>a473f712-e525-3813-ae82-6ec3f6dc7093</versionedComponentId>
+      <position x="2504.0" y="272.0"/>
+    </funnel>
+    <funnel>
+      <id>7c666746-0184-1000-45d0-ee6b0716d08d</id>
+      <versionedComponentId>25db2837-3798-321d-8cf6-619df1d263b6</versionedComponentId>
+      <position x="3192.0" y="1112.0"/>
+    </funnel>
+    <funnel>
+      <id>1ab166f0-0181-1000-73e7-9e9cd497f516</id>
+      <versionedComponentId>faff271b-8865-39d4-bff6-362bcd48c26b</versionedComponentId>
+      <position x="1688.0" y="160.0"/>
+    </funnel>
+    <funnel>
+      <id>e360a7c8-017a-1000-ea6d-f04d629dd3ff</id>
+      <versionedComponentId>3698bccb-750b-318c-a25c-3243164c3db4</versionedComponentId>
+      <position x="1736.0" y="640.0"/>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
     </funnel>
     <connection>
       <id>1ab28321-0181-1000-8991-ff9269262cce</id>
@@ -1700,6 +1776,30 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
+=======
+      <id>27c8ea96-0186-1000-c02f-1329d07e5332</id>
+      <versionedComponentId>75a5f249-754f-3f41-bf32-3b401c14b1f1</versionedComponentId>
+      <name/>
+      <bendPoints/>
+      <labelIndex>1</labelIndex>
+      <zIndex>0</zIndex>
+      <sourceId>393959fc-0185-1000-8fe6-91d47952ca27</sourceId>
+      <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
+      <sourceType>FUNNEL</sourceType>
+      <destinationId>27c0a28f-0186-1000-c4d9-0be6c812c3dc</destinationId>
+      <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
+      <destinationType>PROCESSOR</destinationType>
+      <relationship/>
+      <maxWorkQueueSize>10000</maxWorkQueueSize>
+      <maxWorkQueueDataSize>1 GB</maxWorkQueueDataSize>
+      <flowFileExpiration>0 sec</flowFileExpiration>
+      <loadBalanceStrategy>DO_NOT_LOAD_BALANCE</loadBalanceStrategy>
+      <partitioningAttribute/>
+      <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
+    </connection>
+    <connection>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       <id>1ab17e54-0181-1000-bfbc-bd814bf02f3a</id>
       <versionedComponentId>7c9dfe10-c073-39b6-a9b5-d09b08388cc9</versionedComponentId>
       <name/>
@@ -1878,7 +1978,11 @@ if (flowFile != None):
       <sourceId>b6de64f9-017c-1000-ef75-4802aa67e5f5</sourceId>
       <sourceGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</sourceGroupId>
       <sourceType>PROCESSOR</sourceType>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
       <destinationId>bf66691f-018f-1000-de93-d5c245541618</destinationId>
+=======
+      <destinationId>393959fc-0185-1000-8fe6-91d47952ca27</destinationId>
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       <destinationGroupId>002651c8-016f-1000-f2fa-50ea0c27c262</destinationGroupId>
       <destinationType>FUNNEL</destinationType>
       <relationship>Performed updates</relationship>
@@ -1955,6 +2059,7 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
+<<<<<<< HEAD:Flask/Modules/nifi/conf/flow_tobefixed.xml
       <id>bf67fcd4-018f-1000-810f-c8261ece0ba2</id>
       <versionedComponentId>1350b83e-c122-3105-99ea-46076de1e914</versionedComponentId>
       <name/>
@@ -1976,6 +2081,8 @@ if (flowFile != None):
       <loadBalanceCompression>DO_NOT_COMPRESS</loadBalanceCompression>
     </connection>
     <connection>
+=======
+>>>>>>> 511a6f9f180ecb68c3c55032f5daff869cbd0598:Flask/Modules/nifi/conf/flow_old.xml
       <id>1ab2b048-0181-1000-2f6b-851de96faa75</id>
       <versionedComponentId>6a052239-83df-3b10-8885-d6fd14607bc7</versionedComponentId>
       <name/>
