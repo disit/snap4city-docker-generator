@@ -56,7 +56,7 @@
          "cn"
       ],
       "uuidLDAPAttribute":[
-         "entryUUID"
+         "sn"
       ],
       "userObjectClasses":[
          "inetOrgPerson, person, organizationalPerson"
