@@ -31,7 +31,8 @@ def getTokenViaUserCredentials(username,password):
         'client_id': 'js-kpi-client',
         'grant_type': 'password',
         'username': username,
-        'password': password
+        'password': password,
+        'scope': 'openid'
     }
 
     header = {

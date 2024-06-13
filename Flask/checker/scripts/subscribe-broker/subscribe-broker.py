@@ -11,7 +11,8 @@ def accessToken(data_json):
         'client_secret': "a347fb2d-87f0-4d41-89a9-b746b5273ccd",
         'grant_type': 'password',
         'username': data_json['username'],
-        'password': data_json['password']
+        'password': data_json['password'],
+        'scope': 'openid'
     }
 
     header = {

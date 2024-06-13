@@ -539,7 +539,8 @@ def accessToken(conf):
         'client_id': 'js-kpi-client',
         'grant_type': 'password',
         'username': username,
-        'password': password
+        'password': password,
+        'scope': 'openid'
     }
 
     header = {

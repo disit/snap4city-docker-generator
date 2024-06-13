@@ -43,7 +43,8 @@ def getTokenViaUserCredentials():
         'client_id': 'js-kpi-client',
         'grant_type': 'password',
         'username': username,
-        'password': password
+        'password': password,
+        'scope': 'openid'
     }
 
     header = {
@@ -266,7 +267,8 @@ def accessToken(conf):
         'client_id': conf.get('token').get('clientID'),
         'grant_type': 'password',
         'username': username,
-        'password': password
+        'password': password,
+        'scope': 'openid'
     }
 
     header = {

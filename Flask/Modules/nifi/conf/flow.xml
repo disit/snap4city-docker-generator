@@ -2355,7 +2355,7 @@ if (flowFile != None):
       </property>
       <property>
         <name>Truststore Password</name>
-        <value>enc{44a0c1f573c51e639e7748d383a580ac11150ec325bdc812c9a2a8ef47079ffe}</value>
+        <value>$#truststore-password#$</value>
       </property>
       <property>
         <name>Truststore Type</name>
