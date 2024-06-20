@@ -57,7 +57,8 @@ def getTokenViaUserCredentials():
         'client_id': 'js-kpi-client',
         'grant_type': 'password',
         'username': username,
-        'password': password
+        'password': password,
+        'scope': 'userid'
     }
 
     header = {
@@ -297,7 +298,8 @@ def accessTokenDelegated(conf):
         'client_id': conf.get('token').get('clientID'),
         'grant_type': 'password',
         'username': conf["usernamedelegated"],
-        'password': conf["usernamedelegatedpassword"]
+        'password': conf["usernamedelegatedpassword"],
+        'scope': 'userid'
     }
 
     header = {
