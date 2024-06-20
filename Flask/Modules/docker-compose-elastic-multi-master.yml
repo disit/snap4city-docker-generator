@@ -48,7 +48,7 @@ $#hosts_less#$
       SERVER_BASEPATH: '/kibana'
       SERVER_REWRITEBASEPATH: 'false'
       OPENSEARCH_USER: kibanaserver
-      OPENSEARCH_PASSWORD: $#kibanauser-password#$
+      OPENSEARCH_PASSWORD: $#opensearch-admin-pwd#$
     depends_on:
       - opensearch-n1
     volumes:

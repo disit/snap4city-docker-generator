@@ -8,7 +8,7 @@
 <div class="row align-items-start">
   <div class="col">
 <div class="container" id="droparea">
-<p class="h4">In order to add a new Opensearch, you'll need to provide some non-sensitive information.</p>
+<p class="h4">In order to add a new Opensearch, you'll need to provide some additional information.</p>
 
   <div id="opensearchsection">
     <label for="$#amount-of-opensearch#$">How many OpenSearch do you want?</label>
@@ -31,15 +31,23 @@
 
     <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="LDAP" class="form-control ip-field" required="" id="$#LDAP#$">
     <br>
-    <label for="$#kibanauser-password#$">Password for Opensearch</label>
+    <label for="$#ldap-admin-pwd#$">LDAP admin password</label>
 
-    <input type="password" name="kibanauser-password" class="form-control ip-field" required="" id="$#kibanauser-password#$">
+    <input type="password" name="$#ldap-admin-pwd#$" class="form-control" required="" id="$#ldap-admin-pwd#$">
+    <br>
+    <label for="$#opensearch-admin-pwd#$">Password for Opensearch</label>
+
+    <input type="password" name="kibanauser-password" class="form-control ip-field" required="" id="$#opensearch-admin-pwd#$">
     <br>
 
     
     <label for="$#dashboard#$">IP address of the main service (Dashboard)</label>
 
     <input type="string" pattern="^([0-9]{1,3}(?:.[0-9]{1,3}){3}|[a-zA-Z]+)$" name="dashboard" class="form-control ip-field" required="" id="$#dashboard#$">
+    <br>
+    <label for="$#base-url#$">Base url of the service (EG: http://dashboard)</label>
+
+    <input type="string"  name="dashboard" class="form-control" required="" id="$#base-url#$">
     <br>
 
   </div>
