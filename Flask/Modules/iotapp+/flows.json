@@ -489,9 +489,9 @@
     {
         "id": "a7f0e759.95e218",
         "type": "orion-service-api-v2",
-        "contextbroker": "iotobsf",
-        "selectedContextbroker": "iotobsf",
-        "name": "iotobsf",
+        "contextbroker": "orion-1",
+        "selectedContextbroker": "orion-1",
+        "name": "orion-1",
         "url": "orionbrokerfilter",
         "port": "8443"
     },
@@ -507,9 +507,9 @@
     {
         "id": "6af9a139.5ed2e",
         "type": "orion-service-api-v2",
-        "contextbroker": "iotobsf",
-        "selectedContextbroker": "iotobsf",
-        "name": "iotobsf",
+        "contextbroker": "orion-1",
+        "selectedContextbroker": "orion-1",
+        "name": "orion-1",
         "url": "orionbrokerfilter",
         "port": "8443"
     },
@@ -534,9 +534,9 @@
     {
         "id": "1ddb946d.5c054c",
         "type": "orion-service-api-v2",
-        "contextbroker": "iotobsf",
-        "selectedContextbroker": "iotobsf",
-        "name": "iotobsf",
+        "contextbroker": "orion-1",
+        "selectedContextbroker": "orion-1",
+        "name": "orion-1",
         "url": "orionbrokerfilter",
         "port": "8443"
     },
@@ -552,9 +552,9 @@
     {
         "id": "b23c9283.f35f1",
         "type": "orion-service-api-v2",
-        "contextbroker": "iotobsf",
-        "selectedContextbroker": "iotobsf",
-        "name": "iotobsf",
+        "contextbroker": "orion-1",
+        "selectedContextbroker": "orion-1",
+        "name": "orion-1",
         "url": "orionbrokerfilter",
         "port": "8443"
     },

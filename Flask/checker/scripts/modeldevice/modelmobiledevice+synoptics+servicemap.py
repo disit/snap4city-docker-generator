@@ -1,7 +1,6 @@
 from datetime import datetime
 import time
 import json
-import os
 import sys
 import socketio
 import requests
@@ -127,17 +126,17 @@ def main():
         sleep = 5
         previous_data = latest_data
         for i in range(0, nData):
-            print('\n')
+            print('\nSending value',str(i))
             string_value = str(i)
             sendData(config, accessToken(config), get_latest_device(), string_value)
             print("Waiting", str(sleep), "seconds")
             time.sleep(sleep)
-            time.sleep(sleep)
+            print("\nSearching with IoT-search")
             sio.connect(url=config['base-url'],socketio_path='synoptics/socket.io',transports='websocket')
             print("Waiting another", str(sleep), "seconds")
             sio.wait()
             sio.disconnect()
-            access_token_delegated = accessTokenDelegated(config)
+            print("\nSearching with Synoptics")
             readDelegateDevice(uriDelegateDevice, config, access_token, string_value)
             readDelegateDevice2(uriDelegateDevice, config, access_token, string_value)
             readDelegateDevice3(uriDelegateDevice, config, access_token, string_value)
@@ -181,17 +180,17 @@ def readDelegateDevice(serviceuri, conf, token, value_read):
             print("Servicemap: read expected value")
             #print("whole thing:",response.json())
             if [num*1.5,num] == response.json()["Service"]["features"][0]["geometry"]["coordinates"]:
-                print("Servicemap: position of device detected as intended.")
+                print("Servicemap with parameters realtime=true&appID=iotapp: position of device detected as intended.")
             else:
-                print("Position of device was not detected as intended.")
+                print("Servicemap with parameters realtime=true&appID=iotapp: position of device was not detected as intended.")
                 print("Should be [",num*1.5,"",num,"], was",response.json()["Service"]["features"][0]["geometry"]["coordinates"])
         else:
-            print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
+            print("Servicemap with parameters realtime=true&appID=iotapp: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
         #print("Request was successful.")
         #print("Response:")
         #print(response.json())
     else:
-        print("Servicemap: [ERROR] request failed with status code:",response.status_code)
+        print("Servicemap with parameters realtime=true&appID=iotapp: [ERROR] request failed with status code:",response.status_code)
         print("Response:")
         print(response.text)
         
@@ -219,7 +218,7 @@ def readDelegateDevice2(serviceuri, conf, token, value_read):
             if [num*1.5,num] == response.json()["Service"]["features"][0]["geometry"]["coordinates"]:
                 print("Servicemap: position of device detected as intended.")
             else:
-                print("Position of device was not detected as intended.")
+                print("Servicemap: position of device was not detected as intended.")
                 print("Should be [",num*1.5,"",num,"], was",response.json()["Service"]["features"][0]["geometry"]["coordinates"])
         else:
             print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
@@ -254,12 +253,12 @@ def readDelegateDevice3(serviceuri, conf, token, value_read):
             print("Servicemap: read expected value")
             #print("whole thing:",response.json())
             if [num*1.5,num] == response.json()["Service"]["features"][0]["geometry"]["coordinates"]:
-                print("Servicemap: position of device detected as intended.")
+                print("Servicemap with parameters fromTime=5-minute: position of device detected as intended.")
             else:
-                print("Position of device was not detected as intended.")
+                print("Servicemap with parameters fromTime=5-minute: position of device was not detected as intended.")
                 print("Should be [",num*1.5,"",num,"], was",response.json()["Service"]["features"][0]["geometry"]["coordinates"])
         else:
-            print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
+            print("Servicemap with parameters fromTime=5-minute: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
         #print("Request was successful.")
         #print("Response:")
         #print(response.json())
@@ -283,7 +282,7 @@ def createModel(conf, token):
     response = requests.request("PATCH", url, headers=header)
     r = (response.text)
     r = json.loads(r)
-    print("\nStatus for model "+get_latest_model()+": " + r['status'])
+    print("\nStatus for creating model "+get_latest_model()+": " + r['status'])
     time.sleep(2)
 
 def createDevice(conf, token, device_name):
@@ -310,7 +309,7 @@ def createDevice(conf, token, device_name):
     r = (response.text)
     r = json.loads(r)
     print(r)
-    print("\nStatus for device "+get_latest_device()+": " + r['status'])
+    print("\nStatus for creating device "+get_latest_device()+": " + r['status'])
     time.sleep(2)
     
 def getDevice(conf, device_name, token):

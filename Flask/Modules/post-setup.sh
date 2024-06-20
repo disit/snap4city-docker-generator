@@ -129,6 +129,9 @@ echo add dashboard
 curl --insecure -u admin:$#opensearch-admin-pwd#$ -XPOST "http://localhost:5601/api/saved_objects/_import?overwrite=true" -H "osd-xsrf: true" -H "securitytenant: global" --form file=@osd-dashboard.ndjson
 echo
 
+
+docker-compose exec dashboard-cron bash -c "cd /var/www/html/dashboardSmartCity/opensearch; php IngestData.php"
+
 echo add geoserver workspace Snap4City - if this command fails, it might be because this machine is not able to resolve its own name\; consider using localhost in such a case
 curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>Snap4City</name></workspace>"  $#base-url#$/geoserver/rest/workspaces
 
@@ -144,5 +147,7 @@ docker-compose exec ldap-server bash /ldif_files/psw.sh
 echo "fixing keycloak data - if this command fails, it might be because this machine is not able to resolve its own name; consider using localhost in such a case"
 cd ..
 python3 keycloak-conf/keycloak-rest.py $#base-url#$/auth admin $#keycloak-admin-pwd#$
+python3 keycloak-conf/keycloak-step-2.py
+echo running again to fix first execution
 python3 keycloak-conf/keycloak-step-2.py
 
