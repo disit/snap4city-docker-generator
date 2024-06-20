@@ -211,7 +211,8 @@ def create_app():
                 references = dict(references.items() ^ remove_later.items())  # remove solved references from currently unresolved references
                 if not change: # either no more references exist or we hit a loop (eg $#id#$ -> $#psw#$ and $#psw#$ -> $#id#$)
                     break
-
+            
+            print(fine_as_is)
             try: # make a folder to store the new files
                 os.makedirs("./Output/opensearch-temp")
             except IsADirectoryError:  # Already exists
@@ -220,7 +221,7 @@ def create_app():
             snap4.copy('./Modules/merge-opensearch-instructions.txt', './Output/opensearch-temp/instructions.txt')
             open_ips_keys=[j for i,j in fine_as_is.items() if 'ip_field_opensearch-' in i]
             snap4.make_multiple_opensearch(int(fine_as_is["$#how-many-opensearch#$"]),fine_as_is['dashboard'],fine_as_is['LDAP'], 'token-not-used', open_ips_keys, alt_out='./Output/opensearch-temp')
-            snap4.placeholders_in_folder(fine_as_is,'/Output/opensearch-temp')
+            snap4.placeholders_in_folder(fine_as_is,'./Output/opensearch-temp', True)
             shutil.make_archive('compressed', 'zip', "./Output/opensearch-temp")
             try:
                 shutil.rmtree("./Output/opensearch-temp")

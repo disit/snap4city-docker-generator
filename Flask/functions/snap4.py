@@ -1160,10 +1160,17 @@ def make_multiple_opensearch(how_many, dashboard_ip, ldap_ip, token, ips, alt_ou
 def add_tests(destination_path):
     copy('./auto_tests', destination_path)
 
-def placeholders_in_folder(placeholders, path_of_folder):
+def placeholders_in_folder(placeholders, path_of_folder, ignore_reading_errors=False):
     for dname, dirs, files in os.walk(path_of_folder):
         for file in files:
-            placeholders_in_file(os.path.join(dname,file),placeholders)
+            try:
+                placeholders_in_file(os.path.join(dname,file),placeholders)
+            except UnicodeDecodeError as E:
+                if ignore_reading_errors:
+                    pass
+                else:
+                    raise E
+                
 
 
 def add_utils(destination_path):
