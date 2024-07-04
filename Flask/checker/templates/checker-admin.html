@@ -1,0 +1,27 @@
+{% extends "checker.html" %}
+
+{% block additional_content_certification %}
+			<li class="nav-item active">
+				<form action="./generate_pdf" method="GET">
+					<input type="submit" class="btn btn-info" value="Generate certification" />
+				</form>
+			</li>
+{% endblock %}
+
+{% block additional_content_admin_log_datatable_trigger %}
+	$('#admin-log-table').DataTable();
+	$('#admin-log-table').show();
+{% endblock %}
+{% block additional_content_admin_log %}
+	<div id="admin_log">
+	<h4>Administration Log</h4>
+	<table id="admin-log-table" class="table table-striped table-bordered">
+		<thead><tr><th>User</th><th>Action</th><th>Time</th></tr></thead>
+		<tbody>
+		{%for element in admin_log%}
+		<tr><th>{{element[4]}}</th><th>{{element[2]|safe}}</th><th>{{element[3]}}</th></tr>
+	    {%endfor%}
+		</tbody>
+	</table>
+	</div>
+{% endblock %}

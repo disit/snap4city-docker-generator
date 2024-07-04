@@ -76,3 +76,10 @@ sed -i "s|truststorepassword_replace_me|${nifi_security_truststorePasswd}|" "doc
 echo "updated nifi in compose file"
 echo "fixing chmod perms for generated nifi files"
 sudo chmod a+rw nifi/conf/*
+
+echo creating sentinel users...
+sentineladmin=$(openssl passwd -apr1 $#sentinel-admin-psw#$)
+sentineluser=$(openssl passwd -apr1 $#sentinel-user-psw#$)
+echo sentineladmin:$sentineladmin >> nginx-proxy-conf/htpasswd
+echo sentineladmin:$sentineluser >> nginx-proxy-conf/htpasswd
+

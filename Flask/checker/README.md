@@ -1,7 +1,10 @@
 # Execution of the service
+
+You are REQUIRED to provide in the python script data such as telegram codes, emails from which to sends alerts, and so on, or else these functionalities will not work 
+
 To run the app, use the following command in the CLI in the folder of this readme -> `waitress-serve --port 4080 --call flask_app:create_app`
 
-To install the python packages you will need Pip. In this page it is assumed such an utility can be accessed with `pip`
+To install the python packages you will need Pip. In this README it is assumed such an utility can be accessed with `pip`
 
 In order to run the app, you'll need both Flask and Waitress: `pip install flask waitress`
 
@@ -23,7 +26,9 @@ To schedule the background healthchecks, you need to install the Apscheduler pac
 
 To connect to the MySQL database, you need to install the mysql-connector-python package: `pip install mysql-connector-python`
 
-If this doesn't run be sure to update Python (3.9 minimum), Flask and  for python (use apt-get and pip)
+To create the archive for certification, you'll need to install the zip package: `apt-get install zip`; you might need admin privileges to install it
+
+If this doesn't run be sure to update Python (3.9 minimum), Flask and for python (use apt-get and pip)
 
 # Using the service
 

@@ -13,7 +13,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.'''
 import subprocess
-from flask import Flask, jsonify, render_template, request, send_file, Response
+from flask import Flask, jsonify, render_template, request, send_file
 import requests
 import mysql.connector
 import json
@@ -29,16 +29,18 @@ import telegram
 import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 import base64
+import random
+import string
 
 API_TOKEN = 'replaceme'
 
-greendot = """<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>"""
-reddot = """<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>"""
+greendot = """&#128994"""
+reddot = """&#128308"""
 
 # edit this block according to your mysql server's configuration
 db_conn_info = {
         "user": "root",
-        "passwd": "root",
+        "passwd": "replaceme",
         "host": "localhost",
         "port": 3306,
         "database": "checker",
@@ -50,15 +52,15 @@ def send_telegram(chat_id, message):
     asyncio.run(bot.send_message(chat_id=chat_id, text=message))
     return
 
-def send_email(sender_email, sender_password, receiver_email, subject, message):
-    smtp_server = 'smtps.aruba.it'
+def send_email(sender_email, sender_password, receiver_emails, subject, message):
+    smtp_server = 'replaceme'
     smtp_port = 587 # may be changed
     server = smtplib.SMTP(smtp_server, smtp_port)
     server.starttls()
     server.login(sender_email, sender_password)
     msg = MIMEMultipart()
     msg['From'] = sender_email
-    msg['To'] = receiver_email
+    msg['To'] = ','.join(receiver_emails)
     msg['Subject'] = subject
     msg.attach(MIMEText(message, 'plain'))
     server.send_message(msg)
@@ -66,9 +68,32 @@ def send_email(sender_email, sender_password, receiver_email, subject, message):
     return
 
 def isalive():
-    send_email("support@snap4.eu", "b2d!xcaZD/ZbVpR", "forgothowtoreddid@gmail.com", "SnapSentinel-Test is alive", "Platform is alive")
-    send_telegram(-4111023179, "Platform is alive")
+    try:
+        send_email("replaceme", "replaceme", ("replaceme"), "SnapSentinel-$#base-hostname#$ is alive", "$#base-url#$/sentinel is alive")
+        send_telegram("replaceme", "$#base-url#$/sentinel is alive")
+    except Exception as E:
+        print("Something went wrong:", E)
     return
+
+def auto_run_tests():
+    try:
+        with mysql.connector.connect(**db_conn_info) as conn:
+            cursor = conn.cursor(buffered=True)
+            # to run malicious code, malicious code must be present in the db or the machine in the first place
+            query = '''select command from tests_table;'''
+            cursor.execute(query)
+            conn.commit()
+            results = cursor.fetchall()
+            total_result = ""
+            badstuff = ""
+            for r in list(results):
+                command_ran = subprocess.run(r[0], shell=True, capture_output=True, text=True, encoding="cp437").stdout
+                total_result += command_ran
+                if "Failure" in command_ran:
+                    badstuff += r[0] + " resulted in " + command_ran + "\n"
+            return badstuff
+    except Exception as e:
+        print("Something went wrong during tests running because of",e)
 
 def auto_alert_status():
     containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
@@ -91,35 +116,24 @@ def auto_alert_status():
     except Exception as e:
         send_alerts("Can't reach db, auto alert 1")
         return
+    is_alive_with_ports = auto_run_tests()
     categories = [a[0].replace("*","") for a in results]
     containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in categories) and (c["State"] != "running" or "unhealthy" in c["Status"])]
     containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["62149183138_certbot_1"]) and c["State"] != "exited"]
     problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not
     containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) -set([n["Names"] for n in problematic_containers]))
     names_of_problematic_containers = [n["Names"] for n in problematic_containers]
-    if len(names_of_problematic_containers) > 0:
+    if len(names_of_problematic_containers) > 0 or len(is_alive_with_ports) > 0:
         try:
-            with mysql.connector.connect(**db_conn_info) as conn:
-                cursor = conn.cursor(buffered=True)
-                values = [f"{val}%" for val in names_of_problematic_containers]
-                values = [''.join([i for i in values if not i.isdigit()])]
-                conditions = ' OR '.join(['component LIKE %s'] * len(values))
-                query = f'SELECT category FROM component_to_category WHERE {conditions};'
-                cursor.execute(query, values)
-                conn.commit()
-                results = cursor.fetchall()
-                values = ', '.join([f"'{val}'" for val in [a[0] for a in results]])
-                update_problematic_categories_query=f"UPDATE `checker`.`summary_status` SET `status` = %s WHERE `category` in ({values});"
-                cursor.execute(update_problematic_categories_query, [reddot])
-                conn.commit()
-                update_healthy_categories_query=f"UPDATE `checker`.`summary_status` SET `status` = %s WHERE `category` not in ({values});"
-                cursor.execute(update_healthy_categories_query, [greendot])
-                conn.commit()
-                send_alerts("There are problems with the containers: "+str(problematic_containers))
-                return
+            issues = ""
+            if len(names_of_problematic_containers) > 0:
+                issues = "There are problems with the containers: "+str(problematic_containers) + "\n"
+            if len(is_alive_with_ports) > 0:
+                issues += is_alive_with_ports
+            send_alerts(issues)
         except Exception as e:
             print(e)
-            send_alerts("Can't reach db, auto alert 2")
+            send_alerts("Couldn't reach database while sending error messages")
             return
     else:
         try:
@@ -131,17 +145,17 @@ def auto_alert_status():
                 return
         except Exception as e:
             print(e)
-            send_alerts("Can't reach db, auto alert 3")
+            send_alerts("Couldn't reach database while not needing to send error messages")
             return
 
     
 def send_alerts(message):
     try:
         print(message)
-        #send_email("support@snap4.eu", "b2d!xcaZD/ZbVpR", "forgothowtoreddid@gmail.com", "SnapSentinel-Test is in trouble!", message)
-        send_telegram("chat_id", message)
+        send_email("replaceme", "replaceme", ("replace@at.me"), "$#base-url#$/sentinel is in trouble!", message)
+        send_telegram("replaceme", message)
     except Exception as E:
-        print(E)
+        print("Error sending alerts: ",E)
     
     
 scheduler = BackgroundScheduler()
@@ -158,15 +172,26 @@ def create_app():
     def main_page():
         try:
             with mysql.connector.connect(**db_conn_info) as conn:
+                user = ""
+                try:
+                    user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
+                    user = user[:user.find(":")]
+                except Exception as e:
+                    pass
                 cursor = conn.cursor(buffered=True)
                 # to run malicious code, malicious code must be present in the db or the machine in the first place
                 query = '''SELECT complex_tests.*, GetHighContrastColor(button_color), COALESCE(categories.category, "System") as category FROM checker.complex_tests left join category_test on id = category_test.test left join categories on categories.idcategories = category_test.category;'''
                 cursor.execute(query)
                 conn.commit()
                 results = cursor.fetchall()
-                #send_email("sender", "sender password", "receiver", "subject", "text of mail")
-                #send_telegram( chat_id, "text of telegram password")
-                return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data())
+                if user != "admin":
+                    return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data())
+                else:
+                    query_2 = "SELECT * FROM checker.test_ran order by datetime desc limit 200;"
+                    cursor.execute(query_2)
+                    conn.commit()
+                    results_log = cursor.fetchall()
+                    return render_template("checker-admin.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),admin_log=results_log)
         except Exception as e:
             print("Something went wrong because of",e)
             return render_template("error_showing.html", r = e)
@@ -178,6 +203,7 @@ def create_app():
             try:
                 response = requests.get(request.args.to_dict()['url_of_resource'])
                 response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
+                print("\n\n" + response.text + "\n\n")
                 return response.text
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching URL: {e}")
@@ -215,27 +241,6 @@ def create_app():
                 send_alerts("Can't reach db")
                 return "There was a problem: "+e, 500
         
-        
-    @app.route('/forward', methods=['GET', 'POST', 'PUT', 'DELETE'])
-    def forward_request():
-        # Forward the incoming request to the target URL
-        response = requests.request(
-            method=request.method,
-            url=request.form.to_dict()['forward_to'],
-            headers={key: value for key, value in request.headers if key != 'Host'},
-            data=request.get_data(),
-            cookies=request.cookies,
-            allow_redirects=False)
-
-        # Create a response object to send back to the client
-        forwarded_response = Response(
-            response.content,
-            status=response.status_code,
-            headers=dict(response.headers)
-        )
-
-        return forwarded_response
-        
     @app.route("/read_containers", methods=['POST','GET'])
     def check():
         if request.method == "POST":
@@ -243,6 +248,29 @@ def create_app():
             #containers = subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout
             #log_to_db('asking_containers', 'docker ps --format json -a resulted in: '+containers)
             return containers
+        else:
+            log_to_db('asking_containers', "POST wasn't used in the request", request)
+            return False
+            
+    @app.route("/advanced_read_containers", methods=['POST','GET'])
+    def check_adv():
+        if request.method == "POST":
+            try:
+                results = None
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    cursor = conn.cursor(buffered=True)
+                    query = '''SELECT distinct position FROM checker.component_to_category;'''
+                    cursor.execute(query)
+                    conn.commit()
+                    results = cursor.fetchall()
+                    total_answer=[]
+                    for r in results:
+                        obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
+                        total_answer = total_answer + json.loads(obtained)
+                    return total_answer
+            except Exception as e:
+                print("Something went wrong because of",e)
+                return render_template("error_showing.html", r = e)
         else:
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return False
@@ -281,19 +309,21 @@ def create_app():
                 with mysql.connector.connect(**db_conn_info) as conn:
                     cursor = conn.cursor(buffered=True)
                     # to run malicious code, malicious code must be present in the db or the machine in the first place
-                    query = '''select command from tests_table where container_name =%s'''
+                    query = '''select command, command_explained from tests_table where container_name =%s'''
                     cursor.execute(query, (request.form.to_dict()['container'],))
                     conn.commit()
                     results = cursor.fetchall()
                     total_result = ""
+                    command_ran_explained = ""
                     for r in list(results):
                         command_ran = subprocess.run(r[0], shell=True, capture_output=True, text=True, encoding="cp437").stdout
-                        total_result += command_ran
+                        command_ran_explained = subprocess.run(r[1], shell=True, capture_output=True, text=True, encoding="cp437").stdout + '\n'
+                        total_result += "Running " + r[0] + " with result " + command_ran
                         query_1 = 'insert into tests_results (datetime, result, container, command) values (now(), %s, %s, %s);'
                         cursor.execute(query_1,(command_ran, request.form.to_dict()['container'],r[0],))
                         conn.commit()
-                        log_to_db('test_ran', "result was "+command_ran, request)
-                    return jsonify(total_result)
+                        log_to_db('test_ran', "Executing the is alive test on "+request.form.to_dict()['container']+" resulted in: "+command_ran, request)
+                    return jsonify(total_result, command_ran_explained)
             except Exception as e:
                 print("Something went wrong during tests running because of",e)
                 return render_template("error_showing.html", r = e)
@@ -328,7 +358,7 @@ def create_app():
                         query_1 = 'insert into tests_results (datetime, result, container, command) values (now(), %s, %s, %s);'
                         cursor.execute(query_1,(string_used, test_name,r[0],))
                         conn.commit()
-                        log_to_db('test_ran', "result was "+string_used, request)
+                        log_to_db('test_ran', "Executing the complex test " + test_name + " resulted in: " +string_used, request)
                     return jsonify(total_result)
             except Exception as e:
                 print("Something went wrong during tests running because of",e)
@@ -337,13 +367,65 @@ def create_app():
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return "False"
         
+    @app.route("/reboot/<container_id>", methods=['POST', 'GET'])
+    def reboot(container_id):
+        try:
+            return render_template("reboot.html", container=container_id)
+        except Exception as e:
+            print("Something went wrong during rebooting because of",e)
+            return render_template("error_showing.html", r = e)
+        
+        
+    @app.route("/test_all_ports", methods=['GET'])
+    def test_all_ports():
+        result = {}
+        with mysql.connector.connect(**db_conn_info) as conn:
+            cursor = conn.cursor(buffered=True)
+            # to run malicious code, malicious code must be present in the db or the machine in the first place
+            query = '''select container_name, command from tests_table;'''
+            cursor.execute(query)
+            conn.commit()
+            results = cursor.fetchall()
+            for r in list(results):
+                command_ran = subprocess.run(r[1], shell=True, capture_output=True, text=True, encoding="cp437").stdout
+                result[r[0]]=command_ran
+        return result
+            
+        
+        
     @app.route("/reboot_container", methods=['POST','GET'])
     def reboot_container():
         if request.method == "POST":
-            result = subprocess.run('docker restart '+request.form.to_dict()['id'], shell=True, capture_output=True, text=True, encoding="utf_8").stdout
-            # insert way to make result clearer here
-            log_to_db('rebooting_containers', 'docker restart '+request.form.to_dict()['id']+' resulted in: '+result, request)
-            return result
+            something = str(base64.b64decode(request.headers["Authorization"][len("Basic "):]))[:-1]
+            psw = something[something.find(":")+1:]
+            if psw == request.form.to_dict()['psw']:
+                result = subprocess.run('docker restart '+request.form.to_dict()['id'], shell=True, capture_output=True, text=True, encoding="utf_8").stdout
+                log_to_db('rebooting_containers', 'docker restart '+request.form.to_dict()['id']+' resulted in: '+result, request)
+                return result
+            else:
+                return "Container not rebooted", 401
+        else: 
+            log_to_db('rebooting_containers', "POST wasn't used in the request", request)
+            return "False"
+            
+    @app.route("/reboot_container_advanced/<container_id>", methods=['POST','GET'])
+    def reboot_container_advanced(container_id):
+        if request.method == "POST":
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    something = str(base64.b64decode(request.headers["Authorization"][len("Basic "):]))[:-1]
+                    psw = something[something.find(":")+1:]
+                    cursor = conn.cursor(buffered=True)
+                    # to run malicious code, malicious code must be present in the db or the machine in the first place
+                    query = '''SELECT position FROM checker.component_to_category where component=%s;'''
+                    cursor.execute(query, (container_id,))
+                    conn.commit()
+                    results = cursor.fetchall()
+                    r = requests.post(results[0][0]+"/sentinel/reboot_container", headers=request.headers, data={"id": container_id, "psw": psw})
+                    return r.text
+            except Exception as e:
+                print("Something went wrong during advanced container rebooting because of",e)
+                return render_template("error_showing.html", r = e)
         else: 
             log_to_db('rebooting_containers', "POST wasn't used in the request", request)
             return "False"
@@ -380,7 +462,7 @@ def create_app():
         try:
             with mysql.connector.connect(**db_conn_info) as conn:
                 cursor = conn.cursor(buffered=True)
-                cursor.execute('''INSERT INTO `{}` (date, log, perpetrator) VALUES (NOW(),'{}','{}')'''.format(table, log.replace("'","''"), user))
+                cursor.execute('''INSERT INTO `{}` (datetime, log, perpetrator) VALUES (NOW(),'{}','{}')'''.format(table, log.replace("'","''"), user))
                 conn.commit()
         except Exception as e:
             print("Something went wrong during db logging because of",e, "in",table)
@@ -532,6 +614,41 @@ def create_app():
         # Send the PDF file as a response
         response = send_file(pdf_output_path)
         return response
+    
+    def find_target_folder(parent_folder):
+        for root, dirs, files in os.walk(parent_folder):
+            if "docker-compose.yml" in files and "setup.sh" in files:
+                return root
+        return None
+    
+    @app.route('/certification', methods=['GET'])
+    def certification():
+        user = ""
+        try:
+            user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
+            user = user[:user.find(":")]
+        except Exception as e:
+            return render_template("error_showing.html", r = "Issues during the establishing of the user: "+ e)
+        if user != "admin":
+            return render_template("error_showing.html", r = "User is not authorized to perform the operation.")
+        script_folder = os.path.dirname(os.path.abspath(__file__))
+        parent_folder = os.path.dirname(script_folder)
+        
+        # Find the target folder
+        target_folder = find_target_folder(parent_folder)
+        
+        if target_folder:
+            # Define the output zip file path and password
+            password = ''.join(random.choice(string.digits + string.ascii_letters) for i in range(16))
+            make_certification = subprocess.run(f'cd {target_folder}; bash scripts/make_dumps_of_database.sh; zip -r -P {password} snap4city-certification-{password}.zip iotapp-00*/flows.json d*conf iot-directory-conf m*conf n*conf ownership-conf/config.php nifi/conf servicemap-conf/servicemap.properties ../placeholder_used.txt *dump.* servicemap-iot-conf/iotdeviceapi.dtd servicemap-superservicemap-conf/settings.xml synoptics-conf/ mongo_dump virtuoso_dump', shell=True, capture_output=True, text=True, encoding="utf_8")
+            if len(make_certification.stderr) > 0:
+                return send_file(target_folder + f'/snap4city-certification-{password}.zip')
+                # for reasons beyond my understanding some of the commands will write to stderr even when everything is fine
+                return render_template("error_showing.html", r = "There were issues: "+ make_certification.stderr)
+            else:
+                return send_file(target_folder + f'/snap4city-certification-{password}.zip')
+        else:
+            return render_template("error_showing.html", r = "Couldn't find the snap4city installation.")
     
     
     return app
