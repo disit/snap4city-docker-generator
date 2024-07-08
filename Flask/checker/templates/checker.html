@@ -505,7 +505,7 @@
 			});
 			
 			var rebootbutton = document.createElement("td");
-			rebootbutton.innerHTML=`<button type="button" class="btn btn-primary open-modal" data-toggle="modal" data-target="#passwordModal" data-containerid="`+elements[12]+`" data-containercategory="`+name_of_table_value+`">Reboot</button>`;
+			rebootbutton.innerHTML=`<button type="button" class="btn btn-primary open-modal" data-toggle="modal" data-target="#passwordModal" data-containerid="`+elements[12]+`" data-containercategory="`+name_of_table_value+`">Restart</button>`;
 			row.appendChild(rebootbutton);
 			var testsbutton = document.createElement("td");
 			testsbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Check the port..." class="btn btn-info" onclick="runTests('`+elements[12]+`', this, '`+name_of_table_value+`')"/>`;
@@ -540,7 +540,7 @@
 			do_not_update_this.setAttribute("onclick", "toggle_update_this_line(this)");
 			do_not_update_this.setAttribute("class", "btn btn-info");
 			do_not_update_this.setAttribute("type", "button");
-			do_not_update_this.setAttribute("value", "Stop this component from refreshing");
+			do_not_update_this.setAttribute("value", "Stop refreshing");
 			do_not_update_this_td.appendChild(do_not_update_this);
 			row.appendChild(do_not_update_this_td);
 			tbody.appendChild(row);
@@ -565,7 +565,6 @@
 	
 	function makeTable(containerdata) {
 		const headerData = ["I/O" ,"CPU%", "Command", "ContainerID (click for container-logs)", "Created at", "ID", "Image", "Labels", "Local Volumes", "Mem%", "Mem Used / Mem Max", "Mounts", "Container Name", "Names", "Network I/O", "Networks", "PIDs", "Ports", "Running for / Exited since", "Size", "State", "Status", "Restart", "Is alive port test", "Last test results", "Contacts", "Location", "Toggle update for this component"];
-		
 		const tableContainer = document.getElementById("table-container");
 		tableContainer.setAttribute("style", "display: flex; flex-wrap: wrap;")
 		tableContainer.innerText="";
@@ -665,7 +664,6 @@
 			var id = $('#containeridmodal').val();
 			var category = $('#containercategorymodal').val();
 			var result_loc = document.getElementById(id+"-reboot-result");
-			result_loc.innerHTML="Rebooting... &#128993";
 			var string = new Date().toLocaleString();
 			if (password) {
 				try {
@@ -675,6 +673,7 @@
 						type: 'POST',
 						success: function(response) {
 							logging('<b>' + id + "</b> was rebooted!", category+"-logs");
+							result_loc.innerHTML="Rebooting... &#128993";
 							$('#passwordModal').modal('hide');
 						},
 						error: function(error) {

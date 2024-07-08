@@ -1187,6 +1187,61 @@ def copy(source, dest):
             raise E
     return
 
+def add_mongos_for_sentinel(mysql_location, amount_of_mongos, dump_sh_location):
+    str_to_add='\nINSERT INTO checker.component_to_category VALUES '
+    str_to_add_2='\nINSERT INTO checker.`tests_table` VALUES '
+    with open(mysql_location, 'a') as file:
+        for a in range(amount_of_mongos):
+            str_to_add+='''('mongo-'''+str(a+1).zfill(3)+'''','Broker','Contact information not set','localhost'),\n'''
+            str_to_add_2+='''('mongo-'''+str(a+1).zfill(3)+'''','docker exec mongo-'''+str(a+1).zfill(3)+''' mongo localhost --eval \"printjson(db.serverStatus())\" | grep -q \'\"ok\" : 1\' && echo \'Success &#128994\' || echo \'Failure &#128308\'; date "+%F at %H:%M:%S"','docker exec mongo-'''+str(a+1).zfill(3)+''' mongo localhost --eval \"printjson(db.serverStatus())\" | grep -q \'\"ok\" : 1'),\n'''
+        file.write(str_to_add[:-2]+';')
+        file.write(str_to_add_2[:-2]+';')
+    with open(dump_sh_location, "a") as file:
+        for a in range(amount_of_mongos):
+            file.write('docker exec mongo-'+str(a+1).zfill(3)+' mongodump --out /dump; docker cp mongo-'+str(a+1).zfill(3)+':/dump mongo_dump; docker exec mongo-'+str(a+1).zfill(3)+' rm -rf /dump\n')
+    return
+
+#add nifi stuff (if multi)
+def add_nifis_for_sentinel(mysql_location, amount_of_nifis):
+    return
+
+def add_iotapps_for_sentinel(mysql_location, amount_of_iotapps):
+    str_to_add='\nINSERT INTO checker.`tests_table` VALUES '
+    with open(mysql_location, 'a') as file:
+        for a in range(amount_of_iotapps):
+            str_to_add+='''('iotapp-'''+str(a+1).zfill(3)+'''','curl -I -s $#base-url#$/iotapp/iotapp-'''+str(a+1).zfill(3)+'''/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 200 ] && echo \'Success &#128994\' || echo \'Failure &#128308\'; date "+%F at %H:%M:%S" )','curl -I -s $#base-url#$/iotapp/iotapp-'''+str(a+1).zfill(3)+'''/'),\n'''
+        file.write(str_to_add[:-2]+';')
+    return
+
+def add_opensearchs_for_sentinel(mysql_location, amount_of_opensearchs):
+    str_to_add='\nINSERT INTO checker.`component_to_category` VALUES '
+    str_to_add_2='\nINSERT INTO checker.`tests_table` VALUES '
+    with open(mysql_location, 'a') as file:
+        for a in range(amount_of_opensearchs):
+            str_to_add+='''('opensearch-n'''+str(a+1)+'''','Data Storage','Contact information not set','localhost'),\n'''
+        file.write(str_to_add[:-2]+';')
+        for a in range(amount_of_opensearchs):
+            str_to_add_2+='''('opensearch-n'''+str(a+1)+'''','curl -I -s https://localhost:9200/ --insecure| awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 401 ] && echo \'Success &#128994\' || echo \'Failure &#128308\' ); date "+%F at %H:%M:%S"','curl -I -s https://localhost:9200/ --insecure')'''
+        file.write(str_to_add_2[:-2]+';')
+    return
+
+
+#TODO virtuoso stuff
+def add_brokers_for_sentinel(mysql_location, amount_of_brokers):
+    str_to_add='\nINSERT INTO checker.`tests_table` VALUES '
+    with open(mysql_location, 'a') as file:
+        for a in range(amount_of_brokers):
+            str_to_add+='''('orion-'''+str(a+1).zfill(3)+'''','docker exec orion-'''+str(a+1).zfill(3)+''' contextBroker --version | grep -q \'3.11.0\' && echo \'Success &#128994\' || echo \'Failure &#128308\'; date "+%F at %H:%M:%S"','curl -I -s http://localhost:1026/'),('orionbrokerfilter-'''+str(a+1).zfill(3)+'''','curl -I -s  $#base-url#$/orion-filter/orion-'''+str(a+1)+'''/v2 | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 401 ] && echo \'Success &#128994\' || echo \'Failure &#128308\'; date "+%F at %H:%M:%S" ','curl -I -s  $#base-url#$/orion-filter/orion-'''+str(a+1)+'''/v2'),\n'''
+        file.write(str_to_add[:-2]+';')
+    return
+
+def add_components_for_sentinel(mysql_location, mongos, nifis, iotapps, opensearchs, brokers, dump_sh_location):
+    add_mongos_for_sentinel(mysql_location, mongos, dump_sh_location)
+    add_nifis_for_sentinel(mysql_location, nifis)
+    add_iotapps_for_sentinel(mysql_location, iotapps)
+    add_opensearchs_for_sentinel(mysql_location, opensearchs)
+    add_brokers_for_sentinel(mysql_location, brokers)
+
 #TODO "end of files" volumes are not generated and they should be
 def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/generated'):
     # unfortunately, docker-compose config was edited in a such way it broke some usages, even if the devs say that's intended

@@ -521,12 +521,20 @@ def create_app():
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/scripts/virtuoso/run.sh',fine_as_is)
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/compatibility4nfs.py',fine_as_is)
             snap4.copy('./checker', './Output/'+token+'/checker')
+            snap4.add_components_for_sentinel('./Output/'+token+'/checker/out.sql',
+                                              max(len([value for (key,value) in sorted(detailed_ips.items()) if "broker" in key]),1),
+                                              max(len([value for (key,value) in sorted(detailed_ips.items()) if "nifi" in key]),1),
+                                              int(post['# of IoT-Apps']),
+                                              max(len([value for (key,value) in sorted(detailed_ips.items()) if "opensearch" in key]),1),
+                                              max(len([value for (key,value) in sorted(detailed_ips.items()) if "virtuoso" in key]),1),
+                                              './Output/'+token+'/checker/scripts/make_dumps_of_database.sh')
+            
             for dname, dirs, files in os.walk('./Output/'+token+'/checker'):
                 for file in files:
                     try:
                         snap4.placeholders_in_file(os.path.join(dname,file), fine_as_is)
                     except UnicodeDecodeError as E:
-                        pass #doesn't matter
+                        pass #doesn't matter     
 
             if modello in ("Micro","Kubernetes"):
                 if len(ips)>1:

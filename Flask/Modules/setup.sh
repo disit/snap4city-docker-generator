@@ -81,5 +81,5 @@ echo creating sentinel users...
 sentineladmin=$(openssl passwd -apr1 $#sentinel-admin-psw#$)
 sentineluser=$(openssl passwd -apr1 $#sentinel-user-psw#$)
 echo sentineladmin:$sentineladmin >> nginx-proxy-conf/htpasswd
-echo sentineladmin:$sentineluser >> nginx-proxy-conf/htpasswd
+echo sentineluser:$sentineluser >> nginx-proxy-conf/htpasswd
 
