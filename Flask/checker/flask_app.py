@@ -33,6 +33,7 @@ import random
 import string
 import traceback
 from urllib.parse import urlparse
+from datetime import datetime
 
 f = open("conf.json")
 config = json.load(f)
@@ -40,8 +41,8 @@ config = json.load(f)
 
 API_TOKEN = config['telegram-api-token']
 
-greendot = """&#128994"""
-reddot = """&#128308"""
+greendot = """<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>"""
+reddot = """<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>"""
 
 # edit this block according to your mysql server's configuration
 db_conn_info = {
@@ -669,7 +670,7 @@ def create_app():
         
         if target_folder:
             # Define the output zip file path and password
-            password = ''.join(random.choice(string.digits + string.ascii_letters) for i in range(16))
+            password = ''.join(random.choice(string.digits + string.ascii_letters) for _ in range(16))
             make_certification = subprocess.run(f'cd {target_folder}; bash make_dumps_of_database.sh; zip -r -P {password} snap4city-certification-{password}.zip iotapp-00*/flows.json d*conf iot-directory-conf m*conf n*conf ownership-conf/config.php nifi/conf servicemap-conf/servicemap.properties ../placeholder_used.txt *dump.* servicemap-iot-conf/iotdeviceapi.dtd servicemap-superservicemap-conf/settings.xml synoptics-conf/ mongo_dump virtuoso_dump ../checker/*', shell=True, capture_output=True, text=True, encoding="utf_8")
             if len(make_certification.stderr) > 0:
                 return send_file(target_folder + f'/snap4city-certification-{password}.zip')
@@ -700,7 +701,10 @@ def create_app():
                 results = cursor.fetchall()
                 error = False
                 errorText = ""
-                subprocess.run(f'rm -f *snap4city-certification-*.zip', shell=True)
+                #pick folder
+                now = datetime.now()
+                folder_name = now.strftime("%Y-%m-%d_%H-%M-%S")
+                os.makedirs(folder_name)
                 for r in results:
                     file_name, content_disposition = "", ""
                     obtained = requests.get(r[0]+"/sentinel/certification", headers=request.headers)
@@ -712,7 +716,7 @@ def create_app():
                         errorText += "Unable to recover password from sentinel located at " + r[0] + "\n"
                         error = True
                     if obtained.status_code == 200 and len(file_name) > 1:
-                        with open(urlparse(r[0]).hostaname + ' - ' +file_name, "wb+") as file:
+                        with open(folder_name+'/'+urlparse(r[0]).hostaname + ' - ' +file_name, "wb+") as file:
                             if not error:
                                 file.write(obtained.content)
                     else:
@@ -721,8 +725,9 @@ def create_app():
                 if error:
                     return render_template("error_showing.html", r = errorText.replace("\n","<br>")), 500
                 else:
-                    password = ''.join(random.choice(string.digits + string.ascii_letters) for i in range(16))
-                    return send_file(f'snap4city-certification-composite-{password}.zip')
+                    password = ''.join(random.choice(string.digits + string.ascii_letters) for _ in range(16))
+                    subprocess.run(f'cd {folder_name}; rar a snap4city-certification-composite-{password}.rar -p"{password}" snap4city-certification-*.rar -k', shell=True, capture_output=True, text=True, encoding="utf_8")
+                    return send_file(f'snap4city-certification-composite-{password}.rar')
         except Exception:
             print("Something went wrong during clustered certification due to:",traceback.print_exc())
             return render_template("error_showing.html", r = traceback.format_exc()), 500

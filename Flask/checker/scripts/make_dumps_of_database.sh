@@ -9,4 +9,14 @@ docker exec dashboarddb mysqldump -uroot -p'$#dashboard-db-pwd-admin#$' iotdb fu
 docker exec $#virtuoso-kb-pwd#$ mkdir -p /usr/local/virtuoso-opensource/share/virtuoso/vad/dump.nq; docker exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ exec="dump_nquads('/usr/local/virtuoso-opensource/share/virtuoso/vad/dump.nq')"; docker cp virtuoso-kb:/usr/local/virtuoso-opensource/share/virtuoso/vad/dump.nq virtuoso_dump.nq; docker exec virtuoso-kb rm -rf /usr/local/virtuoso-opensource/share/virtuoso/vad/dump.nq
 docker exec od-postgis pg_dumpall -U postgres > postgres_od-postgis_dump.sql
 docker exec postgres-db pg_dumpall -U keycloak > postgres_postgres-db_dump.sql
+
+
+echo date > sysinfo.txt
+date >> sysinfo.txt
+echo cpu info >> sysinfo.txt
+lscpu >> sysinfo.txt
+echo hd info >> sysinfo.txt
+lsblk >> sysinfo.txt
+echo bus tree info >> sysinfo.txt
+lspci >> sysinfo.txt
 #todo postgres-s geoserver is cursed and doesn't like any user or password

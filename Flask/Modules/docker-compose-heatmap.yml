@@ -59,7 +59,7 @@ services:
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   geoserver:
     container_name: geoserver
-    image: kartoza/geoserver:2.20.0
+    image: kartoza/geoserver:2.25.2
     volumes:
       - geoserver-data:/opt/geoserver/data_dir
     ports:
