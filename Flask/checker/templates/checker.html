@@ -13,9 +13,9 @@
 		{%for item in extra_data%}['{{item[0]}}', '{{item[1]}}', '{{item[2]}}', '{{item[3]}}'],
 		{% endfor %}
 	];
-	var less_columns = false;
+	var less_columns = true;
 	
-	var dict_of_hidden_columns = {};
+	var dict_of_hidden_columns = {columnDefs:[{target: 0, visible: false},{target: 2, visible: false},{target: 4, visible: false},{target: 5, visible: false},{target: 6, visible: false},{target: 7, visible: false},{target: 8, visible: false},{target: 9, visible: false},{target: 10, visible: false},{target: 11, visible: false},{target: 13, visible: false},{target: 14, visible: false},{target: 15, visible: false},{target: 16, visible: false},{target: 17, visible: false},{target: 19, visible: false}]};
 	var container_rows = {};
 	var iframes = {};
 	var closed_categories = new Set();
@@ -492,7 +492,7 @@
 				}
 				else if (index_of_below_array === 20) {
 					var content_of_id_cell;
-					if (cellData === "running" != (elements[6] === "certbot/certbot"))
+					if ((cellData === "running" != (elements[6] === "certbot/certbot")) && !elements[21].includes('unhealthy'))
 						content_of_id_cell = cellData + '&#128994';
 						else content_of_id_cell = cellData + '&#128308';
 					td.innerHTML = '<div id="'+elements[12]+'-reboot-result">'+content_of_id_cell+'</div>';
@@ -505,7 +505,7 @@
 			});
 			
 			var rebootbutton = document.createElement("td");
-			rebootbutton.innerHTML=`<button type="button" class="btn btn-primary open-modal" data-toggle="modal" data-target="#passwordModal" data-containerid="`+elements[12]+`" data-containercategory="`+name_of_table_value+`">Restart</button>`;
+			rebootbutton.innerHTML=`<button type="button" class="btn btn-primary open-modal" data-toggle="modal" data-target="#passwordModal" data-containerid="`+elements[12]+`" data-containercategory="`+name_of_table_value+`">Reboot</button>`;
 			row.appendChild(rebootbutton);
 			var testsbutton = document.createElement("td");
 			testsbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Check the port..." class="btn btn-info" onclick="runTests('`+elements[12]+`', this, '`+name_of_table_value+`')"/>`;
@@ -565,6 +565,7 @@
 	
 	function makeTable(containerdata) {
 		const headerData = ["I/O" ,"CPU%", "Command", "ContainerID (click for container-logs)", "Created at", "ID", "Image", "Labels", "Local Volumes", "Mem%", "Mem Used / Mem Max", "Mounts", "Container Name", "Names", "Network I/O", "Networks", "PIDs", "Ports", "Running for / Exited since", "Size", "State", "Status", "Restart", "Is alive port test", "Last test results", "Contacts", "Location", "Toggle update for this component"];
+		
 		const tableContainer = document.getElementById("table-container");
 		tableContainer.setAttribute("style", "display: flex; flex-wrap: wrap;")
 		tableContainer.innerText="";
@@ -664,6 +665,7 @@
 			var id = $('#containeridmodal').val();
 			var category = $('#containercategorymodal').val();
 			var result_loc = document.getElementById(id+"-reboot-result");
+			result_loc.innerHTML="Rebooting... &#128993";
 			var string = new Date().toLocaleString();
 			if (password) {
 				try {
@@ -673,14 +675,17 @@
 						type: 'POST',
 						success: function(response) {
 							logging('<b>' + id + "</b> was rebooted!", category+"-logs");
-							result_loc.innerHTML="Rebooting... &#128993";
 							$('#passwordModal').modal('hide');
+							if (id.includes('proxy')) {
+								alert("By restarting the proxy, you will lose connection to the Snap4Sentinel backend. By closing this alert, you will reload the page.");
+								location.reload();
+							}
 						},
 						error: function(error) {
 							logging('<b>' + id + "</b> was not rebooted! Reason: " + error, category+"-logs");
 							$('#passwordModal').modal('hide');
 						},
-						timeout: 7000
+						timeout: 15000
 					});
 				}
 				catch (exception_var) {
@@ -806,7 +811,7 @@
 	
 	{% block additional_content_code %}{% endblock %}
 </script>
-<nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light">
+<nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light" style="flex-direction: column;">
 	<div class="collapse navbar-collapse container-fluid" id="navbarSupportedContent">
 		<ul class="navbar-nav mr-auto">
 			<li class="nav-item active">
@@ -814,7 +819,12 @@
 			</li>
 		</ul>
 		<ul class="navbar-nav mr-auto">
-			<li class="nav-item active">
+			<li class="nav-item active" style="padding-right: 0.5em;">
+				<form action="deauthenticate" method="GET">
+					<input type="submit" class="btn btn-info" value="Logout" />
+				</form>
+			</li>
+			<li class="nav-item active" style="padding-right: 0.5em;">
 				<form action="generate_pdf" method="POST">
 					<input type="submit" class="btn btn-info" value="Generate full logs" />
 				</form>
@@ -834,18 +844,19 @@
 			<button id="updatenow" class="btn btn-danger" onClick="update_routine()">Refresh now</button>
 			</li>
 			<li class="nav-item">
-			<button id="toggle_columns" class="btn btn-danger" onClick="toggle_hide_extra_columns(this)">Hide unimportant columns</button>
+			<button id="toggle_columns" class="btn btn-danger" onClick="toggle_hide_extra_columns(this)">Show unimportant columns</button>
 			</li>
 			<li class="nav-item">
 			<div id="last-update" class="nav-link"></div>
 			</li>
 		</ul>
 	</div>
+	<div id="category_menu" class="category_menu">
+	</div>
 </nav>
 <div id="output" class="main">
 	<br>
-	<div id="category_menu" class="category_menu">
-</div>
+
 <div id="table-container">
 </div>
 <div class="modal fade" id="passwordModal" tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">

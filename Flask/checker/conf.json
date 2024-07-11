@@ -1,0 +1,14 @@
+{
+	"telegram-api-token": "replaceme",
+	"telegram-channel":123456789,
+	"db-user": "root",
+	"db-passwd": "$#dashboard-db-pwd-admin#$",
+	"db-host": "localhost",
+	"db-port":$#dashboard-db-port#$,
+	"smtp-server": "change.me.com",
+	"smtp-port":587,
+	"sender-email": "change@at.me",
+	"sender-email-password": "replacethispassword",
+	"email-recipients": ["first_address@to.besent", "second_address@to.besent", "more_addresses@to.besent"],
+	"platform-url": "$#base-url#$"
+}

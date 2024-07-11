@@ -31,18 +31,24 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import base64
 import random
 import string
+import traceback
+from urllib.parse import urlparse
 
-API_TOKEN = 'replaceme'
+f = open("conf.json")
+config = json.load(f)
+
+
+API_TOKEN = config['telegram-api-token']
 
 greendot = """&#128994"""
 reddot = """&#128308"""
 
 # edit this block according to your mysql server's configuration
 db_conn_info = {
-        "user": "root",
-        "passwd": "replaceme",
-        "host": "localhost",
-        "port": 3306,
+        "user": config['db-user'],
+        "passwd": config['db-passwd'],
+        "host": config['db-host'],
+        "port": config['db-port'],
         "database": "checker",
         "auth_plugin": 'mysql_native_password'
     }
@@ -53,8 +59,8 @@ def send_telegram(chat_id, message):
     return
 
 def send_email(sender_email, sender_password, receiver_emails, subject, message):
-    smtp_server = 'replaceme'
-    smtp_port = 587 # may be changed
+    smtp_server = config['smtp-server']
+    smtp_port = config['smtp-port']
     server = smtplib.SMTP(smtp_server, smtp_port)
     server.starttls()
     server.login(sender_email, sender_password)
@@ -69,10 +75,10 @@ def send_email(sender_email, sender_password, receiver_emails, subject, message)
 
 def isalive():
     try:
-        send_email("replaceme", "replaceme", ("replaceme"), "SnapSentinel-$#base-hostname#$ is alive", "$#base-url#$/sentinel is alive")
-        send_telegram("replaceme", "$#base-url#$/sentinel is alive")
-    except Exception as E:
-        print("Something went wrong:", E)
+        send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is alive", config["platform-url"]+" is alive")
+        send_telegram(config['telegram-channel'], config["platform-url"]+" is alive")
+    except Exception:
+        print("Something went wrong:", traceback.print_exc())
     return
 
 def auto_run_tests():
@@ -92,8 +98,8 @@ def auto_run_tests():
                 if "Failure" in command_ran:
                     badstuff += r[0] + " resulted in " + command_ran + "\n"
             return badstuff
-    except Exception as e:
-        print("Something went wrong during tests running because of",e)
+    except Exception:
+        print("Something went wrong during tests running because of:",traceback.print_exc())
 
 def auto_alert_status():
     containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
@@ -113,15 +119,16 @@ def auto_alert_status():
             cursor.execute(query)
             conn.commit()
             results = cursor.fetchall()
-    except Exception as e:
-        send_alerts("Can't reach db, auto alert 1")
+    except Exception:
+        send_alerts("Can't reach db, auto alert 1, reason:",traceback.print_exc())
         return
     is_alive_with_ports = auto_run_tests()
     categories = [a[0].replace("*","") for a in results]
-    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in categories) and (c["State"] != "running" or "unhealthy" in c["Status"])]
+    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in categories) and (c["State"] != "running")]
     containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["62149183138_certbot_1"]) and c["State"] != "exited"]
-    problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not
-    containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) -set([n["Names"] for n in problematic_containers]))
+    containers_which_are_running_but_are_not_healthy = [c for c in containers_merged if any(c["Names"].startswith(value) for value in categories) and "unhealthy" in c["Status"]]
+    problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not + containers_which_are_running_but_are_not_healthy
+    #containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) - set([n["Names"] for n in problematic_containers]))
     names_of_problematic_containers = [n["Names"] for n in problematic_containers]
     if len(names_of_problematic_containers) > 0 or len(is_alive_with_ports) > 0:
         try:
@@ -131,9 +138,9 @@ def auto_alert_status():
             if len(is_alive_with_ports) > 0:
                 issues += is_alive_with_ports
             send_alerts(issues)
-        except Exception as e:
-            print(e)
-            send_alerts("Couldn't reach database while sending error messages")
+        except Exception:
+            print("Issues when trying to reach the database due to:",traceback.print_exc())
+            send_alerts("Couldn't reach database while sending error messages due to:",traceback.print_exc())
             return
     else:
         try:
@@ -143,19 +150,17 @@ def auto_alert_status():
                 cursor.execute(update_healthy_categories_query, [greendot])
                 conn.commit()
                 return
-        except Exception as e:
-            print(e)
+        except Exception:
             send_alerts("Couldn't reach database while not needing to send error messages")
             return
 
     
 def send_alerts(message):
     try:
-        print(message)
-        send_email("replaceme", "replaceme", ("replace@at.me"), "$#base-url#$/sentinel is in trouble!", message)
-        send_telegram("replaceme", message)
-    except Exception as E:
-        print("Error sending alerts: ",E)
+        send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", message)
+        send_telegram(config["platform-url"]+" is alive", message)
+    except Exception:
+        print("Error while sending alerts: ",traceback.print_exc())
     
     
 scheduler = BackgroundScheduler()
@@ -176,7 +181,7 @@ def create_app():
                 try:
                     user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
                     user = user[:user.find(":")]
-                except Exception as e:
+                except Exception:
                     pass
                 cursor = conn.cursor(buffered=True)
                 # to run malicious code, malicious code must be present in the db or the machine in the first place
@@ -192,9 +197,9 @@ def create_app():
                     conn.commit()
                     results_log = cursor.fetchall()
                     return render_template("checker-admin.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),admin_log=results_log)
-        except Exception as e:
-            print("Something went wrong because of",e)
-            return render_template("error_showing.html", r = e)
+        except Exception:
+            print("Something went wrong because of:",traceback.print_exc())
+            return render_template("error_showing.html", r = traceback.print_exc()), 500
 
 
     @app.route("/get_data_from_source")
@@ -222,9 +227,9 @@ def create_app():
                 conn.commit()
                 results = cursor.fetchall()
                 return results
-        except Exception as e:
-            print("Something went wrong because of",e)
-            return render_template("error_showing.html", r = e)
+        except Exception:
+            print("Something went wrong because of:",traceback.print_exc())
+            return render_template("error_showing.html", r = traceback.print_exc()), 500
         
     @app.route("/container_is_okay", methods=['POST'])
     def make_category_green():
@@ -236,10 +241,10 @@ def create_app():
                     cursor.execute(update_categories_query, [greendot])
                     conn.commit()
                     return "👌"
-            except Exception as e:
-                print(e)
+            except Exception:
+                print(traceback.print_exc())
                 send_alerts("Can't reach db")
-                return "There was a problem: "+e, 500
+                return "There was a problem: "+traceback.print_exc(), 500
         
     @app.route("/read_containers", methods=['POST','GET'])
     def check():
@@ -268,9 +273,9 @@ def create_app():
                         obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
                         total_answer = total_answer + json.loads(obtained)
                     return total_answer
-            except Exception as e:
-                print("Something went wrong because of",e)
-                return render_template("error_showing.html", r = e)
+            except Exception:
+                print("Something went wrong because of:",traceback.print_exc())
+                return render_template("error_showing.html", r = traceback.print_exc()), 500
         else:
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return False
@@ -285,9 +290,9 @@ def create_app():
                 conn.commit()
                 results = cursor.fetchall()
                 return results
-        except Exception as e:
-            print("Something went wrong because of",e)
-            return render_template("error_showing.html", r = e)
+        except Exception:
+            print("Something went wrong because of:",traceback.print_exc())
+            return render_template("error_showing.html", r = traceback.print_exc()), 500
     
     def get_extra_data():
         try:
@@ -298,8 +303,8 @@ def create_app():
                 conn.commit()
                 results = cursor.fetchall()
                 return results
-        except Exception as e:
-            print("Something went wrong because of",e)
+        except Exception:
+            print("Something went wrong because of",traceback.print_exc())
             return "Error in get extra data!"
         
     @app.route("/run_test", methods=['POST','GET'])
@@ -324,9 +329,9 @@ def create_app():
                         conn.commit()
                         log_to_db('test_ran', "Executing the is alive test on "+request.form.to_dict()['container']+" resulted in: "+command_ran, request)
                     return jsonify(total_result, command_ran_explained)
-            except Exception as e:
-                print("Something went wrong during tests running because of",e)
-                return render_template("error_showing.html", r = e)
+            except Exception:
+                print("Something went wrong during tests running because of",traceback.print_exc())
+                return render_template("error_showing.html", r = traceback.print_exc()), 500
         else:
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return "False"
@@ -360,9 +365,9 @@ def create_app():
                         conn.commit()
                         log_to_db('test_ran', "Executing the complex test " + test_name + " resulted in: " +string_used, request)
                     return jsonify(total_result)
-            except Exception as e:
-                print("Something went wrong during tests running because of",e)
-                return render_template("error_showing.html", r = e)
+            except Exception:
+                print("Something went wrong during tests running because of",traceback.print_exc())
+                return render_template("error_showing.html", r = traceback.print_exc()), 500
         else:
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return "False"
@@ -371,9 +376,9 @@ def create_app():
     def reboot(container_id):
         try:
             return render_template("reboot.html", container=container_id)
-        except Exception as e:
-            print("Something went wrong during rebooting because of",e)
-            return render_template("error_showing.html", r = e)
+        except Exception:
+            print("Something went wrong during rebooting because of:",traceback.print_exc())
+            return render_template("error_showing.html", r = traceback.print_exc()), 500
         
         
     @app.route("/test_all_ports", methods=['GET'])
@@ -391,7 +396,9 @@ def create_app():
                 result[r[0]]=command_ran
         return result
             
-        
+    @app.route("/deauthenticate", methods=['POST','GET'])
+    def deauthenticate():
+        return "You have been deauthenticated", 401
         
     @app.route("/reboot_container", methods=['POST','GET'])
     def reboot_container():
@@ -423,9 +430,9 @@ def create_app():
                     results = cursor.fetchall()
                     r = requests.post(results[0][0]+"/sentinel/reboot_container", headers=request.headers, data={"id": container_id, "psw": psw})
                     return r.text
-            except Exception as e:
-                print("Something went wrong during advanced container rebooting because of",e)
-                return render_template("error_showing.html", r = e)
+            except Exception:
+                print("Something went wrong during advanced container rebooting because of:",traceback.print_exc())
+                return render_template("error_showing.html", r = traceback.print_exc()), 500
         else: 
             log_to_db('rebooting_containers', "POST wasn't used in the request", request)
             return "False"
@@ -445,9 +452,9 @@ def create_app():
                     log_to_db('getting_tests', 'Tests results were read', request)
                     results = cursor.fetchall()
                     return jsonify(results)
-            except Exception as e:
-                print("Something went wrong because of",e)
-                return render_template("error_showing.html", r = e)
+            except Exception:
+                print("Something went wrong because of:",traceback.print_exc())
+                return render_template("error_showing.html", r = traceback.print_exc()), 500
         else: 
             log_to_db('getting_tests', "POST wasn't used in the request", request)
             return "False"
@@ -464,8 +471,8 @@ def create_app():
                 cursor = conn.cursor(buffered=True)
                 cursor.execute('''INSERT INTO `{}` (datetime, log, perpetrator) VALUES (NOW(),'{}','{}')'''.format(table, log.replace("'","''"), user))
                 conn.commit()
-        except Exception as e:
-            print("Something went wrong during db logging because of",e, "in",table)
+        except Exception:
+            print("Something went wrong during db logging because of:",traceback.print_exc(), "in",table)
             
     @app.route("/load_db",methods=['POST'])
     def load_db():
@@ -496,9 +503,9 @@ def create_app():
                     log_to_db('getting_tests', 'Tests results were read', request)
                     results = cursor.fetchall()
                     return jsonify(results)
-            except Exception as e:
-                print("Something went wrong because of",e)
-                return render_template("error_showing.html", r = e)
+            except Exception:
+                print("Something went wrong because of:",traceback.print_exc())
+                return render_template("error_showing.html", r = traceback.print_exc()), 500
         else: 
             log_to_db('getting_tests', "POST wasn't used in the request", request)
             return "False"
@@ -517,8 +524,9 @@ def create_app():
                 cursor.execute('''SELECT * FROM summary_status;''')
                 results = cursor.fetchall()
                 return jsonify(results)
-        except Exception as e:
-            print("Something went wrong during db logging because of",e)
+        except Exception:
+            print("Something went wrong during db logging because of:",traceback.print_exc())
+            return "Problems when obtaining summary statuses due to: "+ traceback.print_exc(), 500
     
     def get_container_data(do_not_jsonify=False):
         containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
@@ -564,8 +572,9 @@ def create_app():
                 log_to_db('getting_tests', 'Tests results were read', request)
                 results = cursor.fetchall()
                 tests_out = results
-        except Exception as e:
-            print("Something went wrong because of",e)
+        except Exception:
+            print("Something went wrong because of:",traceback.print_exc())
+            return render_template("error_showing.html",r="Couldn't generate report due to: "+traceback.print_exc()), 500
         # index
         content.append(Paragraph("The following are hyperlinks to logs of each container.", styles["Heading1"]))
         for pair in data_stored:
@@ -621,16 +630,37 @@ def create_app():
                 return root
         return None
     
+    @app.route('/clear_certifications', methods=['GET'])
+    def clear_certifications():
+        user = ""
+        try:
+            user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
+            user = user[:user.find(":")]
+        except Exception:
+            return render_template("error_showing.html", r = "Issues during the establishing of the user: "+ traceback.print_exc()), 500
+        if user != "admin":
+            return render_template("error_showing.html", r = "User is not authorized to perform the operation."), 401
+        script_folder = os.path.dirname(os.path.abspath(__file__))
+        parent_folder = os.path.dirname(script_folder)
+        
+        # Find the target folder
+        target_folder = find_target_folder(parent_folder)
+        if target_folder:
+            # Define the output zip file path and password
+            subprocess.run(f'cd {target_folder}; rm -f *snap4city-certification-*.zip', shell=True, capture_output=True, text=True, encoding="utf_8")
+            return "Done"
+        
+    
     @app.route('/certification', methods=['GET'])
     def certification():
         user = ""
         try:
             user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
             user = user[:user.find(":")]
-        except Exception as e:
-            return render_template("error_showing.html", r = "Issues during the establishing of the user: "+ e)
+        except Exception:
+            return render_template("error_showing.html", r = "Issues during the establishing of the user: "+ traceback.print_exc()), 500
         if user != "admin":
-            return render_template("error_showing.html", r = "User is not authorized to perform the operation.")
+            return render_template("error_showing.html", r = "User is not authorized to perform the operation."), 401
         script_folder = os.path.dirname(os.path.abspath(__file__))
         parent_folder = os.path.dirname(script_folder)
         
@@ -640,17 +670,62 @@ def create_app():
         if target_folder:
             # Define the output zip file path and password
             password = ''.join(random.choice(string.digits + string.ascii_letters) for i in range(16))
-            make_certification = subprocess.run(f'cd {target_folder}; bash scripts/make_dumps_of_database.sh; zip -r -P {password} snap4city-certification-{password}.zip iotapp-00*/flows.json d*conf iot-directory-conf m*conf n*conf ownership-conf/config.php nifi/conf servicemap-conf/servicemap.properties ../placeholder_used.txt *dump.* servicemap-iot-conf/iotdeviceapi.dtd servicemap-superservicemap-conf/settings.xml synoptics-conf/ mongo_dump virtuoso_dump', shell=True, capture_output=True, text=True, encoding="utf_8")
+            make_certification = subprocess.run(f'cd {target_folder}; bash make_dumps_of_database.sh; zip -r -P {password} snap4city-certification-{password}.zip iotapp-00*/flows.json d*conf iot-directory-conf m*conf n*conf ownership-conf/config.php nifi/conf servicemap-conf/servicemap.properties ../placeholder_used.txt *dump.* servicemap-iot-conf/iotdeviceapi.dtd servicemap-superservicemap-conf/settings.xml synoptics-conf/ mongo_dump virtuoso_dump ../checker/*', shell=True, capture_output=True, text=True, encoding="utf_8")
             if len(make_certification.stderr) > 0:
                 return send_file(target_folder + f'/snap4city-certification-{password}.zip')
-                # for reasons beyond my understanding some of the commands will write to stderr even when everything is fine
-                return render_template("error_showing.html", r = "There were issues: "+ make_certification.stderr)
+                # bypass this shit, for now
+                return render_template("error_showing.html", r = "There were issues: "+ make_certification.stderr), 500
             else:
                 return send_file(target_folder + f'/snap4city-certification-{password}.zip')
         else:
-            return render_template("error_showing.html", r = "Couldn't find the snap4city installation.")
-    
-    
+            return render_template("error_showing.html", r = "Couldn't find the snap4city installation."), 500
+            
+    @app.route('/clustered_certification', methods=['GET'])
+    def clustered_certification():
+        user = ""
+        try:
+            user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
+            user = user[:user.find(":")]
+        except Exception:
+            return render_template("error_showing.html", r = "Issues during the establishing of the user: "+ traceback.print_exc()), 500
+        if user != "admin":
+            return render_template("error_showing.html", r = "User is not authorized to perform the operation."), 401
+        try:
+            results = None
+            with mysql.connector.connect(**db_conn_info) as conn:
+                cursor = conn.cursor(buffered=True)
+                query = '''SELECT distinct position FROM checker.component_to_category;'''
+                cursor.execute(query)
+                conn.commit()
+                results = cursor.fetchall()
+                error = False
+                errorText = ""
+                subprocess.run(f'rm -f *snap4city-certification-*.zip', shell=True)
+                for r in results:
+                    file_name, content_disposition = "", ""
+                    obtained = requests.get(r[0]+"/sentinel/certification", headers=request.headers)
+                    if 'Content-Disposition' in obtained.headers:
+                        content_disposition = obtained.headers['Content-Disposition']
+                    if 'filename=' in content_disposition:
+                        file_name = content_disposition.split('filename=')[1].strip('"')
+                    if len(file_name) < 1:
+                        errorText += "Unable to recover password from sentinel located at " + r[0] + "\n"
+                        error = True
+                    if obtained.status_code == 200 and len(file_name) > 1:
+                        with open(urlparse(r[0]).hostaname + ' - ' +file_name, "wb+") as file:
+                            if not error:
+                                file.write(obtained.content)
+                    else:
+                        error = True
+                        errorText += "Couldn't read file from sentinel located at " + r[0] + " because of error in request: "+ str(obtained.status_code) + '\n'
+                if error:
+                    return render_template("error_showing.html", r = errorText.replace("\n","<br>")), 500
+                else:
+                    password = ''.join(random.choice(string.digits + string.ascii_letters) for i in range(16))
+                    return send_file(f'snap4city-certification-composite-{password}.zip')
+        except Exception:
+            print("Something went wrong during clustered certification due to:",traceback.print_exc())
+            return render_template("error_showing.html", r = traceback.format_exc()), 500
     return app
     
 if __name__ == "__main__":
