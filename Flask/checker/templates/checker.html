@@ -130,7 +130,7 @@
 	function getcontainers(){
 		try {
 			$.ajax({
-				url: './read_containers',
+				url: './advanced_read_containers',
 				type: 'POST',
 				success: function(response) {
 					makeTable(response);
@@ -487,7 +487,7 @@
 			elements.forEach(cellData => {
 				const td = document.createElement("td");
 				if (index_of_below_array === 3) {
-					var content_of_id_cell = '<a target="_blank" href="./container/'+cellData+'">'+cellData+'</a>';
+					var content_of_id_cell = '<a target="_blank" href="./advanced-container/'+cellData+'">'+cellData+'</a>';
 					td.innerHTML = content_of_id_cell;
 				}
 				else if (index_of_below_array === 20) {
@@ -614,6 +614,7 @@
 					const centerer = document.createElement("div");
 					centerer.setAttribute("name", i);
 					const name_of_table = document.createElement("h1");
+					const li_element=document.createElement("li");
 					if (!closed_categories.has(i)) 
 						name_of_table.setAttribute("class", "btn btn-light btn-lg"); 
 					else 
@@ -622,7 +623,8 @@
 					name_of_table.setAttribute("id", i+"-status");
 					name_of_table.innerHTML = i;
 					var menupage = document.getElementById("category_menu");
-					menupage.appendChild(name_of_table);
+					li_element.appendChild(name_of_table);
+					menupage.appendChild(li_element);
 					var div_for_category_name = document.createElement("h1");
 					div_for_category_name.innerHTML=i;
 					tableContainer.appendChild(centerer);
@@ -673,7 +675,7 @@
 			if (password) {
 				try {
 					$.ajax({
-						url: './reboot_container',
+						url: './reboot_container_advanced',
 						data: {id: id, psw: password},
 						type: 'POST',
 						success: function(response) {
@@ -814,41 +816,36 @@
 	
 	{% block additional_content_code %}{% endblock %}
 </script>
-<nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light" style="flex-direction: column;flex-direction: column;flex-wrap: revert;">
+<nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light" style="flex-direction: column;width:100%;">
 	<div class="collapse navbar-collapse container-fluid" id="navbarSupportedContent">
 		<ul class="navbar-nav mr-auto">
 			<li class="nav-item active">
 				<a class="navbar-brand">$#base-url#$</a>
 			</li>
 		</ul>
-		<div>
-			<ul class="navbar-nav mr-auto">
-				<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Toggle categories</a>
-				<ul class="dropdown-menu">
-					<div id="category_menu" class="category_menu container-fluid">
-					</div>
-				</ul>
+		<ul class="navbar-nav mr-auto">
+			<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Toggle categories</a>
+			<ul class="dropdown-menu">
+				<div id="category_menu" class="category_menu container-fluid">
+				</div>
 			</ul>
-		</div>
-			<ul class="navbar-nav mr-auto">
-				<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Show administrative actions</a>
-				<ul class="dropdown-menu">
-					<li class="nav-item active" style="padding-right: 0.5em;">
-						<form action="deauthenticate" method="GET">
-							<input type="submit" class="btn btn-info" value="Logout" />
-						</form>
-					</li>
-					<li class="nav-item active" style="padding-right: 0.5em;">
-						<form action="generate_pdf" method="POST">
-							<input type="submit" class="btn btn-info" value="Generate full logs" />
-						</form>
-					</li>
-					{% block additional_content_certification %}{% endblock %}
-				</ul>
+		</ul>
+		<ul class="navbar-nav mr-auto">
+			<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Show administrative actions</a>
+			<ul class="dropdown-menu">
+				<li class="nav-item active">
+					<form action="deauthenticate" method="GET">
+						<input type="submit" class="btn btn-info" value="Logout" />
+					</form>
+				</li>
+				<li class="nav-item active">
+					<form action="generate_clustered_pdf" method="POST">
+						<input type="submit" class="btn btn-info" value="Generate full logs" />
+					</form>
+				</li>
+				{% block additional_content_certification %}{% endblock %}
 			</ul>
-		<div>
-		</div>
-
+		</ul>
 		<ul class="navbar-nav mr-auto">
 			<li class="nav-item active">
 				<a class="navbar-brand">SnapSentinel: Platform Process Monitoring and Control</a>
@@ -858,15 +855,16 @@
 			<ul class="navbar-nav mr-auto">
 				<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Show operational actions</a>
 				<ul class="dropdown-menu">
-					<li class="nav-item" style="padding-right: 0.5em;">
+					<li class="nav-item">
 					<button id="buttonForUpdates" class="btn btn-danger" onClick="toggleUpdate()">Stop refresh</button>
 					</li>
-					<li class="nav-item" style="padding-right: 0.5em;">
+					<li class="nav-item">
 					<button id="updatenow" class="btn btn-danger" onClick="update_routine()">Refresh now</button>
 					</li>
 					<li class="nav-item">
 					<button id="toggle_columns" class="btn btn-danger" onClick="toggle_hide_extra_columns(this)">Show unimportant columns</button>
 					</li>
+					<li><hr class="dropdown-divider"></li>
 					<li class="nav-item">
 					<div id="last-update" class="nav-link"></div>
 					</li>
@@ -875,6 +873,8 @@
 			
 		</ul>
 	</div>
+
+	
 </nav>
 <div id="output" class="main">
 	<br>
