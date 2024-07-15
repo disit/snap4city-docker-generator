@@ -1,6 +1,7 @@
 from datetime import datetime
 import time
 import json
+import os
 import sys
 import socketio
 import requests
@@ -30,13 +31,37 @@ except Exception as E:
     password = "Mdn!hkH"
     synoptics = True
 
+def getTokenViaUserCredentials():
+    """Get the authentication token from keycloak. Uses global variables to ease programming
+
+    Returns:
+        dict: The response from the keycloak service
+    """ 
+    payload = {
+        'f': 'json',
+        'client_id': 'js-kpi-client',
+        'grant_type': 'password',
+        'username': username,
+        'password': password,
+        'scope': 'openid'
+    }
+
+    header = {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+
+    urlToken = config['base-url']+"/auth/realms/master/protocol/openid-connect/token"
+    response = requests.request("POST", urlToken, data=payload, headers=header)
+    token = response.json()
+    return token
+
 @sio.event
 def connect():
     """Connect to synoptics with the auth token
     """
     globals()['async_check']=0
-    token = accessToken(config)
-    sio.emit("authenticate",token)
+    token = getTokenViaUserCredentials()
+    sio.emit("authenticate",token['access_token'])
 
 @sio.event
 def authenticate(data):
@@ -114,30 +139,35 @@ def main():
     access_token = accessToken(config)
     model_name = datetime.now().strftime("%Y%m%dT%H%M%S")
     device_name = datetime.now().strftime("%Y%m%dT%H%M%S")
+    
     with open('latest-model.txt', 'w') as f:
         f.write(model_name+'model')
     with open('latest-device.txt', 'w') as f:
         f.write(device_name+'device')
     createModel(config, access_token)
+    
     createDevice(config, access_token, get_latest_device())
+
     uriDelegateDevice = delegateDevice(device_name+'device', config, access_token)
     if synoptics == "True":
         nData = 5
-        sleep = 5
+        sleep = 2
         previous_data = latest_data
         for i in range(0, nData):
-            print('\nSending value',str(i))
+            print('\n')
             string_value = str(i)
-            sendData(config, accessToken(config), get_latest_device(), string_value)
+            access_token =  accessToken(config)
+            sendData(config, access_token, get_latest_device(), string_value)
+            
             print("Waiting", str(sleep), "seconds")
             time.sleep(sleep)
-            print("\nSearching with IoT-search")
             sio.connect(url=config['base-url'],socketio_path='synoptics/socket.io',transports='websocket')
+            
             print("Waiting another", str(sleep), "seconds")
             sio.wait()
             sio.disconnect()
-            print("\nSearching with Synoptics")
-            readDelegateDevice(uriDelegateDevice, config, access_token, string_value)
+            access_token_delegated = accessTokenDelegated(config)
+            readDelegateDevice(uriDelegateDevice, config, access_token_delegated, string_value)
             readDelegateDevice2(uriDelegateDevice, config, access_token, string_value)
             readDelegateDevice3(uriDelegateDevice, config, access_token, string_value)
             if str(latest_data)==string_value:
@@ -180,17 +210,17 @@ def readDelegateDevice(serviceuri, conf, token, value_read):
             print("Servicemap: read expected value")
             #print("whole thing:",response.json())
             if [num*1.5,num] == response.json()["Service"]["features"][0]["geometry"]["coordinates"]:
-                print("Servicemap with parameters realtime=true&appID=iotapp: position of device detected as intended.")
+                print("Servicemap: position of device detected as intended.")
             else:
-                print("Servicemap with parameters realtime=true&appID=iotapp: position of device was not detected as intended.")
+                print("Position of device was not detected as intended.")
                 print("Should be [",num*1.5,"",num,"], was",response.json()["Service"]["features"][0]["geometry"]["coordinates"])
         else:
-            print("Servicemap with parameters realtime=true&appID=iotapp: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
+            print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
         #print("Request was successful.")
         #print("Response:")
         #print(response.json())
     else:
-        print("Servicemap with parameters realtime=true&appID=iotapp: [ERROR] request failed with status code:",response.status_code)
+        print("Servicemap: [ERROR] request failed with status code:",response.status_code)
         print("Response:")
         print(response.text)
         
@@ -210,23 +240,25 @@ def readDelegateDevice2(serviceuri, conf, token, value_read):
     url = conf["base-url"] + '/superservicemap/api/v1/iot-search/?serviceUri='+ serviceuri
 
     response = requests.get(url, headers=headers)
+    #print(url+" --> ", response.json(), "token: "+token)
     num = int(value_read)
     if response.status_code == 200:
-        if value_read==response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"]:
-            print("Servicemap: read expected value")
+        if response.json()["features"][0]["properties"]["values"]["value44"]==num :
+            print("Servicemap iot-search: read expected value",num)
             #print("whole thing:",response.json())
-            if [num*1.5,num] == response.json()["Service"]["features"][0]["geometry"]["coordinates"]:
-                print("Servicemap: position of device detected as intended.")
+            if [num*1.5,num] == response.json()["features"][0]["geometry"]["coordinates"]:
+                print("Servicemap iot-search: position of device detected as intended.")
             else:
-                print("Servicemap: position of device was not detected as intended.")
-                print("Should be [",num*1.5,"",num,"], was",response.json()["Service"]["features"][0]["geometry"]["coordinates"])
+                print("Servicemap iot-search: [ERROR] Position of device was not detected as intended.")
+                print("Should be [",num*1.5,"",num,"], was",response.json()["features"][0]["geometry"]["coordinates"])
         else:
-            print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
+            print("Servicemap iot-search: [ERROR] didn't read correct value; got", response.json(), "expected", value_read)
         #print("Request was successful.")
         #print("Response:")
         #print(response.json())
     else:
-        print("Servicemap: [ERROR] request failed with status code:",response.status_code)
+        print("Servicemap iot-search: [ERROR] request failed with status code:",response.status_code)
+        print("Request:", url, "token:", token)
         print("Response:")
         print(response.text)
         
@@ -249,21 +281,21 @@ def readDelegateDevice3(serviceuri, conf, token, value_read):
     response = requests.get(url, headers=headers)
     num = int(value_read)
     if response.status_code == 200:
-        if value_read==response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"]:
-            print("Servicemap: read expected value")
+        if num==response.json()["features"][0]["properties"]["values"]["value44"]:
+            print("Servicemap iot-search/time-range: read expected value", num)
             #print("whole thing:",response.json())
-            if [num*1.5,num] == response.json()["Service"]["features"][0]["geometry"]["coordinates"]:
-                print("Servicemap with parameters fromTime=5-minute: position of device detected as intended.")
+            if [num*1.5,num] == response.json()["features"][0]["geometry"]["coordinates"]:
+                print("Servicemap iot-search/time-range: position of device detected as intended.")
             else:
-                print("Servicemap with parameters fromTime=5-minute: position of device was not detected as intended.")
-                print("Should be [",num*1.5,"",num,"], was",response.json()["Service"]["features"][0]["geometry"]["coordinates"])
+                print("Position of device was not detected as intended.")
+                print("Should be [",num*1.5,"",num,"], was",response.json()["features"][0]["geometry"]["coordinates"])
         else:
-            print("Servicemap with parameters fromTime=5-minute: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
+            print("Servicemap iot-search/time-range: [ERROR] didn't read correct value; got", response.json(), ", expected", value_read)
         #print("Request was successful.")
         #print("Response:")
         #print(response.json())
     else:
-        print("Servicemap: [ERROR] request failed with status code:",response.status_code)
+        print("Servicemap iot-search/time-range: [ERROR] request failed with status code:",response.status_code)
         print("Response:")
         print(response.text)
 
@@ -282,7 +314,7 @@ def createModel(conf, token):
     response = requests.request("PATCH", url, headers=header)
     r = (response.text)
     r = json.loads(r)
-    print("\nStatus for creating model "+get_latest_model()+": " + r['status'])
+    print("\nStatus for model "+get_latest_model()+": " + r['status'])
     time.sleep(2)
 
 def createDevice(conf, token, device_name):
@@ -309,7 +341,7 @@ def createDevice(conf, token, device_name):
     r = (response.text)
     r = json.loads(r)
     print(r)
-    print("\nStatus for creating device "+get_latest_device()+": " + r['status'])
+    print("\nStatus for device "+get_latest_device()+": " + r['status'])
     time.sleep(2)
     
 def getDevice(conf, device_name, token):
@@ -363,7 +395,8 @@ def accessTokenDelegated(conf):
         'client_id': conf.get('token').get('clientID'),
         'grant_type': 'password',
         'username': conf["usernamedelegated"],
-        'password': conf["usernamedelegatedpassword"]
+        'password': conf["usernamedelegatedpassword"],
+        'scope': 'openid'
     }
 
     header = {
@@ -482,7 +515,7 @@ def deletemodel(modelname, access_token, base_url):
                         print("Connected successfully but an error occourred while deleting the model. JSON of response:",response.json())
                     return
                 elif (response.status_code == 401):
-                    print("\nUnauthorized, accessToken: " + access_token)
+                    print("\nUnauthorized, accessToken: " + accessToken(config))
                     return
                 else:
                     print("\nSomething else went wrong: " + response.content)
@@ -490,7 +523,7 @@ def deletemodel(modelname, access_token, base_url):
         print("Model to be deleted wasn't found among", str(response.json()["recordsTotal"]),"received")
         return
     elif (response.status_code == 401):
-        print("\nUnauthorized, accessToken: " + access_token)
+        print("\nUnauthorized, accessToken: " + accessToken(config))
     else:
         print("\nSomething else went wrong: " + response.content)
     return
@@ -512,7 +545,7 @@ def sendData(conf, token, device_name, string_value):
     timestamp = datetime.now().isoformat()
     timestamp = timestamp[0:20] + "000Z"
     num = int(string_value)
-    payload = {"value44":{"type":"string","value": string_value},"dateObserved":{"type":"string","value":timestamp},"latitude":{"value":str(num*1.0),"type":"float"},"longitude":{"value":str(num*1.5),"type":"float"}}
+    payload = {"value44":{"type":"string","value": num},"dateObserved":{"type":"string","value":timestamp},"latitude":{"value":str(num*1.0),"type":"float"},"longitude":{"value":str(num*1.5),"type":"float"}}
     # http://dashtest/orion-filter-orion-1/v2/entities/20231120T094406device/attrs?elementid=20231120T094406device&type=test
     url = f'{conf["base-url"]}/orion-filter/orion-1/v2/entities/' + device_name + '/attrs?elementid=' + device_name + '&type=' + conf['model']['model_type']
     print(url)

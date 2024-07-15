@@ -4,6 +4,7 @@ import json
 import sys
 import socketio
 import requests
+import urllib.parse
 
 http_session = requests.Session()
 http_session.verify = False
@@ -58,7 +59,7 @@ def getTokenViaUserCredentials():
         'grant_type': 'password',
         'username': username,
         'password': password,
-        'scope': 'userid'
+        'scope': 'openid'
     }
 
     header = {
@@ -138,10 +139,10 @@ def main():
 
     uriDelegateDevice = delegateDevice(device_name+'device', config, access_token)
     if synoptics == "True":
-        nData = 3
-        sleep = 5
+        nData = 7
+        sleep = 1
         previous_data = latest_data
-        for i in range(0, nData):
+        for i in range(2, nData):
             print('\n')
             string_value = str(i)
             sendData(config, accessToken(config), get_latest_device(), string_value)
@@ -151,8 +152,8 @@ def main():
             access_token_delegated = accessTokenDelegated(config)
             readDelegateDevice(uriDelegateDevice, config, access_token_delegated, string_value)
             
-            print("Waiting another", str(sleep), "seconds")
-            time.sleep(sleep)
+            #print("Waiting another", str(sleep), "seconds")
+            #time.sleep(sleep)
             sio.connect(url=config['base-url'],socketio_path='synoptics/socket.io',transports='websocket')
             sio.wait()
             sio.disconnect()
@@ -190,7 +191,7 @@ def readDelegateDevice(serviceuri, conf, token, value_read):
     if response.status_code == 200:
         try:
             if value_read==response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"]:
-                print("Servicemap: read expected value")
+                print("Servicemap: read expected value", value_read)
             else:
                 print("Servicemap: [ERROR] didn't read correct value; got", response.json()["realtime"]["results"]["bindings"][0]["value44"]["value"], ", expected", value_read)
             #print("Request was successful.")
@@ -214,7 +215,9 @@ def createModel(conf, token):
         "Content-Type": "application/json",
         "Authorization": "Bearer "+token
     }
-    url = conf["model"]["model_url"] + "action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&name="+get_latest_model()+"&description=&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&producer=&frequency="+conf['model']['model_frequency']+"&kgenerator="+conf['model']['model_kgenerator']+"&edgegateway_type=&contextbroker="+conf['model']['model_contextbroker']+"&protocol="+conf['model']['model_protocol']+"&format="+conf['model']['model_format']+"&hc="+conf['model']['model_hc']+"&hv="+conf['model']['model_hv']+"&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5D&service=&servicePath=&token="+token+"&nodered=true"
+    attributes = [{"value_name":"dateObserved","data_type":"string","value_type":"timestamp","editable":"0","value_unit":"timestamp","healthiness_criteria":"refresh_rate","healthiness_value":"300"},{"value_name":"value44","data_type":"string","value_type":"message","editable":"0","value_unit":"-","healthiness_criteria":"refresh_rate","healthiness_value":"300","real_time_flag":"true"}]
+
+    url = conf["model"]["model_url"] + "action=insert&attributes=" + urllib.parse.quote(json.dumps(attributes,separators=(",", ":"))) + "&name="+get_latest_model()+"&description=&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&producer=&frequency="+conf['model']['model_frequency']+"&kgenerator="+conf['model']['model_kgenerator']+"&edgegateway_type=&contextbroker="+conf['model']['model_contextbroker']+"&protocol="+conf['model']['model_protocol']+"&format="+conf['model']['model_format']+"&hc="+conf['model']['model_hc']+"&hv="+conf['model']['model_hv']+"&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5D&service=&servicePath=&token="+token+"&nodered=true"
     response = requests.request("PATCH", url, headers=header)
     r = (response.text)
     r = json.loads(r)
@@ -237,8 +240,9 @@ def createDevice(conf, token, device_name):
         "Accept": "application/x-www-form-urlencoded",
         "Authorization": "Bearer "+token,
     }
+    attributes = [{"value_name":"dateObserved","data_type":"string","value_type":"timestamp","editable":"0","value_unit":"timestamp","healthiness_criteria":"refresh_rate","healthiness_value":"300"},{"value_name":"value44","data_type":"string","value_type":"message","editable":"0","value_unit":"-","healthiness_criteria":"refresh_rate","healthiness_value":"300","real_time_flag":"true"}]
     
-    url = conf["device"]["device_url"] + "action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&id="+device_name+"&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&contextbroker="+conf['model']['model_contextbroker']+"&format="+conf['model']['model_format']+"&mac=&model="+get_latest_model()+"&producer=&latitude="+lat+"&longitude="+long+"&visibility=&frequency="+conf['model']['model_frequency']+"&token="+token+"&k1=ae402872-8207-4451-83cb-d047a2f68340&k2=ecb6a002-8452-4f90-88d7-e0c4c4dcf370&edgegateway_type=&edgegateway_uri=&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5D&service=&servicePath=&nodered=true"
+    url = conf["device"]["device_url"] + "action=insert&attributes=" + urllib.parse.quote(json.dumps(attributes,separators=(",", ":"))) + "&id="+device_name+"&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&contextbroker="+conf['model']['model_contextbroker']+"&format="+conf['model']['model_format']+"&mac=&model="+get_latest_model()+"&producer=&latitude="+lat+"&longitude="+long+"&visibility=&frequency="+conf['model']['model_frequency']+"&token="+token+"&k1=ae402872-8207-4451-83cb-d047a2f68340&k2=ecb6a002-8452-4f90-88d7-e0c4c4dcf370&edgegateway_type=&edgegateway_uri=&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5D&service=&servicePath=&nodered=true"
     #mobile_device_url
     #url = conf["device"]["device_url"] + f"action=insert&attributes=%5B%7B%22value_name%22%3A%22dateObserved%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22timestamp%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22timestamp%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%2C%7B%22value_name%22%3A%22value44%22%2C%22data_type%22%3A%22string%22%2C%22value_type%22%3A%22message%22%2C%22editable%22%3A%220%22%2C%22value_unit%22%3A%22-%22%2C%22healthiness_criteria%22%3A%22refresh_rate%22%2C%22healthiness_value%22%3A%22300%22%7D%5D&id="+device_name+"&type="+conf['model']['model_type']+"&kind="+conf['model']['model_kind']+"&contextbroker="+conf['model']['model_contextbroker']+"&format="+conf['model']['model_format']+"&mac=&model="+get_latest_model()+"&producer=&latitude="+lat+"&longitude="+long+"&visibility=&frequency="+conf['model']['model_frequency']+"&token="+token+"&k1=ae402872-8207-4451-83cb-d047a2f68340&k2=ecb6a002-8452-4f90-88d7-e0c4c4dcf370&edgegateway_type=&edgegateway_uri=&subnature="+conf['model']['model_subnature']+"&static_attributes=%5B%5B%22http%3A%2F%2Fwww.disit.org%2Fkm4city%2Fschema%23isMobile%22%2C%22true%22%5D%5D&service=&servicePath=&nodered=true"    
     response = requests.request("PATCH", url, headers=header)
@@ -299,7 +303,7 @@ def accessTokenDelegated(conf):
         'grant_type': 'password',
         'username': conf["usernamedelegated"],
         'password': conf["usernamedelegatedpassword"],
-        'scope': 'userid'
+        'scope': 'openid'
     }
 
     header = {
@@ -405,16 +409,16 @@ def sendData(conf, token, device_name, string_value):
     }
     timestamp = datetime.now().isoformat()
     timestamp = timestamp[0:20] + "000Z"
-    payload = {"value44":{"type":"string","value": string_value},"dateObserved":{"type":"string","value":timestamp}}
+    payload = {"value44":{"type":"string","value": int(string_value)},"dateObserved":{"type":"string","value":timestamp}}
     #mobile_device_url
     #payload = {"value44":{"type":"string","value": string_value},"dateObserved":{"type":"string","value":timestamp},"latitude":{"value":"49.67971430832918","type":"float"},"longitude":{"value":"9.760345207618004","type":"float"}}
     url = conf["base-url"]+'/orion-filter/orion-1/v2/entities/' + device_name + '/attrs?elementid=' + device_name + '&type=' + conf['model']['model_type']
     print(url)
     response = requests.request("PATCH", url, data=json.dumps(payload), headers=header)
     if (response.status_code == 204):
-        print("Insert Succeded")
+        print("Insert Succeded value", string_value)
     else:
-        print("Insert Failed")
+        print("Insert Failed response:", response)
 
 def accessToken(conf):
     """Get the authentication token from keycloak. Uses global variables to ease programming
@@ -431,7 +435,8 @@ def accessToken(conf):
         'client_id': 'js-kpi-client',
         'grant_type': 'password',
         'username': username,
-        'password': password
+        'password': password,
+        'scope': 'openid'
     }
 
     header = {
