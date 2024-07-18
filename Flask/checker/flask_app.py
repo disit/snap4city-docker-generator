@@ -41,8 +41,8 @@ config = json.load(f)
 
 API_TOKEN = config['telegram-api-token']
 
-greendot = """&#128994"""
-reddot = """&#128308"""
+greendot = """<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>"""
+reddot = """<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>"""
 
 # edit this block according to your mysql server's configuration
 db_conn_info = {
@@ -191,13 +191,13 @@ def create_app():
                     conn.commit()
                     results = cursor.fetchall()
                     if user != "admin":
-                        return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data())
+                        return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),timeout=config['requests-timeout'],user=user)
                     else:
-                        query_2 = "SELECT * FROM checker.test_ran order by datetime desc limit 200;"
+                        query_2 = f"(SELECT datetime, log, perpetrator FROM checker.test_ran) union (SELECT datetime, log, perpetrator FROM checker.rebooting_containers) order by datetime desc limit {config['admin-log-length']};" #
                         cursor.execute(query_2)
                         conn.commit()
                         results_log = cursor.fetchall()
-                        return render_template("checker-admin.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),admin_log=results_log)
+                        return render_template("checker-admin.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),admin_log=results_log,timeout=config['requests-timeout'],user=user)
             except Exception:
                 print("Something went wrong because of",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
@@ -317,7 +317,7 @@ def create_app():
                 with mysql.connector.connect(**db_conn_info) as conn:
                     cursor = conn.cursor(buffered=True)
                     # to run malicious code, malicious code must be present in the db or the machine in the first place
-                    query = '''select command, command_explained from tests_table where container_name =%s'''
+                    query = '''select command, command_explained, id from tests_table where container_name =%s'''
                     cursor.execute(query, (request.form.to_dict()['container'],))
                     conn.commit()
                     results = cursor.fetchall()
@@ -330,7 +330,7 @@ def create_app():
                         query_1 = 'insert into tests_results (datetime, result, container, command) values (now(), %s, %s, %s);'
                         cursor.execute(query_1,(command_ran, request.form.to_dict()['container'],r[0],))
                         conn.commit()
-                        log_to_db('test_ran', "Executing the is alive test on "+request.form.to_dict()['container']+" resulted in: "+command_ran, request)
+                        log_to_db('test_ran', "Executing the is alive test on "+request.form.to_dict()['container']+" resulted in: "+command_ran, request, which_test="is alive " + r[2])
                     return jsonify(total_result, command_ran_explained)
             except Exception:
                 print("Something went wrong during tests running because of:",traceback.format_exc())
@@ -346,7 +346,7 @@ def create_app():
                 with mysql.connector.connect(**db_conn_info) as conn:
                     cursor = conn.cursor(buffered=True)
                     # to run malicious code, malicious code must be present in the db or the machine in the first place
-                    query = '''select command from complex_tests where name_of_test =%s'''
+                    query = '''select command, id from complex_tests where name_of_test =%s'''
                     form_dict = request.form.to_dict()
                     test_name = form_dict.pop('test_name')
                     cursor.execute(query, (test_name,))
@@ -366,7 +366,7 @@ def create_app():
                         query_1 = 'insert into tests_results (datetime, result, container, command) values (now(), %s, %s, %s);'
                         cursor.execute(query_1,(string_used, test_name,r[0],))
                         conn.commit()
-                        log_to_db('test_ran', "Executing the complex test " + test_name + " resulted in: " +string_used, request)
+                        log_to_db('test_ran', "Executing the complex test " + test_name + " resulted in: " +string_used, request, test_name="advanced test - "+r[1])
                     return jsonify(total_result)
             except Exception:
                 print("Something went wrong during tests running because of",traceback.format_exc())
@@ -415,6 +415,7 @@ def create_app():
                 log_to_db('rebooting_containers', 'docker restart '+request.form.to_dict()['id']+' resulted in: '+result, request)
                 return result
             else:
+                log_to_db('rebooting_containers', 'wrong authentication while restarting '+request.form.to_dict()['id'], request)
                 return "Container not rebooted", 401
         else: 
             log_to_db('rebooting_containers', "POST wasn't used in the request", request)
@@ -467,7 +468,7 @@ def create_app():
             return "False"
         
     # this is only called serverside
-    def log_to_db(table, log, request=None):
+    def log_to_db(table, log, request=None, which_test=""):
         if (request):
             user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
             user = user[:user.find(":")] 
@@ -476,7 +477,10 @@ def create_app():
         try:
             with mysql.connector.connect(**db_conn_info) as conn:
                 cursor = conn.cursor(buffered=True)
-                cursor.execute('''INSERT INTO `{}` (datetime, log, perpetrator) VALUES (NOW(),'{}','{}')'''.format(table, log.replace("'","''"), user))
+                if table != "test_ran":
+                    cursor.execute('''INSERT INTO `{}` (datetime, log, perpetrator) VALUES (NOW(),'{}','{}')'''.format(table, log.replace("'","''"), user))
+                else:
+                    cursor.execute('''INSERT INTO `{}` (datetime, log, perpetrator, test) VALUES (NOW(),'{}','{}','{}')'''.format(table, log.replace("'","''"), user, which_test))
                 conn.commit()
         except Exception:
             print("Something went wrong during db logging because of:",traceback.format_exc(), "- in:",table)
@@ -527,7 +531,7 @@ def create_app():
         except Exception:
             print("Probably fucked up the authentication:",traceback.format_exc())
             return render_template("error_showing.html", r = traceback.format_exc()), 401
-        r = '<br>'.join(subprocess.run('docker logs '+container_id+" --tail 1000", shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
+        r = '<br>'.join(subprocess.run('docker logs '+container_id+" --tail "+config["default-log-length"], shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
         container_name = subprocess.run('docker ps -a -f id='+container_id+' --format "{{.Names}}"', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n')[0]
         return render_template('log_show.html', container_id = container_id, r = r, container_name=container_name)
         
@@ -578,7 +582,7 @@ def create_app():
         return jsonify(containers_merged)
     
     # put in folder\\   
-    @app.route('/generate_clustered_pdf')
+    @app.route('/generate_clustered_pdf', methods=['GET'])
     def generate_clustered_pdf():
         if not config['is-master']:
             return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
@@ -600,7 +604,7 @@ def create_app():
                 results = cursor.fetchall()
                 error = False
                 errorText = ""
-                subprocess.run(f'rm -f snap4city-clustered-reports.pdf.rar', shell=True)
+                subprocess.run(f'rm -f *-*logs.pdf snap4city-clustered-reports.pdf.rar', shell=True)
                 for r in results:
                     file_name, content_disposition = "", ""
                     obtained = requests.get(r[0]+"/sentinel/generate_pdf", headers=request.headers)
@@ -612,7 +616,7 @@ def create_app():
                         errorText += "Couldn't quite get the file: " + r[0] + "\n"
                         error = True
                     if obtained.status_code == 200 and len(file_name) > 1:
-                        with open(urlparse(r[0]).hostaname + ' - ' +file_name, "wb+") as file:
+                        with open(urlparse(r[0]).hostname + ' - ' +file_name, "wb+") as file:
                             if not error:
                                 file.write(obtained.content)
                     else:
@@ -622,17 +626,17 @@ def create_app():
                     return render_template("error_showing.html", r = errorText.replace("\n","<br>")), 500
                 else:
                     subfolder = "pdf-cluster-"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                    subprocess.run(f"rar a snap4city-clustered-reports.pdf.rar *.rar; mkdir {subfolder}, cp snap4city-clustered-reports.pdf.rar {subfolder}/snap4city-clustered-reports.pdf.rar")
+                    print(subprocess.run(f"rar a snap4city-clustered-reports.pdf.rar *-*logs.pdf; mkdir {subfolder}; cp snap4city-clustered-reports.pdf.rar {subfolder}/snap4city-clustered-reports.pdf.rar", shell=True, capture_output=True, text=True, encoding="utf_8").stdout)
                     return send_file(f'snap4city-clustered-reports.pdf.rar')
         except Exception:
             return render_template("error_showing.html", r = traceback.format_exc()), 500
     
     # put in folder
-    @app.route('/generate_pdf', methods=['POST'])
+    @app.route('/generate_pdf', methods=['GET'])
     def generate_pdf():
         data_stored = []
-        for container_data in get_container_data(True): #doesn't work as clustered
-            r = '<br>'.join(subprocess.run('docker logs '+container_data['ID'] + ' --tail 500', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
+        for container_data in get_container_data(True):
+            r = '<br>'.join(subprocess.run('docker logs '+container_data['ID'] + ' --tail '+config["default-log-length"], shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
             data_stored.append({"header": container_data['Name'], "string": r})
         
         # Create a PDF document
@@ -666,21 +670,20 @@ def create_app():
         for pair in data_stored:
             if pair["header"] in ['dashboard-backend','myldap']:
                 continue
-            content.append(Paragraph(f'<a href="#{pair["header"]}" color="blue">{pair["header"]}</a>', styles["Normal"]))
-        
+            content.append(Paragraph(f'<a href="#c-{pair["header"]}" color="blue">Container {pair["header"]}</a>', styles["Normal"]))
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        for root, dirs, files in os.walk(os.path.join(current_dir, os.pardir)): #maybe doesn't find the the files while clustered but continues gracefully
+        for root, dirs, files in os.walk(os.path.join(current_dir, os.pardir)): #maybe doesn't find the files while clustered but continues gracefully
             if 'log.txt' in files:
                 logs_file_path = os.path.join(root, 'log.txt')
-                with open(logs_file_path, 'r') as file:
-                    content.append(Paragraph('<a href="#iot-directory-log" color="blue">iot-directory-log</a>', styles["Normal"]))
-                    extra_logs.append(Paragraph(f'<b><a name=iot-directory-log></a>iot-directory-log</b>', styles["Heading1"]))
-                    extra_logs.append(Paragraph(file.read(), styles["Normal"]))
+                log_output = subprocess.run(f'cd {root}; tail -n {config["default-log-length"]} log.txt', shell=True, capture_output=True, text=True, encoding="utf_8").stdout
+                content.append(Paragraph('<a href="#iot-directory-log" color="blue">iot-directory-log</a>', styles["Normal"]))
+                extra_logs.append(Paragraph(f'<b><a name="iot-directory-log"></a>iot-directory-log</b>', styles["Heading1"]))
+                extra_logs.append(Paragraph(log_output.replace("\n","<br></br>"), styles["Normal"]))
                 break  # Stop searching after finding the first occurrence
         for test in tests_out:
             if not test:
                 break
-            content.append(Paragraph(f'<a href="#{test[3]}" color="blue">{test[3]}</a>', styles["Normal"]))
+            content.append(Paragraph(f'<a href="#t-{test[3]}" color="blue">Test of {test[3]}</a>', styles["Normal"]))
             extra_tests.append(test)
         content.append(PageBreak())
         
@@ -693,7 +696,7 @@ def create_app():
             string = pair["string"]
             strings = string.split("<br>")
             # Add header to content
-            content.append(Paragraph(f'<b><a name={header}></a>{header}</b>', styles["Heading1"]))
+            content.append(Paragraph(f'<b><a name="c-{header}"></a>{header}</b>', styles["Heading1"]))
             # Add normal string if it exists
             for substring in strings:
                 content.append(Paragraph(substring, styles["Normal"]))
@@ -702,8 +705,9 @@ def create_app():
             content.append(extra)
         content.append(PageBreak())
         for test in extra_tests:
-            content.append(Paragraph(f'<b><a name="{test[3]}"></a>{test[3]}</b>', styles["Heading1"]))
-            content.append(Paragraph(test[2], styles["Normal"]))
+            content.append(Paragraph(f'<b><a name="t-{test[3]}"></a>{test[3]}</b>', styles["Heading1"]))
+            content.append(Paragraph(test[2].replace("<br>","<br></br>"), styles["Normal"]))
+            content.append(PageBreak())
         # Add content to the PDF document
         doc.build(content)
         # Send the PDF file as a response
@@ -751,13 +755,13 @@ def create_app():
         
         if target_folder:
             password = ''.join(random.choice(string.digits + string.ascii_letters) for _ in range(16))
-            make_certification = subprocess.run(f'cd {target_folder}; mkdir {subfolder}, bash make_dumps_of_database.sh; rar a -k -p{password} snap4city-certification-{password}.rar iotapp-00*/flows.json d*conf iot-directory-conf m*conf n*conf ownership-conf/config.php nifi/conf servicemap-conf/servicemap.properties ../placeholder_used.txt *dump.* servicemap-iot-conf/iotdeviceapi.dtd servicemap-superservicemap-conf/settings.xml synoptics-conf/ mongo_dump virtuoso_dump ../checker/*; cp snap4city-certification-{password}.rar {subfolder}/snap4city-certification-{password}.rar', shell=True, capture_output=True, text=True, encoding="utf_8")
+            make_certification = subprocess.run(f'cd {target_folder}; mkdir {subfolder}; bash make_dumps_of_database.sh; rar a -k -p{password} snap4city-certification-{password}.rar iotapp-00*/flows.json d*conf iot-directory-conf m*conf n*conf ownership-conf/config.php nifi/conf servicemap-conf/servicemap.properties ../placeholder_used.txt *dump.* servicemap-iot-conf/iotdeviceapi.dtd servicemap-superservicemap-conf/settings.xml synoptics-conf/ mongo_dump virtuoso_dump php ../checker/*; cp snap4city-certification-{password}.rar {subfolder}/snap4city-certification-{password}.rar', shell=True, capture_output=True, text=True, encoding="utf_8")
             if len(make_certification.stderr) > 0:
                 return send_file(target_folder + f'/{subfolder}/snap4city-certification-{password}.rar')
                 # bypass this shit, for now
                 return render_template("error_showing.html", r = "There were issues: "+ make_certification.stderr), 500
             else:
-                return send_file(target_folder + f'/snap4city-certification-{password}.zip')
+                return send_file(target_folder + f'/snap4city-certification-{password}.rar')
         else:
             return render_template("error_showing.html", r = "Couldn't find the snap4city installation."), 500
             
@@ -796,7 +800,7 @@ def create_app():
                         errorText += "Unable to recover password from sentinel located at " + r[0] + "\n"
                         error = True
                     if obtained.status_code == 200 and len(file_name) > 1:
-                        with open(urlparse(r[0]).hostaname + ' - ' +file_name, "wb+") as file:
+                        with open(urlparse(r[0]).hostname + ' - ' +file_name, "wb+") as file:
                             if not error:
                                 file.write(obtained.content)
                     else:

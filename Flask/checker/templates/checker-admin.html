@@ -2,7 +2,7 @@
 
 {% block additional_content_certification %}
 			<li class="nav-item active">
-				<form action="./generate_pdf" method="GET">
+				<form action="./certification" method="GET">
 					<input type="submit" class="btn btn-info" value="Generate certification" />
 				</form>
 			</li>
@@ -19,7 +19,7 @@
 		<thead><tr><th>User</th><th>Action</th><th>Time</th></tr></thead>
 		<tbody>
 		{%for element in admin_log%}
-		<tr><th>{{element[4]}}</th><th>{{element[2]|safe}}</th><th>{{element[3]}}</th></tr>
+		<tr><th>{{element[2]|safe}}</th><th>{{element[1]|safe}}</th><th>{{element[0]}}</th></tr>
 	    {%endfor%}
 		</tbody>
 	</table>

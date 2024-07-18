@@ -138,7 +138,7 @@
 				error: function(error) {
 					logging(error);
 				},
-				timeout: 7000
+				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
@@ -168,7 +168,7 @@
 				error: function(error) {
 					logging(error);
 				},
-				timeout: 7000
+				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
@@ -190,7 +190,7 @@
 				error: function(jqXHR, textStatus, errorThrown) {
 					logging(errorThrown+ textStatus+ jqXHR);
 				},
-				timeout: 7000
+				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
@@ -217,7 +217,7 @@
 				error: function(error) {
 					logging(error);
 				},
-				timeout: 7000
+				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
@@ -253,7 +253,7 @@
 				error: function(error) {
 					logging(error);
 				},
-				timeout: 7000
+				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
@@ -273,7 +273,7 @@
 				error: function(error) {
 					logging(error);
 				},
-				timeout: 7000
+				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
@@ -314,7 +314,7 @@
 				error: function(error) {
 					logging(oldtext + " - " + error.statusText ,category+"-logs");
 				},
-				timeout: 7000
+				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
@@ -374,7 +374,7 @@
 				error: function(error) {
 					logging(error);
 				},
-				timeout: 7000
+				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
@@ -395,7 +395,7 @@
 					var errorHtml = "<p>Error: Unable to fetch data from "+url_of_resource+" due to "+error+" with status "+status+"</p>";
 					renderContentInIframe(errorHtml, destination_element);
 				},
-				timeout: 7000
+				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
@@ -690,7 +690,7 @@
 							logging('<b>' + id + "</b> was not rebooted! Reason: " + error, category+"-logs");
 							$('#passwordModal').modal('hide');
 						},
-						timeout: 15000
+						timeout: {{timeout}}
 					});
 				}
 				catch (exception_var) {
@@ -823,27 +823,11 @@
 				<a class="navbar-brand">$#base-url#$</a>
 			</li>
 		</ul>
-		<ul class="navbar-nav mr-auto">
-			<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Toggle categories</a>
-			<ul class="dropdown-menu">
+		<ul class="dropdown" style="margin-top: auto; margin-bottom: auto;">
+			<button class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Toggle categories</button>
+			<ul class="dropdown-menu" style="padding: 10px;">
 				<div id="category_menu" class="category_menu container-fluid">
 				</div>
-			</ul>
-		</ul>
-		<ul class="navbar-nav mr-auto">
-			<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Show administrative actions</a>
-			<ul class="dropdown-menu">
-				<li class="nav-item active">
-					<form action="deauthenticate" method="GET">
-						<input type="submit" class="btn btn-info" value="Logout" />
-					</form>
-				</li>
-				<li class="nav-item active">
-					<form action="generate_clustered_pdf" method="POST">
-						<input type="submit" class="btn btn-info" value="Generate full logs" />
-					</form>
-				</li>
-				{% block additional_content_certification %}{% endblock %}
 			</ul>
 		</ul>
 		<ul class="navbar-nav mr-auto">
@@ -851,10 +835,26 @@
 				<a class="navbar-brand">SnapSentinel: Platform Process Monitoring and Control</a>
 			</li>
 		</ul>
-		<ul class="navbar-nav mr-auto">
+		<ul class="dropdown" style="margin-top: auto; margin-bottom: auto;">
+			<button class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Show administrative actions</button>
+			<ul class="dropdown-menu" style="padding: 10px;">
+				<li class="nav-item active">
+					<form action="deauthenticate" method="GET">
+						<input type="submit" class="btn btn-info" value="Logout" />
+					</form>
+				</li>
+				<li class="nav-item active">
+					<form action="generate_clustered_pdf" method="GET">
+						<input type="submit" class="btn btn-info" value="Generate full logs" />
+					</form>
+				</li>
+				{% block additional_content_certification %}{% endblock %}
+			</ul>
+		</ul>
+		<ul class="dropdown" style="margin-top: auto; margin-bottom: auto;">
 			<ul class="navbar-nav mr-auto">
-				<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Show operational actions</a>
-				<ul class="dropdown-menu">
+				<button class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Show operational actions</button>
+				<ul class="dropdown-menu" style="padding: 10px;">
 					<li class="nav-item">
 					<button id="buttonForUpdates" class="btn btn-danger" onClick="toggleUpdate()">Stop refresh</button>
 					</li>
@@ -919,9 +919,10 @@
 {% block additional_content_admin_log %}{% endblock %}
 <nav class="navbar sticky-bottom bg-body-tertiary">
 	<div class="container-fluid">
-		<a class="navbar-brand" href="mailto: replaceme">Supporto? Mandaci una mail!</a>
+		<a class="navbar-brand">Welcome, {{user}}</a>
+		<a class="navbar-brand" href="mailto: replaceme">Need help? Send us an Email!</a>
 		<a class="navbar-brand" href="#">
-		<img src="./{{ url_for('static', filename = 'snap4.png') }}" alt="Logo" width="80px" height="45px" class="d-inline-block align-text-top">
+			<img src="./{{ url_for('static', filename = 'snap4.png') }}" alt="Logo" width="80px" height="45px" class="d-inline-block align-text-top">
 		</a>
 	</div>
 </nav>
