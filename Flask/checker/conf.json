@@ -1,4 +1,8 @@
 {
+	"admin-log-length": 200,
+	"default-log-length": 1000,
+	"requests-timeout": 15000,
+	"is-master": true,
 	"telegram-api-token": "replaceme",
 	"telegram-channel":123456789,
 	"db-user": "root",

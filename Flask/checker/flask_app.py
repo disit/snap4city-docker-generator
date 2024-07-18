@@ -126,7 +126,7 @@ def auto_alert_status():
     containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["62149183138_certbot_1"]) and c["State"] != "exited"]
     containers_which_are_running_but_are_not_healthy = [c for c in containers_merged if any(c["Names"].startswith(value) for value in categories) and "unhealthy" in c["Status"]]
     problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not + containers_which_are_running_but_are_not_healthy
-    containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) - set([n["Names"] for n in problematic_containers]))
+    #containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) - set([n["Names"] for n in problematic_containers]))
     names_of_problematic_containers = [n["Names"] for n in problematic_containers]
     if len(names_of_problematic_containers) > 0 or len(is_alive_with_ports) > 0:
         try:
