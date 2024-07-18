@@ -249,20 +249,20 @@ def create_app():
                 send_alerts("Can't reach db due to",traceback.format_exc())
                 return "There was a problem: "+traceback.format_exc(), 500
         
-    @app.route("/read_containers", methods=['POST','GET'])
+    @app.route("/read_containers", methods=['GET'])
     def check():
-        if request.method == "POST":
+        if request.method == "GET":
             containers = get_container_data()
             return containers
         else:
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return False
             
-    @app.route("/advanced_read_containers", methods=['POST','GET'])
+    @app.route("/advanced_read_containers", methods=['GET'])
     def check_adv():
         if not config['is-master']:
             return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
-        if request.method == "POST":
+        if request.method == "GET":
             try:
                 results = None
                 with mysql.connector.connect(**db_conn_info) as conn:
@@ -273,7 +273,7 @@ def create_app():
                     results = cursor.fetchall()
                     total_answer=[]
                     for r in results:
-                        obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
+                        obtained = requests.get(r[0]+"/sentinel/read_containers", headers=request.headers).text
                         total_answer = total_answer + json.loads(obtained)
                     return total_answer
             except Exception:
@@ -283,7 +283,7 @@ def create_app():
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return False
 
-    @app.route("/get_container_categories", methods=['POST','GET'])
+    @app.route("/get_container_categories", methods=['GET'])
     def get_container_categories():
         try:
             with mysql.connector.connect(**db_conn_info) as conn:
@@ -310,7 +310,7 @@ def create_app():
             print("Something went wrong because of:",traceback.format_exc())
             return "Error in get extra data!"
         
-    @app.route("/run_test", methods=['POST','GET'])
+    @app.route("/run_test", methods=['POST'])
     def run_test():
         if request.method == "POST":
             try:
@@ -339,7 +339,7 @@ def create_app():
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return "False"
         
-    @app.route("/run_test_complex", methods=['POST','GET'])
+    @app.route("/run_test_complex", methods=['POST'])
     def run_test_complex():
         if request.method == "POST":
             try:
@@ -374,15 +374,7 @@ def create_app():
         else:
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return "False"
-        
-    @app.route("/reboot/<container_id>", methods=['POST', 'GET'])
-    def reboot(container_id):
-        try:
-            return render_template("reboot.html", container=container_id)
-        except Exception:
-            print("Something went wrong during rebooting because of:",traceback.format_exc())
-            return render_template("error_showing.html", r = traceback.format_exc()), 500
-        
+                
         
     @app.route("/test_all_ports", methods=['GET'])
     def test_all_ports():
@@ -405,7 +397,7 @@ def create_app():
             return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
         return "You have been deauthenticated", 401
         
-    @app.route("/reboot_container", methods=['POST','GET'])
+    @app.route("/reboot_container", methods=['POST'])
     def reboot_container():
         if request.method == "POST":
             something = str(base64.b64decode(request.headers["Authorization"][len("Basic "):]))[:-1]
@@ -421,7 +413,7 @@ def create_app():
             log_to_db('rebooting_containers', "POST wasn't used in the request", request)
             return "False"
             
-    @app.route("/reboot_container_advanced/<container_id>", methods=['POST','GET'])
+    @app.route("/reboot_container_advanced/<container_id>", methods=['POST'])
     def reboot_container_advanced(container_id):
         if not config['is-master']:
             return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
@@ -445,9 +437,9 @@ def create_app():
             log_to_db('rebooting_containers', "POST wasn't used in the request", request)
             return "False"
         
-    @app.route("/tests_results", methods=['POST','GET'])
+    @app.route("/tests_results", methods=['GET'])
     def get_tests():
-        if request.method == "POST":
+        if request.method == "GET":
             try:
                 with mysql.connector.connect(**db_conn_info) as conn:
                     cursor = conn.cursor(buffered=True)
@@ -464,7 +456,7 @@ def create_app():
                 print("Something went wrong because of:",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
         else: 
-            log_to_db('getting_tests', "POST wasn't used in the request", request)
+            log_to_db('getting_tests', "Not a GET request", request)
             return "False"
         
     # this is only called serverside
@@ -518,7 +510,7 @@ def create_app():
                 print("Something went wrong because of:",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
         else: 
-            log_to_db('getting_tests', "POST wasn't used in the request", request)
+            log_to_db('getting_tests', "GET wasn't used in the request", request)
             return "False"
     
     @app.route("/container/<container_id>") #still answers to everyone
@@ -718,25 +710,7 @@ def create_app():
         for root, dirs, files in os.walk(parent_folder):
             if "docker-compose.yml" in files and "setup.sh" in files:
                 return root
-        return None
-    
-    @app.route('/clear_certifications', methods=['GET'])
-    def clear_certifications():
-        user = ""
-        try:
-            user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
-            user = user[:user.find(":")]
-        except Exception:
-            return render_template("error_showing.html", r = "Issues during the establishing of the user: "+ traceback.format_exc()), 500
-        if user != "admin":
-            return render_template("error_showing.html", r = "User is not authorized to perform the operation."), 401
-        script_folder = os.path.dirname(os.path.abspath(__file__))
-        parent_folder = os.path.dirname(script_folder)
-        target_folder = find_target_folder(parent_folder)
-        if target_folder:
-            clear_rars = subprocess.run(f'cd {target_folder}; rm -f *snap4city*-certification-*.rar', shell=True, capture_output=True, text=True, encoding="utf_8")
-            return "Done"
-        
+        return None       
     
     @app.route('/certification', methods=['GET'])
     def certification():

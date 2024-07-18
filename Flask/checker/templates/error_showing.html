@@ -6,6 +6,7 @@
 {% endblock %}
 {% block content %}
 <div id="errors">
-    {{r|safe}}
+    <p class="h1">Oh no! An error Occurred.</p>
+    <div>Your request could not be retrieved because of some problem. Here is what happened: {{r|safe}}.</div>
 </div>
 {% endblock %}

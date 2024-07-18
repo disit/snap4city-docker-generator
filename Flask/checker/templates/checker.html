@@ -131,7 +131,7 @@
 		try {
 			$.ajax({
 				url: './advanced_read_containers',
-				type: 'POST',
+				type: 'GET',
 				success: function(response) {
 					makeTable(response);
 				},
@@ -161,7 +161,7 @@
 		try {
 			$.ajax({
 				url: './tests_results',
-				type: 'POST',
+				type: 'GET',
 				success: function(response) {
 					setTestResults(response);
 					},
