@@ -191,13 +191,13 @@ def create_app():
                     conn.commit()
                     results = cursor.fetchall()
                     if user != "admin":
-                        return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),timeout=config['requests-timeout'],user=user)
+                        return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),timeout=config['requests-timeout'],user=user,platform=config['platform-url'])
                     else:
                         query_2 = f"(SELECT datetime, log, perpetrator FROM checker.test_ran) union (SELECT datetime, log, perpetrator FROM checker.rebooting_containers) order by datetime desc limit {config['admin-log-length']};" #
                         cursor.execute(query_2)
                         conn.commit()
                         results_log = cursor.fetchall()
-                        return render_template("checker-admin.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),admin_log=results_log,timeout=config['requests-timeout'],user=user)
+                        return render_template("checker-admin.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),admin_log=results_log,timeout=config['requests-timeout'],user=user,platform=config['platform-url'])
             except Exception:
                 print("Something went wrong because of",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
