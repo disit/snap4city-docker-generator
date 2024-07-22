@@ -41,8 +41,8 @@ config = json.load(f)
 
 API_TOKEN = config['telegram-api-token']
 
-greendot = """<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>"""
-reddot = """<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>"""
+greendot = """&#128994"""
+reddot = """&#128308"""
 
 # edit this block according to your mysql server's configuration
 db_conn_info = {
@@ -249,20 +249,20 @@ def create_app():
                 send_alerts("Can't reach db due to",traceback.format_exc())
                 return "There was a problem: "+traceback.format_exc(), 500
         
-    @app.route("/read_containers", methods=['GET'])
+    @app.route("/read_containers", methods=['POST','GET'])
     def check():
-        if request.method == "GET":
+        if request.method == "POST":
             containers = get_container_data()
             return containers
         else:
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return False
             
-    @app.route("/advanced_read_containers", methods=['GET'])
+    @app.route("/advanced_read_containers", methods=['POST','GET'])
     def check_adv():
         if not config['is-master']:
             return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
-        if request.method == "GET":
+        if request.method == "POST":
             try:
                 results = None
                 with mysql.connector.connect(**db_conn_info) as conn:
@@ -273,7 +273,7 @@ def create_app():
                     results = cursor.fetchall()
                     total_answer=[]
                     for r in results:
-                        obtained = requests.get(r[0]+"/sentinel/read_containers", headers=request.headers).text
+                        obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
                         total_answer = total_answer + json.loads(obtained)
                     return total_answer
             except Exception:
@@ -283,7 +283,7 @@ def create_app():
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return False
 
-    @app.route("/get_container_categories", methods=['GET'])
+    @app.route("/get_container_categories", methods=['POST','GET'])
     def get_container_categories():
         try:
             with mysql.connector.connect(**db_conn_info) as conn:
@@ -310,7 +310,7 @@ def create_app():
             print("Something went wrong because of:",traceback.format_exc())
             return "Error in get extra data!"
         
-    @app.route("/run_test", methods=['POST'])
+    @app.route("/run_test", methods=['POST','GET'])
     def run_test():
         if request.method == "POST":
             try:
@@ -330,7 +330,7 @@ def create_app():
                         query_1 = 'insert into tests_results (datetime, result, container, command) values (now(), %s, %s, %s);'
                         cursor.execute(query_1,(command_ran, request.form.to_dict()['container'],r[0],))
                         conn.commit()
-                        log_to_db('test_ran', "Executing the is alive test on "+request.form.to_dict()['container']+" resulted in: "+command_ran, request, which_test="is alive " + r[2])
+                        log_to_db('test_ran', "Executing the is alive test on "+request.form.to_dict()['container']+" resulted in: "+command_ran, request, which_test="is alive " + str(r[2]))
                     return jsonify(total_result, command_ran_explained)
             except Exception:
                 print("Something went wrong during tests running because of:",traceback.format_exc())
@@ -339,7 +339,7 @@ def create_app():
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return "False"
         
-    @app.route("/run_test_complex", methods=['POST'])
+    @app.route("/run_test_complex", methods=['POST','GET'])
     def run_test_complex():
         if request.method == "POST":
             try:
@@ -374,7 +374,15 @@ def create_app():
         else:
             log_to_db('asking_containers', "POST wasn't used in the request", request)
             return "False"
-                
+        
+    @app.route("/reboot/<container_id>", methods=['POST', 'GET'])
+    def reboot(container_id):
+        try:
+            return render_template("reboot.html", container=container_id)
+        except Exception:
+            print("Something went wrong during rebooting because of:",traceback.format_exc())
+            return render_template("error_showing.html", r = traceback.format_exc()), 500
+        
         
     @app.route("/test_all_ports", methods=['GET'])
     def test_all_ports():
@@ -397,7 +405,7 @@ def create_app():
             return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
         return "You have been deauthenticated", 401
         
-    @app.route("/reboot_container", methods=['POST'])
+    @app.route("/reboot_container", methods=['POST','GET'])
     def reboot_container():
         if request.method == "POST":
             something = str(base64.b64decode(request.headers["Authorization"][len("Basic "):]))[:-1]
@@ -413,7 +421,7 @@ def create_app():
             log_to_db('rebooting_containers', "POST wasn't used in the request", request)
             return "False"
             
-    @app.route("/reboot_container_advanced/<container_id>", methods=['POST'])
+    @app.route("/reboot_container_advanced/<container_id>", methods=['POST','GET'])
     def reboot_container_advanced(container_id):
         if not config['is-master']:
             return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
@@ -437,9 +445,9 @@ def create_app():
             log_to_db('rebooting_containers', "POST wasn't used in the request", request)
             return "False"
         
-    @app.route("/tests_results", methods=['GET'])
+    @app.route("/tests_results", methods=['POST','GET'])
     def get_tests():
-        if request.method == "GET":
+        if request.method == "POST":
             try:
                 with mysql.connector.connect(**db_conn_info) as conn:
                     cursor = conn.cursor(buffered=True)
@@ -456,7 +464,7 @@ def create_app():
                 print("Something went wrong because of:",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
         else: 
-            log_to_db('getting_tests', "Not a GET request", request)
+            log_to_db('getting_tests', "POST wasn't used in the request", request)
             return "False"
         
     # this is only called serverside
@@ -510,7 +518,7 @@ def create_app():
                 print("Something went wrong because of:",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
         else: 
-            log_to_db('getting_tests', "GET wasn't used in the request", request)
+            log_to_db('getting_tests', "POST wasn't used in the request", request)
             return "False"
     
     @app.route("/container/<container_id>") #still answers to everyone
@@ -523,9 +531,10 @@ def create_app():
         except Exception:
             print("Probably fucked up the authentication:",traceback.format_exc())
             return render_template("error_showing.html", r = traceback.format_exc()), 401
-        r = '<br>'.join(subprocess.run('docker logs '+container_id+" --tail "+config["default-log-length"], shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
-        container_name = subprocess.run('docker ps -a -f id='+container_id+' --format "{{.Names}}"', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n')[0]
-        return render_template('log_show.html', container_id = container_id, r = r, container_name=container_name)
+        r = '<br>'.join(subprocess.run('docker logs '+container_id+" --tail "+str(config["default-log-length"]), shell=True, capture_output=True, text=True, encoding="utf_8").stderr.split('\n'))
+        print('docker logs '+container_id+" --tail "+str(config["default-log-length"]))
+        #container_name = subprocess.run('docker ps -a -f id='+container_id+' --format "{{.Names}}"', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n')[0]
+        return render_template('log_show.html', container_id = container_id, r = r, container_name=container_id)
         
     @app.route("/advanced-container/<container_id>")
     def get_container_logs_advanced(container_id):
@@ -541,11 +550,11 @@ def create_app():
                 cursor.execute(query, (container_id,))
                 conn.commit()
                 results = cursor.fetchall()
-                r = requests.post(results[0][0]+"/container/"+container_id, headers=request.headers, data={"id": container_id, "psw": psw})
+                r = requests.get(results[0][0]+"/sentinel/container/"+container_id, headers=request.headers, data={"id": container_id, "psw": psw})
                 return r.text
         except Exception:
             print("Something went wrong during advanced container rebooting because of:",traceback.format_exc())
-            return render_template("error_showing.html", r = traceback.format_exc()), 500
+            return render_template("error_showing.html", r = traceback.format_exc() + results), 500
     
     @app.route("/get_summary_status")
     def get_summary_status():
@@ -666,7 +675,6 @@ def create_app():
         current_dir = os.path.dirname(os.path.abspath(__file__))
         for root, dirs, files in os.walk(os.path.join(current_dir, os.pardir)): #maybe doesn't find the files while clustered but continues gracefully
             if 'log.txt' in files:
-                logs_file_path = os.path.join(root, 'log.txt')
                 log_output = subprocess.run(f'cd {root}; tail -n {config["default-log-length"]} log.txt', shell=True, capture_output=True, text=True, encoding="utf_8").stdout
                 content.append(Paragraph('<a href="#iot-directory-log" color="blue">iot-directory-log</a>', styles["Normal"]))
                 extra_logs.append(Paragraph(f'<b><a name="iot-directory-log"></a>iot-directory-log</b>', styles["Heading1"]))
@@ -710,7 +718,25 @@ def create_app():
         for root, dirs, files in os.walk(parent_folder):
             if "docker-compose.yml" in files and "setup.sh" in files:
                 return root
-        return None       
+        return None
+    
+    @app.route('/clear_certifications', methods=['GET'])
+    def clear_certifications():
+        user = ""
+        try:
+            user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
+            user = user[:user.find(":")]
+        except Exception:
+            return render_template("error_showing.html", r = "Issues during the establishing of the user: "+ traceback.format_exc()), 500
+        if user != "admin":
+            return render_template("error_showing.html", r = "User is not authorized to perform the operation."), 401
+        script_folder = os.path.dirname(os.path.abspath(__file__))
+        parent_folder = os.path.dirname(script_folder)
+        target_folder = find_target_folder(parent_folder)
+        if target_folder:
+            subprocess.run(f'cd {target_folder}; rm -f *snap4city*-certification-*.rar', shell=True, capture_output=True, text=True, encoding="utf_8")
+            return "Done"
+        
     
     @app.route('/certification', methods=['GET'])
     def certification():
