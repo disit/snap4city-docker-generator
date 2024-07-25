@@ -4,6 +4,7 @@
 {{ super() }}
 {% endblock %}
 {% block content %}
+<!-- data-bs-theme="dark" -->
 <script>
 	var donotupdate = false;
 	var test_results;
@@ -106,7 +107,11 @@
 	
 		var allTables = $.fn.dataTable.tables();
 		delete allTables[0];
-		$.each(allTables, function(index, table) {var dataTable = $(table).DataTable(); dataTable.destroy();});
+		$.each(allTables, function(index, table) { 
+			testthisthingffs = structuredClone(dict_of_hidden_columns);
+			testthisthingffs['destroy'] = true;
+			var dataTable = $(table).DataTable(testthisthingffs);
+		});
 		getcontainers();
 		testsResults();
 		showTestResults();
@@ -131,7 +136,7 @@
 		try {
 			$.ajax({
 				url: './advanced_read_containers',
-				type: 'GET',
+				type: 'POST',
 				success: function(response) {
 					makeTable(response);
 				},
@@ -161,7 +166,7 @@
 		try {
 			$.ajax({
 				url: './tests_results',
-				type: 'GET',
+				type: 'POST',
 				success: function(response) {
 					setTestResults(response);
 					},
@@ -487,7 +492,7 @@
 			elements.forEach(cellData => {
 				const td = document.createElement("td");
 				if (index_of_below_array === 3) {
-					var content_of_id_cell = '<a target="_blank" href="./advanced-container/'+cellData+'">'+cellData+'</a>';
+					var content_of_id_cell = '<a target="_blank" href="./advanced-container/'+elements[12]+'">'+cellData+'</a>';
 					td.innerHTML = content_of_id_cell;
 				}
 				else if (index_of_below_array === 20) {
@@ -614,7 +619,6 @@
 					const centerer = document.createElement("div");
 					centerer.setAttribute("name", i);
 					const name_of_table = document.createElement("h1");
-					const li_element=document.createElement("li");
 					if (!closed_categories.has(i)) 
 						name_of_table.setAttribute("class", "btn btn-light btn-lg"); 
 					else 
@@ -623,8 +627,7 @@
 					name_of_table.setAttribute("id", i+"-status");
 					name_of_table.innerHTML = i;
 					var menupage = document.getElementById("category_menu");
-					li_element.appendChild(name_of_table);
-					menupage.appendChild(li_element);
+					menupage.appendChild(name_of_table);
 					var div_for_category_name = document.createElement("h1");
 					div_for_category_name.innerHTML=i;
 					tableContainer.appendChild(centerer);
@@ -820,15 +823,8 @@
 	<div class="collapse navbar-collapse container-fluid" id="navbarSupportedContent">
 		<ul class="navbar-nav mr-auto">
 			<li class="nav-item active">
-				<a class="navbar-brand">{{platform}}</a>
+				<a class="navbar-brand">{{ platform }}</a>
 			</li>
-		</ul>
-		<ul class="dropdown" style="margin-top: auto; margin-bottom: auto;">
-			<button class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Toggle categories</button>
-			<ul class="dropdown-menu" style="padding: 10px;">
-				<div id="category_menu" class="category_menu container-fluid">
-				</div>
-			</ul>
 		</ul>
 		<ul class="navbar-nav mr-auto">
 			<li class="nav-item active">
@@ -873,6 +869,10 @@
 			
 		</ul>
 	</div>
+	<div>
+		<div id="category_menu" class="category_menu container-fluid">
+		</div>
+	</div>	
 
 	
 </nav>
@@ -886,7 +886,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="passwordModalLabel">Confirmation for rebooting container</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button" class="btn btn-danger" data-dismiss="modal" aria-label="Close" style="position: absolute; right: 15px;" onClick="$('#passwordModal').modal('hide')">
 					<span aria-hidden="true">X</span>
 				</button>
 			</div>
@@ -922,7 +922,7 @@
 		<a class="navbar-brand">Welcome, {{user}}</a>
 		<a class="navbar-brand" href="mailto: replaceme">Need help? Send us an Email!</a>
 		<a class="navbar-brand" href="#">
-			<img src="./{{ url_for('static', filename = 'snap4.png') }}" alt="Logo" width="80px" height="45px" class="d-inline-block align-text-top">
+			<img src="./{{ url_for('static', filename = 'snap4.png') }}" alt="Logo" width="80px" class="d-inline-block align-text-top">
 		</a>
 	</div>
 </nav>
@@ -942,12 +942,12 @@
 	position:relative;
 	}
 	.ui-widget-header {
-	background-color: white;
-	border-width: unset;
-	border-color: black;
-	border-style: solid;
+    color: white;
+    background-color: #1e1e1e;
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
 	overflow: scroll;
-	max-height: 240px;
+	max-height: 300px;
 	}
 	#draggable { max-width: 700px; max-height: 300px; padding: 0.5em; float: left; margin: 0 10px 10px 0; border-style: solid; border-color: blue; background: white;}
 	#draggable p { cursor: move; }

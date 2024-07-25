@@ -40,7 +40,7 @@ config = json.load(f)
 
 
 API_TOKEN = config['telegram-api-token']
-
+bot = telegram.Bot(token=API_TOKEN)
 greendot = """&#128994"""
 reddot = """&#128308"""
 
@@ -55,8 +55,9 @@ db_conn_info = {
     }
 
 def send_telegram(chat_id, message):
-    bot = telegram.Bot(token=API_TOKEN)
-    asyncio.run(bot.send_message(chat_id=chat_id, text=message))
+    if isinstance(message, list):
+        message[2]=filter_out_muted_containers_for_telegram(message[2])
+    asyncio.run(bot.send_message(chat_id=chat_id, text=str(message)))
     return
 
 def send_email(sender_email, sender_password, receiver_emails, subject, message):
@@ -69,10 +70,76 @@ def send_email(sender_email, sender_password, receiver_emails, subject, message)
     msg['From'] = sender_email
     msg['To'] = ','.join(receiver_emails)
     msg['Subject'] = subject
-    msg.attach(MIMEText(message, 'plain'))
+    msg.attach(MIMEText(str(message), 'plain'))
     server.send_message(msg)
     server.quit()
     return
+
+def filter_out_muted_containers_for_telegram(containers):
+    try:
+        with mysql.connector.connect(**db_conn_info) as conn:
+            cursor = conn.cursor(buffered=True)
+            query = '''WITH RankedEntries AS ( 
+                    SELECT *, ROW_NUMBER() OVER (PARTITION BY component ORDER BY until DESC) AS row_num FROM telegram_alert_pauses
+                    ) 
+                    SELECT component, until FROM RankedEntries WHERE row_num = 1;'''
+            cursor.execute(query)
+            results = cursor.fetchall()
+        new_elements=[]
+        for element in containers:
+            if any(element in string for string in [a[0] for a in results]) and element[1].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+                pass
+            else:
+                new_elements.append(element)
+    except Exception:
+        print("Something went wrong during container filtering because of:",traceback.format_exc())
+    return new_elements
+
+def filter_out_muted_failed_are_alive_for_telegram(tests):
+    try:
+        with mysql.connector.connect(**db_conn_info) as conn:
+            cursor = conn.cursor(buffered=True)
+            query = '''WITH RankedEntries AS ( 
+                    SELECT *, ROW_NUMBER() OVER (PARTITION BY component ORDER BY until DESC) AS row_num FROM telegram_alert_pauses
+                    ) 
+                    SELECT component, until FROM RankedEntries WHERE row_num = 1;'''
+            cursor.execute(query)
+            results = cursor.fetchall()
+        new_elements=[]
+        for element in results:
+            for element_2 in tests:
+                if element[0] == element_2["container"]:
+                    if element[1].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+                        pass
+                    else:
+                        new_elements.append(element_2)
+    except Exception:
+        print("Something went wrong during container filtering because of:",traceback.format_exc())
+    return "\n".join(new_elements)
+
+def filter_out_wrong_status_containers_for_telegram(containers):
+    try:
+        with mysql.connector.connect(**db_conn_info) as conn:
+            cursor = conn.cursor(buffered=True)
+            query = '''WITH RankedEntries AS ( 
+                    SELECT *, ROW_NUMBER() OVER (PARTITION BY component ORDER BY until DESC) AS row_num FROM telegram_alert_pauses
+                    ) 
+                    SELECT component, until FROM RankedEntries WHERE row_num = 1;'''
+            cursor.execute(query)
+            results = cursor.fetchall()
+        new_elements=[]
+        restruct={}
+        for a in results:
+            restruct[a[0]]=a[1]
+        for element in containers:
+            if element["Names"] in [a[0] for a in results]:
+                if restruct[element[element["Names"]]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+                    pass
+                else:
+                    new_elements.append(element)
+    except Exception:
+        print("Something went wrong during container filtering because of:",traceback.format_exc())
+    return "\n".join(new_elements)
 
 def isalive():
     send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is alive", config["platform-url"]+" is alive")
@@ -84,17 +151,17 @@ def auto_run_tests():
         with mysql.connector.connect(**db_conn_info) as conn:
             cursor = conn.cursor(buffered=True)
             # to run malicious code, malicious code must be present in the db or the machine in the first place
-            query = '''select command from tests_table;'''
+            query = '''select command, container_name from tests_table;'''
             cursor.execute(query)
             conn.commit()
             results = cursor.fetchall()
             total_result = ""
-            badstuff = ""
+            badstuff = []
             for r in list(results):
                 command_ran = subprocess.run(r[0], shell=True, capture_output=True, text=True, encoding="cp437").stdout
                 total_result += command_ran
                 if "Failure" in command_ran:
-                    badstuff += r[0] + " resulted in " + command_ran + "\n"
+                    badstuff.append({"container":r[1], "result":command_ran})
             return badstuff
     except Exception:
         print("Something went wrong during tests running because of:",traceback.format_exc())
@@ -121,24 +188,29 @@ def auto_alert_status():
         send_alerts("Can't reach db, auto alert 1:", traceback.format_exc())
         return
     is_alive_with_ports = auto_run_tests()
-    categories = [a[0].replace("*","") for a in results]
-    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in categories) and (c["State"] != "running")]
+    components = [a[0].replace("*","") for a in results]
+    components_original = [a[0] for a in results]
+    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in components) and (c["State"] != "running")]
     containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["62149183138_certbot_1"]) and c["State"] != "exited"]
-    containers_which_are_running_but_are_not_healthy = [c for c in containers_merged if any(c["Names"].startswith(value) for value in categories) and "unhealthy" in c["Status"]]
+    containers_which_are_running_but_are_not_healthy = [c for c in containers_merged if any(c["Names"].startswith(value) for value in components) and "unhealthy" in c["Status"]]
     problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not + containers_which_are_running_but_are_not_healthy
-    #containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) - set([n["Names"] for n in problematic_containers]))
+    containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) - set([n["Names"] for n in problematic_containers]))
     names_of_problematic_containers = [n["Names"] for n in problematic_containers]
-    if len(names_of_problematic_containers) > 0 or len(is_alive_with_ports) > 0:
+    containers_which_are_not_expected = list(set(components_original)-set([a["Names"] for a in containers_merged]))
+    containers_which_are_not_expected = [a for a in containers_which_are_not_expected if not a.endswith("*")]
+    if len(names_of_problematic_containers) > 0 or len(is_alive_with_ports) > 0 or len(containers_which_are_not_expected):
         try:
-            issues = ""
+            issues = ["","",""] # maybe make this a real object, later
             if len(names_of_problematic_containers) > 0:
-                issues = "There are problems with the containers: "+str(problematic_containers) + "\n"
+                issues[0]=str(problematic_containers)
             if len(is_alive_with_ports) > 0:
-                issues += is_alive_with_ports
-            send_alerts(issues)
+                issues[1]=is_alive_with_ports #this has to be refined
+            if len(containers_which_are_not_expected) > 0:
+                issues[2]=containers_which_are_not_expected
+            send_advanced_alerts(issues)
         except Exception:
             print(traceback.format_exc())
-            send_alerts("Couldn't reach database while sending error messages:",traceback.format_exc())
+            send_alerts("Couldn't properly send error messages: "+traceback.format_exc())
             return
     else:
         try:
@@ -150,18 +222,41 @@ def auto_alert_status():
                 return
         except Exception:
             print(traceback.format_exc())
-            send_alerts("Couldn't reach database while not needing to send error messages:",traceback.format_exc())
+            send_alerts("Couldn't reach database while not needing to send error messages: "+traceback.format_exc())
             return
 
     
 def send_alerts(message):
     try:
-        print(message)
         send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", message)
         send_telegram(config["platform-url"]+" is alive", message)
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
-    
+
+
+def send_advanced_alerts(message):
+    try:
+        text_for_email = ""
+        if len(message[0])>0:
+            text_for_email = "These containers are not in the correct status: " + str(message[0])+"/n"
+        if len(message[1])>0:
+            text_for_email+= 'These containers are not answering correctly to their "is alive" test: '+ str(message[1])+"\n"
+        if len(message[2])>0:
+            text_for_email+= "These containers weren't found in docker: "+ message[2]+"\n"
+        send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", str(message))
+        
+        text_for_telegram = ""
+        if len(message[0])>0:
+            text_for_telegram = "These containers are not in the correct status: " + str(filter_out_wrong_status_containers_for_telegram(message[0])) +"/n"
+        if len(message[1])>0:
+            text_for_telegram+= 'These containers are not answering correctly to their "is alive" test: '+ str(filter_out_muted_failed_are_alive_for_telegram(message[1]))+"\n"
+        if len(filter_out_muted_containers_for_telegram(message[2]))>0:
+            text_for_telegram+= "These containers weren't found in docker: "+ str(filter_out_muted_containers_for_telegram(message[2]))+"\n"
+        if len(text_for_telegram)>0:
+            send_telegram(config["platform-url"]+" is alive", message)
+    except Exception:
+        print("Error sending alerts:",traceback.format_exc())
+        
     
 scheduler = BackgroundScheduler()
 scheduler.add_job(auto_alert_status, trigger='interval', minutes=15)
@@ -191,13 +286,13 @@ def create_app():
                     conn.commit()
                     results = cursor.fetchall()
                     if user != "admin":
-                        return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),timeout=config['requests-timeout'],user=user,platform=config['platform-url'])
+                        return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),timeout=config['requests-timeout'],user=user)
                     else:
                         query_2 = f"(SELECT datetime, log, perpetrator FROM checker.test_ran) union (SELECT datetime, log, perpetrator FROM checker.rebooting_containers) order by datetime desc limit {config['admin-log-length']};" #
                         cursor.execute(query_2)
                         conn.commit()
                         results_log = cursor.fetchall()
-                        return render_template("checker-admin.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),admin_log=results_log,timeout=config['requests-timeout'],user=user,platform=config['platform-url'])
+                        return render_template("checker-admin.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),admin_log=results_log,timeout=config['requests-timeout'],user=user,platform=config["platform-url"])
             except Exception:
                 print("Something went wrong because of",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
@@ -550,11 +645,13 @@ def create_app():
                 cursor.execute(query, (container_id,))
                 conn.commit()
                 results = cursor.fetchall()
+                if len(results) == 0:
+                    return render_template("error_showing.html", r = "It appears that the container "+container_id+" doesn't exist in the cluster."), 500
                 r = requests.get(results[0][0]+"/sentinel/container/"+container_id, headers=request.headers, data={"id": container_id, "psw": psw})
                 return r.text
         except Exception:
             print("Something went wrong during advanced container rebooting because of:",traceback.format_exc())
-            return render_template("error_showing.html", r = traceback.format_exc() + results), 500
+            return render_template("error_showing.html", r = traceback.format_exc() + str(results)), 500
     
     @app.route("/get_summary_status")
     def get_summary_status():
@@ -675,6 +772,7 @@ def create_app():
         current_dir = os.path.dirname(os.path.abspath(__file__))
         for root, dirs, files in os.walk(os.path.join(current_dir, os.pardir)): #maybe doesn't find the files while clustered but continues gracefully
             if 'log.txt' in files:
+                logs_file_path = os.path.join(root, 'log.txt')
                 log_output = subprocess.run(f'cd {root}; tail -n {config["default-log-length"]} log.txt', shell=True, capture_output=True, text=True, encoding="utf_8").stdout
                 content.append(Paragraph('<a href="#iot-directory-log" color="blue">iot-directory-log</a>', styles["Normal"]))
                 extra_logs.append(Paragraph(f'<b><a name="iot-directory-log"></a>iot-directory-log</b>', styles["Heading1"]))
@@ -734,7 +832,7 @@ def create_app():
         parent_folder = os.path.dirname(script_folder)
         target_folder = find_target_folder(parent_folder)
         if target_folder:
-            subprocess.run(f'cd {target_folder}; rm -f *snap4city*-certification-*.rar', shell=True, capture_output=True, text=True, encoding="utf_8")
+            clear_rars = subprocess.run(f'cd {target_folder}; rm -f *snap4city*-certification-*.rar', shell=True, capture_output=True, text=True, encoding="utf_8")
             return "Done"
         
     
