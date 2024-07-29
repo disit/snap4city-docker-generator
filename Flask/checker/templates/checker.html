@@ -75,6 +75,34 @@
 			await smartSleep(120000);
 		}
 	});
+	
+	async function get_muted_components() {
+		try {
+			$.ajax({
+				url: './get_muted_components',
+				type: 'GET',
+				success: function(response) {
+					response.forEach(current_item => {
+						try {
+							document.getElementById("mutebutton-"+current_item[1]).class="btn btn-warning";
+							document.getElementById("mutebutton-"+current_item[1]).value="Currently muted";
+							
+						}
+						catch (exception_var) {
+							//nothing, this is fine
+						}
+					});
+				},
+				error: function(error) {
+					console.log("Error!: "+error);
+				}
+			});
+		}
+		catch (exception_var) {
+			console.log(exception_var);
+		}
+	}
+	
 	async function better_get_all_tests() {
 		try {
 			$.ajax({
@@ -126,6 +154,7 @@
 		});
 		var see_logs = document.getElementById('see_logs');
 		var lines = see_logs.innerHTML.split('<br>');
+		get_muted_components();
 		if (lines.length > 100) {
 			lines = lines.slice(lines.length - 100);
 			see_logs.innerHTML = lines.join('<br>');
@@ -547,6 +576,7 @@
 			do_not_update_this.setAttribute("type", "button");
 			do_not_update_this.setAttribute("value", "Stop refreshing");
 			do_not_update_this_td.appendChild(do_not_update_this);
+			do_not_update_this_td.innerHTML+='<button type="button" class="btn btn-primary open-modal-m" data-toggle="modal" data-containercategory="'+name_of_table_value+'" data-target="#muteComponent" data-containerid="'+elements[12]+'" id="mutebutton-'+elements[12]+'">Mute</button>';
 			row.appendChild(do_not_update_this_td);
 			tbody.appendChild(row);
 			testresults.innerHTML=test_results_divs[row.childNodes[12].innerHTML];
@@ -569,7 +599,7 @@
 	};
 	
 	function makeTable(containerdata) {
-		const headerData = ["I/O" ,"CPU%", "Command", "ContainerID (click for container-logs)", "Created at", "ID", "Image", "Labels", "Local Volumes", "Mem%", "Mem Used / Mem Max", "Mounts", "Container Name", "Names", "Network I/O", "Networks", "PIDs", "Ports", "Running for / Exited since", "Size", "State", "Status", "Restart", "Is alive port test", "Last test results", "Contacts", "Location", "Toggle update for this component"];
+		const headerData = ["I/O" ,"CPU%", "Command", "ContainerID (click for container-logs)", "Created at", "ID", "Image", "Labels", "Local Volumes", "Mem%", "Mem Used / Mem Max", "Mounts", "Container Name", "Names", "Network I/O", "Networks", "PIDs", "Ports", "Running for / Exited since", "Size", "State", "Status", "Restart", "Is alive port test", "Last test results", "Contacts", "Location", "Operations"];
 		
 		const tableContainer = document.getElementById("table-container");
 		tableContainer.setAttribute("style", "display: flex; flex-wrap: wrap;")
@@ -668,6 +698,14 @@
 			$('#passwordModal').modal('show');
 		});
 		
+		$('.open-modal-m').on('click', function() {
+			var category = $(this).data('containercategory');
+			$('#containercategorymodalmuted').val(category);
+			var id = $(this).data('containerid');
+			$('#containeridmodalMute').val(id);
+			$('#muteComponent').modal('show');
+		});
+		
 		$('#attemptReboot').on('click', function() {
 			var password = $('#passwordInput').val();
 			var id = $('#containeridmodal').val();
@@ -703,7 +741,52 @@
 			else {
 				alert('Please enter a password');
 			}
-		});	
+		});
+
+		$('#muteContainer').on('click', function() {
+			var password = $('#passwordInputMute').val();
+			var id = $('#containeridmodalMute').val();
+			var category = $('#containercategorymodalmuted').val();
+			var current_date = new Date();
+			current_date.setTime(current_date.getTime()+($('#time-selection').val()*60*60*1000))
+			var muted_until = formatDateForMysql(current_date);
+			if (password) {
+				try {
+					$.ajax({
+						url: './mute_component_by_hours',
+						data: {id: id, psw: password, hours: $('#time-selection').val()},
+						type: 'POST',
+						success: function(response) {
+							if ($('#time-selection').val() == 0) {
+								logging('<b>' + id + "</b> was unmuted!", category+"-logs");
+								$('#muteComponent').modal('hide');
+							}
+							else {
+								logging('<b>' + id + "</b> was muted for"+$('#time-selection').val()+" hours!", category+"-logs");
+								$('#muteComponent').modal('hide');
+							}
+						},
+						error: function(error) {
+							if ($('#time-selection').val() == 0) {
+								logging('<b>' + id + "</b> was not unmuted! Reason: " + error.responseText, category+"-logs");
+								$('#muteComponent').modal('hide');
+							}
+							else {
+								logging('<b>' + id + "</b> was not muted! Reason: " + error.responseText, category+"-logs");
+								$('#muteComponent').modal('hide');
+							}
+						},
+						timeout: {{timeout}}
+					});
+				}
+				catch (exception_var) {
+					console.log(exception_var);
+				}
+			}
+			else {
+				alert('Please enter a password');
+			}
+		});			
 	};
 	
 	async function who_has_issues() {
@@ -806,6 +889,16 @@
 		});
 		return final_str;
 	};
+	
+	function formatDateForMysql(date) {
+		const year = date.getFullYear();
+		const month = (date.getMonth() + 1).toString().padStart(2, '0');
+		const day = date.getDate().toString().padStart(2, '0');
+		const hours = date.getHours().toString().padStart(2, '0');
+		const minutes = date.getMinutes().toString().padStart(2, '0');
+		const seconds = date.getSeconds().toString().padStart(2, '0');
+		return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+	}
 		
 	function* colorGenerator() {
 		const colors = ['#00abff', '#cf71ff', '#fff466', '#3cb032', '#ff8a38'];
@@ -823,7 +916,7 @@
 	<div class="collapse navbar-collapse container-fluid" id="navbarSupportedContent">
 		<ul class="navbar-nav mr-auto">
 			<li class="nav-item active">
-				<a class="navbar-brand">{{ platform }}</a>
+				<a class="navbar-brand">{{platform}}</a>
 			</li>
 		</ul>
 		<ul class="navbar-nav mr-auto">
@@ -881,6 +974,48 @@
 
 <div id="table-container">
 </div>
+
+<div class="modal fade" id="muteComponent" tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="passwordModalLabel">Confirmation for muting a container</h5>
+				<button type="button" class="btn btn-danger" data-dismiss="modal" aria-label="Close" style="position: absolute; right: 15px;" onClick="$('#muteComponent').modal('hide')">
+					<span aria-hidden="true">X</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<form id="muteComponent">
+					<div class="form-group">
+						<label for="passwordInputMute">Password</label>
+						<input type="password" class="form-control" id="passwordInputMute" autocomplete="current-password" required>
+					</div>
+					<div class="form-group">
+						<label for="containeridmodalMute">Container ID</label>
+						<input type="text" class="form-control" id="containeridmodalMute" readonly>
+					</div>
+					<label for="time-selection">Select time duration:</label>
+					<select id="time-selection" name="time-selection" class="form-select">
+						<option value="0">Unmute</option>
+						<option value="1">1 hour</option>
+						<option value="4">4 hours</option>
+						<option value="8">8 hours</option>
+						<option value="24">24 hours</option>
+						<option value="72">72 hours</option>
+					</select>
+					<div class="form-group">
+						<input type="text" class="form-control" id="containercategorymodalmuted" readonly hidden>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn close btn-secondary" data-dismiss="modal" aria-label="Close" onClick="$('#muteComponent').modal('hide')">Close</button>
+				<button type="button" class="btn btn-primary" data-dismiss="modal" id="muteContainer">Mute component</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <div class="modal fade" id="passwordModal" tabindex="-1" role="dialog" aria-labelledby="passwordModalLabel" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">

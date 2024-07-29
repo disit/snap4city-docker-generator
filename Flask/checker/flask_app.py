@@ -1,3 +1,4 @@
+
 '''Copyright (C) 2023 DISIT Lab http://www.disit.org - University of Florence
 
 This program is free software: you can redistribute it and/or modify
@@ -33,7 +34,7 @@ import random
 import string
 import traceback
 from urllib.parse import urlparse
-from datetime import datetime
+from datetime import datetime, timedelta
 
 f = open("conf.json")
 config = json.load(f)
@@ -298,6 +299,42 @@ def create_app():
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
         return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
 
+    @app.route("/organize_containers", methods=["GET"])
+    def organize_containers():
+        if config['is-master']:
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    user = ""
+                    try:
+                        user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
+                        user = user[:user.find(":")]
+                    except Exception:
+                        pass
+                    if user!="admin":
+                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage."), 401
+                    cursor = conn.cursor(buffered=True)
+                    # to run malicious code, malicious code must be present in the db or the machine in the first place
+                    query = '''SELECT * FROM checker.component_to_category;'''
+                    query2 = '''SELECT category from categories;'''
+                    cursor.execute(query)
+                    conn.commit()
+                    results = cursor.fetchall()
+                    cursor.execute(query2)
+                    conn.commit()
+                    results_2 = cursor.fetchall()
+                    return render_template("organize_containers.html",containers=results, categories=results_2,timeout=config['requests-timeout'])
+            except Exception:
+                print("Something went wrong because of",traceback.format_exc())
+                return render_template("error_showing.html", r = traceback.format_exc()), 500
+        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+        
+    @app.route("/add_container", methods=["POST"])
+    def add_container():
+        return request.form.to_dict() 
+        
+    @app.route("/delete_container", methods=["POST"])
+    def delete_container():
+        return request.form.to_dict()
 
     @app.route("/get_data_from_source")
     def get_additional_data():
@@ -539,6 +576,47 @@ def create_app():
         else: 
             log_to_db('rebooting_containers', "POST wasn't used in the request", request)
             return "False"
+            
+    @app.route("/get_muted_components", methods=['GET'])
+    def get_muted_components():
+        if request.method == "GET":
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    cursor = conn.cursor(buffered=True)
+                    query = '''select * from telegram_alert_pauses where until > now();'''
+                    cursor.execute(query,)
+                    conn.commit()
+                    results = cursor.fetchall()
+                    if len(results) > 1:
+                        return results, 200
+                    else:
+                        return [results], 200
+            except Exception:
+                print("Something went wrong during getting the muted components because:",traceback.format_exc())
+                return traceback.format_exc(), 500
+        else: 
+            return "You can't use a POST here.", 400
+            
+    @app.route("/mute_component_by_hours", methods=['POST'])
+    def mute_component_by_hours():
+        if not config['is-master']:
+            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+        if request.method == "POST":
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    something = str(base64.b64decode(request.headers["Authorization"][len("Basic "):]))[:-1]
+                    psw = something[something.find(":")+1:]
+                    cursor = conn.cursor(buffered=True)
+                    # to run malicious code, malicious code must be present in the db or the machine in the first place
+                    query = '''INSERT INTO telegram_alert_pauses (`component`, `until`) VALUES (%s, %s);'''
+                    cursor.execute(query, (request.form.to_dict()['id'],(datetime.now() + timedelta(hours=int(request.form.to_dict()['hours']))).strftime("%Y-%m-%d %H:%M:%S"),))
+                    conn.commit()
+                    return "ok", 200
+            except Exception:
+                print("Something went wrong during muting a component because of:",traceback.format_exc())
+                return traceback.format_exc(), 500
+        else: 
+            return "You may only use a POST here.", 400
         
     @app.route("/tests_results", methods=['POST','GET'])
     def get_tests():
@@ -679,7 +757,6 @@ def create_app():
             return containers_merged
         return jsonify(containers_merged)
     
-    # put in folder\\   
     @app.route('/generate_clustered_pdf', methods=['GET'])
     def generate_clustered_pdf():
         if not config['is-master']:
@@ -729,7 +806,6 @@ def create_app():
         except Exception:
             return render_template("error_showing.html", r = traceback.format_exc()), 500
     
-    # put in folder
     @app.route('/generate_pdf', methods=['GET'])
     def generate_pdf():
         data_stored = []
