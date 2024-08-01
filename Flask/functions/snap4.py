@@ -695,7 +695,7 @@ def adjust_profiledb_dump(iot_app_amount): # assigns iotapps to user (defaults t
         return None
     str_to_add='INSERT INTO profiledb.`ownership` VALUES '
     for i in range(iot_app_amount):
-        str_to_add+='''("'''+str(i+1)+'''",'userareamanager',"'''+'iotapp-'+str(i+1).zfill(3)+'''",'AppID',"iotapp-'''+str(i+1).zfill(3)+'''",'http://$#base-hostname#$/iotapp/iotapp-'''+str(i+1).zfill(3)+'''/','{\"type\":\"advanced\",\"image\":\"snap4city-nodered-adv\",\"iotappids\":[]}',NULL,'2019-02-19 09:15:00',NULL,NULL),'''
+        str_to_add+='''("'''+str(i+1)+'''",'userareamanager',"'''+'iotapp-'+str(i+1).zfill(3)+'''",'AppID',"iotapp-'''+str(i+1).zfill(3)+'''",'$#base-url#$/iotapp/iotapp-'''+str(i+1).zfill(3)+'''/','{\"type\":\"advanced\",\"image\":\"snap4city-nodered-adv\",\"iotappids\":[]}',NULL,'2019-02-19 09:15:00',NULL,NULL),'''
     str_to_add = str_to_add[:-1]  # remove the last comma
     str_to_add+=';\n'
     return str_to_add

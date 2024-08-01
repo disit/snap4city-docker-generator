@@ -19,6 +19,7 @@ import requests
 import mysql.connector
 import json
 import os
+import ast
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak
@@ -132,11 +133,11 @@ def filter_out_wrong_status_containers_for_telegram(containers):
         restruct={}
         for a in results:
             restruct[a[0]]=a[1]
-        for element in containers:
-            print(element)
+        for element in ast.literal_eval(containers):
             if element["Names"] in [a[0] for a in results]:
-                if restruct[element[element["Names"]]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
-                    pass
+                print(element["Names"])
+                if restruct[element["Names"]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+                    print("skipped")
                 else:
                     new_elements.append(element)
     except Exception:
@@ -248,7 +249,7 @@ def send_advanced_alerts(message):
         send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", text_for_email)
         
         text_for_telegram = ""
-        wrong_status_containers = filter_out_wrong_status_containers_for_telegram(message).split("\n")
+        wrong_status_containers = filter_out_wrong_status_containers_for_telegram(message[0]).split("\n")
         failed_are_alive_containers = filter_out_muted_failed_are_alive_for_telegram(message[1]).split("\n")
         containers_not_found = filter_out_muted_containers_for_telegram(message[2]).split("\n")
         if len(wrong_status_containers)>0:
