@@ -248,6 +248,7 @@ services:
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   kafka:
     image: bitnami/kafka:3.3.2
+    
     ports:
       - "9000:9000"
       - "9092:9092"
@@ -308,7 +309,7 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   orion:
-    image: fiware/orion
+    image: fiware/orion:3.12.0
     depends_on:
       - mongo
     ports:

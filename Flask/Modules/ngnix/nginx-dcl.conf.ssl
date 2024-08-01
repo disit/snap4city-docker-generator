@@ -79,12 +79,6 @@ server {
             auth_basic           "Snap4Sentinel Area";
             auth_basic_user_file /etc/nginx/conf.d/htpasswd;
         }
-        location  /whatif-router/ {
-                proxy_pass "http://servicemap:8080/whatif-router/";
-        }
-        location  /trafficflowmanager/ {
-                proxy_pass "http://servicemap:8080/trafficflowmanager/";
-        }
         location  /ServiceMap/api/v1/iot/ {
                 proxy_pass "http://servicemap:8080/iot/";
         }
@@ -98,12 +92,6 @@ server {
                 proxy_pass "http://servicemap:8080/trafficflowmanager/";
                 client_max_body_size 50M;
 		proxy_read_timeout 10m;
-        }
-        location  /whatif-router/ {
-                proxy_pass "http://servicemap:8080/whatif-router/";
-        }
-        location  /trafficflowmanager/ {
-                proxy_pass "http://servicemap:8080/trafficflowmanager/";
         }
         location  /wsserver {
                 proxy_set_header Upgrade $http_upgrade;

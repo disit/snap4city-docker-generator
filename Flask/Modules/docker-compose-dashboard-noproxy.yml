@@ -226,7 +226,8 @@ services:
   kafka:
     container_name: kafka
     image: bitnami/kafka:3.3.2
-
+    
+    restart: unless-stopped
     logging:
       driver: "json-file"
       options:

@@ -13,7 +13,7 @@ server {
         location  /ServiceMap/api/v1/iot/ {
                 proxy_pass "http://servicemap:8080/iot/";
         }
-                                location  /ServiceMap/ {
+        location  /ServiceMap/ {
                 proxy_pass "http://servicemap:8080/ServiceMap/";
         }
         location  / {
@@ -170,14 +170,8 @@ server {
 
         server_name servicemap.local;
 
-                location  /ServiceMap/ {
+        location  /ServiceMap/ {
                 proxy_pass "http://servicemap:8080/ServiceMap/";
-        }
-        location  /whatif-router/ {
-                proxy_pass "http://servicemap:8080/whatif-router/";
-        }
-        location  /trafficflowmanager/ {
-                proxy_pass "http://servicemap:8080/trafficflowmanager/";
         }
         location  /ServiceMap/api/v1/iot/ {
                 proxy_pass "http://servicemap:8080/iot/";

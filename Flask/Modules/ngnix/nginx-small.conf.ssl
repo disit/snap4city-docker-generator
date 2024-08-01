@@ -13,7 +13,7 @@ server {
         location  /ServiceMap/api/v1/iot/ {
                 proxy_pass "http://servicemap:8080/iot/";
         }
-                                location  /ServiceMap/ {
+        location  /ServiceMap/ {
                 proxy_pass "http://servicemap:8080/ServiceMap/";
         }
         location  / {
@@ -81,14 +81,17 @@ server {
         location  /ServiceMap/api/v1/iot/ {
                 proxy_pass "http://servicemap:8080/iot/";
         }
-                location  /ServiceMap/ {
+        location  /ServiceMap/ {
                 proxy_pass "http://servicemap:8080/ServiceMap/";
         }
+        
         location  /whatif-router/ {
                 proxy_pass "http://servicemap:8080/whatif-router/";
         }
         location  /trafficflowmanager/ {
                 proxy_pass "http://servicemap:8080/trafficflowmanager/";
+                client_max_body_size 50M;
+		proxy_read_timeout 10m;
         }
         location  /wsserver {
                 proxy_set_header Upgrade $http_upgrade;
@@ -171,20 +174,6 @@ server {
 
         location  /ServiceMap/ {
                 proxy_pass "http://servicemap:8080/ServiceMap/";
-        }
-        location  /whatif-router/ {
-                proxy_pass "http://servicemap:8080/whatif-router/";
-        }
-        location  /trafficflowmanager/ {
-                proxy_pass "http://servicemap:8080/trafficflowmanager/";
-        }
-        location  /whatif-router/ {
-                proxy_pass "http://servicemap:8080/whatif-router/";
-        }
-        location  /trafficflowmanager/ {
-                proxy_pass "http://servicemap:8080/trafficflowmanager/";
-                client_max_body_size 50M;
-		proxy_read_timeout 10m;
         }
         location  /ServiceMap/api/v1/iot/ {
                 proxy_pass "http://servicemap:8080/iot/";
