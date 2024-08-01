@@ -94,7 +94,7 @@ def filter_out_muted_containers_for_telegram(containers):
                 new_elements.append(element)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
-    return new_elements
+    return "\n".join(new_elements)
 
 def filter_out_muted_failed_are_alive_for_telegram(tests):
     try:
@@ -133,6 +133,7 @@ def filter_out_wrong_status_containers_for_telegram(containers):
         for a in results:
             restruct[a[0]]=a[1]
         for element in containers:
+            print(element)
             if element["Names"] in [a[0] for a in results]:
                 if restruct[element[element["Names"]]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
                     pass
@@ -195,7 +196,7 @@ def auto_alert_status():
     containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["62149183138_certbot_1"]) and c["State"] != "exited"]
     containers_which_are_running_but_are_not_healthy = [c for c in containers_merged if any(c["Names"].startswith(value) for value in components) and "unhealthy" in c["Status"]]
     problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not + containers_which_are_running_but_are_not_healthy
-    containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) - set([n["Names"] for n in problematic_containers]))
+    #containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) - set([n["Names"] for n in problematic_containers]))
     names_of_problematic_containers = [n["Names"] for n in problematic_containers]
     containers_which_are_not_expected = list(set(components_original)-set([a["Names"] for a in containers_merged]))
     containers_which_are_not_expected = [a for a in containers_which_are_not_expected if not a.endswith("*")]
@@ -239,22 +240,25 @@ def send_advanced_alerts(message):
     try:
         text_for_email = ""
         if len(message[0])>0:
-            text_for_email = "These containers are not in the correct status: " + str(message[0])+"/n"
+            text_for_email = "These containers are not in the correct status: " + str(message[0])+"\n"
         if len(message[1])>0:
             text_for_email+= 'These containers are not answering correctly to their "is alive" test: '+ str(message[1])+"\n"
         if len(message[2])>0:
-            text_for_email+= "These containers weren't found in docker: "+ message[2]+"\n"
-        send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", str(message))
+            text_for_email+= "These containers weren't found in docker: "+ ", ".join(message[2])+"\n"
+        send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", text_for_email)
         
         text_for_telegram = ""
-        if len(message[0])>0:
-            text_for_telegram = "These containers are not in the correct status: " + str(filter_out_wrong_status_containers_for_telegram(message[0])) +"/n"
-        if len(message[1])>0:
-            text_for_telegram+= 'These containers are not answering correctly to their "is alive" test: '+ str(filter_out_muted_failed_are_alive_for_telegram(message[1]))+"\n"
-        if len(filter_out_muted_containers_for_telegram(message[2]))>0:
-            text_for_telegram+= "These containers weren't found in docker: "+ str(filter_out_muted_containers_for_telegram(message[2]))+"\n"
+        wrong_status_containers = filter_out_wrong_status_containers_for_telegram(message).split("\n")
+        failed_are_alive_containers = filter_out_muted_failed_are_alive_for_telegram(message[1]).split("\n")
+        containers_not_found = filter_out_muted_containers_for_telegram(message[2]).split("\n")
+        if len(wrong_status_containers)>0:
+            text_for_telegram = "These containers are not in the correct status: " + ", ".join(wrong_status_containers) +"\n"
+        if len(failed_are_alive_containers)>0:
+            text_for_telegram+= 'These containers are not answering correctly to their "is alive" test: '+ ", ".join(failed_are_alive_containers)+"\n"
+        if len(containers_not_found)>0:
+            text_for_telegram+= "These containers weren't found in docker: "+ ", ".join(containers_not_found)+"\n"
         if len(text_for_telegram)>0:
-            send_telegram(config["platform-url"]+" is alive", message)
+            send_telegram(config["platform-url"]+" is alive", text_for_telegram)
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
         
@@ -289,8 +293,8 @@ def create_app():
                     if user != "admin":
                         return render_template("checker.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),timeout=config['requests-timeout'],user=user)
                     else:
-                        query_2 = f"(SELECT datetime, log, perpetrator FROM checker.test_ran) union (SELECT datetime, log, perpetrator FROM checker.rebooting_containers) order by datetime desc limit {config['admin-log-length']};" #
-                        cursor.execute(query_2)
+                        query_2 = '''select * from all_logs limit %s;'''
+                        cursor.execute(query_2, (config['admin-log-length'],))
                         conn.commit()
                         results_log = cursor.fetchall()
                         return render_template("checker-admin.html",extra=results,categories=get_container_categories(),extra_data=get_extra_data(),admin_log=results_log,timeout=config['requests-timeout'],user=user,platform=config["platform-url"])
@@ -330,27 +334,60 @@ def create_app():
         
     @app.route("/add_container", methods=["POST"])
     def add_container():
-        return request.form.to_dict() 
+        if config['is-master']:
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    user = ""
+                    try:
+                        user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
+                        user = user[:user.find(":")]
+                    except Exception:
+                        pass
+                    if user!="admin":
+                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage."), 401
+                    cursor = conn.cursor(buffered=True)
+                    # to run malicious code, malicious code must be present in the db or the machine in the first place
+                    query = '''INSERT INTO `checker`.`component_to_category` (`component`, `category`, `references`, `position`) VALUES (%s, %s, %s, %s);'''
+                    cursor.execute(query, (request.form.to_dict()['id'],request.form.to_dict()['category'],request.form.to_dict()['contacts'], request.form.to_dict()['position'],))
+                    conn.commit()
+                    return "ok", 201
+            except Exception:
+                print("Something went wrong during the addition of a new container because of",traceback.format_exc())
+                return render_template("error_showing.html", r = traceback.format_exc()), 500
+        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
         
     @app.route("/delete_container", methods=["POST"])
     def delete_container():
-        return request.form.to_dict()
-
-    @app.route("/get_data_from_source")
-    def get_additional_data():
-        if request.method == "GET":
+        if config['is-master']:
             try:
-                response = requests.get(request.args.to_dict()['url_of_resource'])
-                response.raise_for_status()
-                print("\n\n" + response.text + "\n\n")
-                return response.text
-            except requests.exceptions.RequestException:
-                print(f"Error fetching URL: {traceback.format_exc()}")
-                return None
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    user = ""
+                    try:
+                        user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
+                        user = user[:user.find(":")]
+                    except Exception:
+                        pass
+                    if user!="admin":
+                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage."), 401
+                    cursor = conn.cursor(buffered=True)
+                    # to run malicious code, malicious code must be present in the db or the machine in the first place
+                    query = '''DELETE FROM `checker`.`component_to_category` WHERE (`component` = %s);'''
+                    cursor.execute(query, (request.form.to_dict()['id'],))
+                    conn.commit()
+                    return "ok", 201
             except Exception:
-                print(f"Some kind of error:",traceback.format_exc())
-        else:
-            return "<html>You didn't use a GET.</html>"
+                print("Something went wrong during the deletion of a container because of",traceback.format_exc())
+                return render_template("error_showing.html", r = traceback.format_exc()), 500
+        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+
+    @app.route("/get_data_from_source", methods=["GET"])
+    def get_additional_data():
+        try:
+            response = requests.get(request.args.to_dict()['url_of_resource'])
+            response.raise_for_status()
+            return response.text
+        except Exception:
+            return render_template("error_showing.html", r = traceback.format_exc()), 500
     
     @app.route("/get_complex_test_buttons")
     def get_complex_test_buttons():
@@ -364,7 +401,6 @@ def create_app():
                 results = cursor.fetchall()
                 return results
         except Exception:
-            print("Something went wrong because of",traceback.format_exc())
             return render_template("error_showing.html", r = traceback.format_exc()), 500
         
     @app.route("/container_is_okay", methods=['POST'])
@@ -373,49 +409,39 @@ def create_app():
             try:
                 with mysql.connector.connect(**db_conn_info) as conn:
                     cursor = conn.cursor(buffered=True)
-                    update_categories_query=f"""UPDATE `checker`.`summary_status` SET `status` = %s WHERE (`category` = '{request.form.to_dict()['container']}');"""
-                    cursor.execute(update_categories_query, [greendot])
+                    update_categories_query=f"""UPDATE `checker`.`summary_status` SET `status` = %s WHERE (`category` = %s);"""
+                    cursor.execute(update_categories_query, (greendot, request.form.to_dict()['container'],))
                     conn.commit()
                     return "👌"
             except Exception:
                 send_alerts("Can't reach db due to",traceback.format_exc())
-                return "There was a problem: "+traceback.format_exc(), 500
+                return render_template("error_showing.html", r =  "There was a problem: "+traceback.format_exc()), 500
         
-    @app.route("/read_containers", methods=['POST','GET'])
+    @app.route("/read_containers", methods=['POST'])
     def check():
-        if request.method == "POST":
-            containers = get_container_data()
-            return containers
-        else:
-            log_to_db('asking_containers', "POST wasn't used in the request", request)
-            return False
+        return get_container_data()
             
-    @app.route("/advanced_read_containers", methods=['POST','GET'])
+    @app.route("/advanced_read_containers", methods=['POST'])
     def check_adv():
         if not config['is-master']:
             return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
-        if request.method == "POST":
-            try:
-                results = None
-                with mysql.connector.connect(**db_conn_info) as conn:
-                    cursor = conn.cursor(buffered=True)
-                    query = '''SELECT distinct position FROM checker.component_to_category;'''
-                    cursor.execute(query)
-                    conn.commit()
-                    results = cursor.fetchall()
-                    total_answer=[]
-                    for r in results:
-                        obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
-                        total_answer = total_answer + json.loads(obtained)
-                    return total_answer
-            except Exception:
-                print("Something went wrong because of:",traceback.format_exc())
-                return render_template("error_showing.html", r = traceback.format_exc()), 500
-        else:
-            log_to_db('asking_containers', "POST wasn't used in the request", request)
-            return False
+        try:
+            results = None
+            with mysql.connector.connect(**db_conn_info) as conn:
+                cursor = conn.cursor(buffered=True)
+                query = '''SELECT distinct position FROM checker.component_to_category;'''
+                cursor.execute(query)
+                conn.commit()
+                results = cursor.fetchall()
+                total_answer=[]
+                for r in results:
+                    obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
+                    total_answer = total_answer + json.loads(obtained)
+                return total_answer
+        except Exception:
+            print("Something went wrong because of:",traceback.format_exc())
+            return render_template("error_showing.html", r = traceback.format_exc()), 500
 
-    @app.route("/get_container_categories", methods=['POST','GET'])
     def get_container_categories():
         try:
             with mysql.connector.connect(**db_conn_info) as conn:
@@ -449,7 +475,7 @@ def create_app():
                 with mysql.connector.connect(**db_conn_info) as conn:
                     cursor = conn.cursor(buffered=True)
                     # to run malicious code, malicious code must be present in the db or the machine in the first place
-                    query = '''select command, command_explained, id from tests_table where container_name =%s'''
+                    query = '''select command, command_explained, id from tests_table where container_name =%s;'''
                     cursor.execute(query, (request.form.to_dict()['container'],))
                     conn.commit()
                     results = cursor.fetchall()
@@ -478,7 +504,7 @@ def create_app():
                 with mysql.connector.connect(**db_conn_info) as conn:
                     cursor = conn.cursor(buffered=True)
                     # to run malicious code, malicious code must be present in the db or the machine in the first place
-                    query = '''select command, id from complex_tests where name_of_test =%s'''
+                    query = '''select command, id from complex_tests where name_of_test =%s;'''
                     form_dict = request.form.to_dict()
                     test_name = form_dict.pop('test_name')
                     cursor.execute(query, (test_name,))

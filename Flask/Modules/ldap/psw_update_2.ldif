@@ -2,3 +2,8 @@ dn: cn=admin,dc=ldap,dc=organization,dc=com
 changetype: modify
 replace: userPassword
 userPassword: shaPSW
+
+dn: cn=config
+changetype: modify
+add: olcDisallows
+olcDisallows: bind_anon
