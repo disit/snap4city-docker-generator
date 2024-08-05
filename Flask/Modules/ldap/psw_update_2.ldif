@@ -7,3 +7,9 @@ dn: cn=config
 changetype: modify
 add: olcDisallows
 olcDisallows: bind_anon
+
+
+dn: cn=config
+changetype: modify
+add: olcDisallows
+olcDisallows: bind_anon

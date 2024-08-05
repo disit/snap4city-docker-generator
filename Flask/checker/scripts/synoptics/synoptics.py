@@ -21,7 +21,7 @@ try:
 except Exception as E:
     print("Probably won't work (create a device called defaultDevice with a value called testValue), but proceeding with default parameters due to",E)
     username = "userareamanager"
-    password = "Mdn!hkH"
+    password = "$#areamanager-pwd#$"
     device="defaultDevice"
 
 

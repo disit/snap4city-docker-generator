@@ -15,7 +15,7 @@ try:
 except Exception as E:
     print("Proceeding with default parameters due to",E)
     username = "userareamanager"
-    password = "Mdn!hkH"
+    password = "$#areamanager-pwd#$"
 
 def main():
     try:

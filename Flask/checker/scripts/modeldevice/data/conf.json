@@ -25,5 +25,5 @@
     "patch": "$#base-url#$/orion-filter/orion-1/v2/entities/",
     "base-url": "$#base-url#$",
     "usernamedelegated": "userareamanager",
-    "usernamedelegatedpassword": "Mdn!hkH"
+    "usernamedelegatedpassword": "$#areamanager-pwd#$"
 }

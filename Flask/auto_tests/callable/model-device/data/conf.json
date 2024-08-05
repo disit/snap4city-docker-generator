@@ -3,7 +3,7 @@
         "clientID": "php-ownership-api",
         "clientSecret": "a347fb2d-87f0-4d41-89a9-b746b5273ccd",
         "username": "userareamanager",
-        "password": "Mdn!hkH",
+        "password": "$#areamanager-pwd#$",
         "token_url": "$#base-url#$/auth/realms/master/protocol/openid-connect/token"
     },
     "model": {

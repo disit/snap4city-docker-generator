@@ -1,0 +1,20 @@
+dn:  cn=userRootAdmin,dc=ldap,dc=organization,dc=com
+changetype: modify
+replace: userPassword
+userPassword: oldUserRootAdminPW
+
+dn:  cn=userAreaManager,dc=ldap,dc=organization,dc=com
+changetype: modify
+replace: userPassword
+userPassword: oldAreaManagerPW
+
+dn:  cn=userToolAdmin,dc=ldap,dc=organization,dc=com
+changetype: modify
+replace: userPassword
+userPassword: oldToolAdminPW
+
+dn:  cn=userManager,dc=ldap,dc=organization,dc=com
+changetype: modify
+replace: userPassword
+userPassword: oldUserManagerPW
+
