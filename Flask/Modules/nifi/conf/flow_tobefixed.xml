@@ -2400,7 +2400,7 @@ if (flowFile != None):
       </property>
       <property>
         <name>PASSWORD</name>
-        <value>$#dashboard-personaldata-user-pwd#$</value>
+        <value>$#userrootadmin-pwd#$</value>
       </property>
     </controllerService>
     <controllerService>

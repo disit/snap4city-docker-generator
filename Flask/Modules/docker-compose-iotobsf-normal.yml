@@ -24,7 +24,7 @@ services:
       "spring.profiles.active": "deploy"
       "spring.openidconnect.clientid": "orionfilter"
       "spring.openidconnect.username": "$#dashboard-personaldata-user#$"
-      "spring.openidconnect.password": "$#dashboard-personaldata-user-pwd#$"
+      "spring.openidconnect.password": "$#userrootadmin-pwd#$"
       "spring.openidconnect.token_endpoint": "$#base-url#$/auth/realms/master/protocol/openid-connect/token"
       "spring.ownership_endpoint": "$#base-url#$/ownership-api/v1/list"
       "spring.delegation_endpoint": "$#base-url#$/datamanager/api"

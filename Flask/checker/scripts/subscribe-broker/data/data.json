@@ -1,6 +1,6 @@
 {
     "url":"$#base-url#$",
-    "password":"$#dashboard-personaldata-user-pwd#$",
+    "password":"$#userrootadmin-pwd#$",
     "username":"userrootadmin",
     "latitude":"$#lat-ib-0#$",
     "longitude":"$#lng-ib-0#$"
