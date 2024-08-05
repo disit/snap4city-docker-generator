@@ -511,7 +511,7 @@ def create_app():
                     if e.errno != errno.ENOENT:
                         raise
                     # try creating parent directories
-                    os.makedirs(os.path.dirname('./Output/'+token+'/'+str(ips[file[-1]])+file[3]+file[4]))
+                    os.makedirs(os.path.dirname('./Output/'+token+'/'+str(ips[file[-1]])+file[3]+file[4]), exist_ok=True)
                     snap4.copy('./Modules'+file[3]+file[4], './Output/'+token+'/'+str(ips[file[-1]])+file[3]+file[4])
             descriptor=''
             fine_as_is['$#iot-amount#$']=post['# of IoT-Apps']
