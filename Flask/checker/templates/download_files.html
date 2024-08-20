@@ -1,0 +1,39 @@
+{% extends "main.html" %}
+{% block title %}Snap4Sentinel{% endblock %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block content %}
+<table id="files">
+  <thead>
+	  <tr>
+		<th>Container</th>
+		<th>Category</th>
+		<th>Contacts</th>
+		<th>Position</th>
+		<th>Delete</th>
+	  </tr>
+  </thead>
+  <tbody>
+    {% for file in files %}
+        <tr>
+            <td>{{ file.name }}</td>
+            <td>
+                {% if os.path.isdir(os.path.join(BASE_DIR, subpath, file.name)) %}
+                    Directory
+                {% else %}
+                    File
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ file.path }}">Download</a>
+            </td>
+        </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+	$("#files").DataTable();
+</script>
+{% endblock %}

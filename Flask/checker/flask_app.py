@@ -921,6 +921,32 @@ def create_app():
                 return root
         return None
     
+    @app.route('/downloads/')
+    @app.route('/downloads/<path:subpath>')
+    def list_files(subpath=''):
+        # Determine the full path relative to the base directory
+        full_path = os.path.join(os.path.join(os.getcwd(), "certifications/"), subpath)
+        if ".." in subpath:
+            return render_template("error_showing.html", r = "Issues during the retrieving of the resource: illegal path"), 500
+        # If it's a directory, list contents
+        if os.path.isdir(full_path):
+            try:
+                files = os.listdir(full_path)
+                files_list = [
+                    {"name": f, "path": os.path.join(subpath, f)}
+                    for f in files
+                ]
+                return render_template("download_files", files=files_list, subpath=subpath)
+            except FileNotFoundError:
+                return render_template("error_showing.html", r = "Issues during the retrieving of the folder: "+ traceback.format_exc()), 500
+        # If it's a file, serve the file
+        elif os.path.isfile(full_path):
+            directory = os.path.dirname(full_path)
+            filename = os.path.basename(full_path)
+            return Flask.send_from_directory(directory, filename, as_attachment=True)
+        else:
+            return render_template("error_showing.html", r = "Issues during the retrieving of the file: "+ traceback.format_exc()), 500
+    
     @app.route('/clear_certifications', methods=['GET'])
     def clear_certifications():
         user = ""
@@ -988,7 +1014,7 @@ def create_app():
                 results = cursor.fetchall()
                 error = False
                 errorText = ""
-                subfolder = "certcluster"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                subfolder = "certifications/certcluster"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 subprocess.run(f'rm -f *snap4city*-certification-*.rar', shell=True)
                 for r in results:
                     file_name, content_disposition = "", ""
@@ -1011,7 +1037,7 @@ def create_app():
                     return render_template("error_showing.html", r = errorText.replace("\n","<br>")), 500
                 else:
                     password = ''.join(random.choice(string.digits + string.ascii_letters) for _ in range(16))
-                    subprocess.run(f'rar a -k -p{password} snap4city-clustered-certification-{password}.rar *snap4city-certification-*.rar; mkdir {subfolder}; cp snap4city-clustered-certification-{password}.rar {subfolder}/snap4city-clustered-certification-{password}.rar', shell=True, capture_output=True, text=True, encoding="utf_8").stdout
+                    subprocess.run(f'rar a -k -p{password} snap4city-clustered-certification-{password}.rar *snap4city-certification-*.rar; mkdir -p {subfolder}; cp snap4city-clustered-certification-{password}.rar {subfolder}/snap4city-clustered-certification-{password}.rar', shell=True, capture_output=True, text=True, encoding="utf_8").stdout
                     return send_file(f'snap4city-clustered-certification-{password}.rar')
         except Exception:
             return render_template("error_showing.html", r = traceback.format_exc()), 500
