@@ -808,7 +808,7 @@ esac
 
             elif modello == "DataCityMedium":
                 snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[1]+'/keycloak-conf')
-                descriptor=post['$#Time#$']+'-IoT'+post['# of IoT-Apps']+'-IoB'+post['# of Iot-Broker servers']+'-SVM'+post['# of ServiceMaps']+'-OSN'+post['# of Nifi nodes']+'-NIFI'+post['# of Nifi nodes']+'-VIRT'+post['# of ServiceMaps']+'-'
+                descriptor=post['$#Time#$']+'-IoT'+post['# of IoT-Apps']+'-IoB'+post['# of Iot-Brokers']+'-SVM'+post['# of ServiceMaps']+'-OSN'+post['# of Nifi nodes']+'-NIFI'+post['# of Nifi nodes']+'-VIRT'+post['# of ServiceMaps']+'-'
                 list_iotapp=[value for (key,value) in sorted(detailed_ips.items()) if "iotapp" in key]
                 list_nifi=[value for (key,value) in sorted(detailed_ips.items()) if "nifi" in key]
                 list_opensearch=list_nifi
@@ -904,7 +904,7 @@ esac
             elif modello == "DataCityLarge":
                 snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[0]+'/keycloak-conf')
                 #todo review ips, empty apache, ngnix config
-                descriptor=post['$#Time#$']+'-IoT'+post['# of IoT-Apps']+'-IoB'+post['# of Iot-Broker servers']+'-SVM'+post['# of ServiceMaps']+'-OSN'+post['# of Opensearch nodes']+'-NIFI'+post['# of Nifi nodes']+'-VIRT'+post['# of ServiceMaps']+'-'
+                descriptor=post['$#Time#$']+'-IoT'+post['# of IoT-Apps']+'-IoB'+post['# of Iot-Brokers']+'-SVM'+post['# of ServiceMaps']+'-OSN'+post['# of Opensearch nodes']+'-NIFI'+post['# of Nifi nodes']+'-VIRT'+post['# of ServiceMaps']+'-'
                 list_iotapp=[value for (key,value) in sorted(detailed_ips.items()) if "iotapp" in key]
                 list_opensearch=[value for (key,value) in sorted(detailed_ips.items()) if "opensearch" in key]
                 list_nifi=[value for (key,value) in sorted(detailed_ips.items()) if "nifi" in key]
