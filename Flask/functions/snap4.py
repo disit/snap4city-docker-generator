@@ -1103,7 +1103,7 @@ def make_multiple_nifi(dashboard_ip, kafka_ip, main_opensearch_ip, ips, token, z
 def make_multiple_opensearch(how_many, dashboard_ip, ldap_ip, token, ips, alt_out=None):
     outdir = ''
     if alt_out is None:
-        outdir = './Output/'+token+'/'+ips[i]
+        outdir = './Output/'+token+'/'+ips[0]
     else:
         outdir = alt_out
     all_ips, less_ips, seed_names, credentials = '','','',''
