@@ -7,11 +7,8 @@
 <table id="files">
   <thead>
 	  <tr>
-		<th>Container</th>
-		<th>Category</th>
-		<th>Contacts</th>
-		<th>Position</th>
-		<th>Delete</th>
+		<th>Name</th>
+		<th>Action</th>
 	  </tr>
   </thead>
   <tbody>
@@ -19,21 +16,36 @@
         <tr>
             <td>{{ file.name }}</td>
             <td>
-                {% if os.path.isdir(os.path.join(BASE_DIR, subpath, file.name)) %}
-                    Directory
-                {% else %}
-                    File
-                {% endif %}
-            </td>
-            <td>
-                <a href="{{ file.path }}">Download</a>
+			{% if file.data[1] == "dir" %}
+                <a class="btn btn-primary" href="{{ file.data[0] }}">Open folder</a>
+			{% else %}
+				<a class="btn btn-primary" href="{{ file.data[0] }}">{{ file.data[1] }}</a>
+			{% endif %}
             </td>
         </tr>
     {% endfor %}
   </tbody>
 </table>
-
+<button class="btn btn-primary" onclick="goToParentPath()">Go to Parent Path</button>
 <script>
 	$("#files").DataTable();
+	function goToParentPath() {
+            // Get the current URL
+            let currentUrl = window.location.href;
+
+            // Remove the trailing slash if there is one
+            if (currentUrl.endsWith('/')) {
+                currentUrl = currentUrl.slice(0, -1);
+            }
+
+            // Find the last slash in the URL
+            let lastSlashIndex = currentUrl.lastIndexOf('/');
+
+            // Get the parent path by slicing the URL up to the last slash
+            let parentPath = currentUrl.slice(0, lastSlashIndex);
+
+            // Redirect to the parent path
+            window.location.href = parentPath + '/';
+        }
 </script>
 {% endblock %}

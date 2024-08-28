@@ -14,7 +14,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.'''
 import subprocess
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file, send_from_directory, redirect
 import requests
 import mysql.connector
 import json
@@ -36,6 +36,7 @@ import string
 import traceback
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
+import concurrent.futures
 
 f = open("conf.json")
 config = json.load(f)
@@ -422,6 +423,10 @@ def create_app():
     def check():
         return get_container_data()
             
+            
+    def send_request(url, headers):
+        return requests.post(url, headers=headers)
+    
     @app.route("/advanced_read_containers", methods=['POST'])
     def check_adv():
         if not config['is-master']:
@@ -435,9 +440,15 @@ def create_app():
                 conn.commit()
                 results = cursor.fetchall()
                 total_answer=[]
-                for r in results:
-                    obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
-                    total_answer = total_answer + json.loads(obtained)
+                # concurrent
+                with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+                    futures = [executor.submit(send_request, r[0]+"/sentinel/read_containers", request.headers) for r in results]
+                    for future in concurrent.futures.as_completed(futures):
+                        total_answer += json.loads(future.result().text)
+                # consecutive
+                #for r in results:
+                #    obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
+                #    total_answer = total_answer + json.loads(obtained)
                 return total_answer
         except Exception:
             print("Something went wrong because of:",traceback.format_exc())
@@ -736,6 +747,8 @@ def create_app():
         #container_name = subprocess.run('docker ps -a -f id='+container_id+' --format "{{.Names}}"', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n')[0]
         return render_template('log_show.html', container_id = container_id, r = r, container_name=container_id)
         
+
+    
     @app.route("/advanced-container/<container_id>")
     def get_container_logs_advanced(container_id):
         if not config['is-master']:
@@ -921,6 +934,10 @@ def create_app():
                 return root
         return None
     
+    @app.route('/download')
+    def redirect_to_download():
+        return redirect('/sentinel/downloads/')
+    
     @app.route('/downloads/')
     @app.route('/downloads/<path:subpath>')
     def list_files(subpath=''):
@@ -932,18 +949,20 @@ def create_app():
         if os.path.isdir(full_path):
             try:
                 files = os.listdir(full_path)
-                files_list = [
-                    {"name": f, "path": os.path.join(subpath, f)}
-                    for f in files
-                ]
-                return render_template("download_files", files=files_list, subpath=subpath)
+                files_list = [{"name": f, "data": [os.path.join(subpath, f)]} for f in files]
+                for a in files_list:
+                    if a['name'] in next(os.walk(full_path))[1]:
+                        a['data'].append('dir')
+                    else:
+                        a['data'].append('file')
+                return render_template("download_files.html", files=files_list, subpath=subpath)
             except FileNotFoundError:
                 return render_template("error_showing.html", r = "Issues during the retrieving of the folder: "+ traceback.format_exc()), 500
         # If it's a file, serve the file
         elif os.path.isfile(full_path):
             directory = os.path.dirname(full_path)
             filename = os.path.basename(full_path)
-            return Flask.send_from_directory(directory, filename, as_attachment=True)
+            return send_from_directory(directory, filename, as_attachment=True)
         else:
             return render_template("error_showing.html", r = "Issues during the retrieving of the file: "+ traceback.format_exc()), 500
     

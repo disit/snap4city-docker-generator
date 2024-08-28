@@ -1100,12 +1100,7 @@ def make_multiple_nifi(dashboard_ip, kafka_ip, main_opensearch_ip, ips, token, z
         j+=1
     return
 
-def make_multiple_opensearch(how_many, dashboard_ip, ldap_ip, token, ips, alt_out=None):
-    outdir = ''
-    if alt_out is None:
-        outdir = './Output/'+token+'/'+ips[0]
-    else:
-        outdir = alt_out
+def make_multiple_opensearch_added(how_many, dashboard_ip, ldap_ip, ips, alt_out):
     all_ips, less_ips, seed_names, credentials = '','','',''
     i=0
     for ip in ips:
@@ -1117,6 +1112,61 @@ def make_multiple_opensearch(how_many, dashboard_ip, ldap_ip, token, ips, alt_ou
     all_ips='      - dashboard:'+dashboard_ip+'\n      - ldap-server:'+ldap_ip+'\n'+less_ips
     i=0
     while i < how_many:
+        currentfolder = '/opensearch-conf-'+str(i)
+        copy('./Modules/opensearch-conf', alt_out+currentfolder)
+        copy('./Modules/opensearch-conf+/opensearch.yml',alt_out+currentfolder+'/opensearch.yml')
+        if i == 0:
+            copy('./Modules/docker-compose-elastic-multi-master.yml', alt_out+'/docker-compose-elastic-multi-master.yml')
+            copy('./Modules/opensearch-conf+/gen_certs_master.sh',alt_out+currentfolder+'/gen-certs.sh')
+        else:
+            copy('./Modules/docker-compose-elastic-multi-slave.yml', alt_out+'/docker-compose-elastic-multi-slave-'+str(i)+'.yml')
+            copy('./Modules/opensearch-conf+/gen_certs.sh',alt_out+currentfolder+'/gen-certs.sh')
+
+        with open(alt_out+currentfolder+'/gen-certs.sh', 'r') as f:
+            q=f.read()
+            q=q.replace('$#node_name#$','opensearch-n'+str(i+1))
+        with open(alt_out+currentfolder+'/gen-certs.sh','w') as f:
+            f.write(q)
+        if i == 0:
+            with open(alt_out+'/docker-compose-elastic-multi-master.yml','r') as f:
+                s=f.read()
+        else:
+            with open(alt_out+'/docker-compose-elastic-multi-slave-'+str(i)+'.yml','r') as f:
+                s=f.read()
+        s=s.replace('$#hosts_less#$',less_ips)
+        s=s.replace('$#extra_hosts#$',all_ips)
+        s=s.replace('$#id_ip#$',ips[i])
+        s=s.replace('$#node_name#$','opensearch-n'+str(i+1))
+        s=s.replace('$#seed_hosts#$',seed_names)
+        if i == 0:
+            with open(alt_out+'/docker-compose-elastic-multi-master.yml','w') as f:
+                f.write(s)
+        else:
+            with open(alt_out+'/docker-compose-elastic-multi-slave-'+str(i)+'.yml','w') as f:
+                f.write(s)
+        with open(alt_out+currentfolder+'/opensearch.yml','r') as f:
+            s=f.read()
+        s=s.replace('$#credentials#$',credentials)
+        with open(alt_out+currentfolder+'/opensearch.yml','w') as f:
+            f.write(s)
+
+        i+=1
+		
+		
+def make_multiple_opensearch(how_many, dashboard_ip, ldap_ip, token, ips):
+    base_dir = './Output/'+token+'/'
+    all_ips, less_ips, seed_names, credentials = '','','',''
+    i=0
+    for ip in ips:
+        less_ips+='      - opensearch-n'+str(i+1)+':'+ip+'\n'
+        seed_names+='opensearch-n'+str(i+1)+','
+        credentials+='  - "CN=opensearch-n'+str(i+1)+',O=SNAP4,L=Florence,ST=Toscana,C=IT"\n'
+        i+=1
+    seed_names=seed_names[:-1]
+    all_ips='      - dashboard:'+dashboard_ip+'\n      - ldap-server:'+ldap_ip+'\n'+less_ips
+    i=0
+    while i < how_many:
+        outdir = base_dir + ips[i]
         currentfolder = '/opensearch-conf-'+str(i)
         copy('./Modules/opensearch-conf', outdir+currentfolder)
         copy('./Modules/opensearch-conf+/opensearch.yml',outdir+currentfolder+'/opensearch.yml')
