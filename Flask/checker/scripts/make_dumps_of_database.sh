@@ -20,3 +20,6 @@ lsblk >> sysinfo.txt
 echo bus tree info >> sysinfo.txt
 lspci >> sysinfo.txt
 #todo postgres-s geoserver is cursed and doesn't like any user or password
+
+rm -r php-css-dump
+docker exec dashboard-builder sh -c 'cd /var/www/html && tar czf - $(find . "*.php" -o -name "*.css")'

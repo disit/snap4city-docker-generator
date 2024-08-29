@@ -23,7 +23,7 @@ services:
   dashboard-builder:
     container_name: dashboard-builder
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v8.2
+    image: disitlab/dashboard-builder:v8.2.1
     #build: ./build/dashboard-builder
     ports:
       - "70:80"
@@ -112,7 +112,7 @@ services:
   dashboard-cron:
     container_name: dashboard-cron
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v8.2
+    image: disitlab/dashboard-builder:v8.2.1
     volumes:
        - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
        - ./dashboard-cron-conf/crontab:/crontab
