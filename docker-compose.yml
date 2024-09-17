@@ -4,9 +4,9 @@ services:
     build: 
       context: ./Flask
       tags:
-        #- fabriziomereu/snap4city_installation_generator:rel.1.9.3
+        #- fabriziomereu/snap4city_installation_generator:rel.2.1.1
         - fabriziomereu/snap4city_installation_generator:unstable
-    image: fabriziomereu/snap4city_installation_generator:dev.2.1
+    image: fabriziomereu/snap4city_installation_generator:dev.2.1.2
     links:
       - db
     ports:

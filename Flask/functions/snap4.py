@@ -1375,6 +1375,8 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
             path = '/Flask'+location[1:]
             with open(os.path.join(dname,file), 'r') as f:
                 data=f.read()
+            with open(os.path.join(dname,file+".old"), 'w') as f:
+                f.write(data)
             data = re.sub(r'(name: )([a-zA-Z0-9-]*)([\w|\W]*)(path: '+path+')(/kubernetes)(\s)',r'\1\2\3\4/volumes/\2-volume\6',data)
             # /Flask/Output/d151c7ce869dbc472534b7286696cbf1bec2d9c9/192.168.1.18/kubernetes
             # /Flask/Output/d151c7ce869dbc472534b7286696cbf1bec2d9c9/192.168.1.18/kubernetes\/volumes\/kafka\-volume
@@ -1389,21 +1391,26 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
         with open(location+'/kubernetes/docker-compose.yml', 'r') as f:
             data_volumes = f.read()
         lines = data_volumes.split("\n")
-        data_lines = [a for a in lines if "- /mnt" in a]
-        data_lines = [a.strip() for a in data_lines]
-        data_lines = [a[2:a.find(':')] for a in data_lines]
+        matches = []
+        for line in lines:
+            match = re.match(r'(\s*- )([\w\/\-\._]*:)([\w\/\-\._]*)(:r[w|o])', line.strip())  # Use strip() to remove leading/trailing whitespaces
+            if match:
+                matches.append(match.group(0))
+        data_lines = [a[2:a.find(':')] for a in matches]
         for dname, dirs, files in os.walk(location+'/kubernetes'):
             for file,volume_path in zip(sorted([file for file in files if 'persistentvolumeclaim' in file]),data_lines):
                 if 'persistentvolumeclaim' in file:
                     temporary = ''
                     vname=''
-                    with open('./Modules/kubernetes/dummy-persistentVolume.yaml', 'r') as f:
+                    with open('./dummy-persistentVolume.yaml', 'r') as f:
                         temporary = f.read()
                         vname=file[file.rfind('\\')+1:file.rfind('-')]
-
-                        temporary=temporary.replace('$#volume-name#$',vname)
+                        if "/" not in vname:
+                            temporary=temporary.replace('$#volume-name#$',final_path+"/kubernetes"+vname)
+                        else:
+                            temporary=temporary.replace('$#volume-name#$',vname)
+                        
                         temporary=temporary.replace('$#volume-path#$',volume_path.replace("/kubernetes",""))
-                        #print(location+'/kubernetes/'+vname+'-persistentvolume.yaml')
                     with open(location+'/kubernetes/'+vname+'-persistentvolume.yaml', 'w') as f:
                         f.write(temporary)
 

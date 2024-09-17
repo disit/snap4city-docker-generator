@@ -96,7 +96,7 @@ def filter_out_muted_containers_for_telegram(containers):
                 new_elements.append(element)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
-    return "\n".join(new_elements)
+    return new_elements
 
 def filter_out_muted_failed_are_alive_for_telegram(tests):
     try:
@@ -108,6 +108,8 @@ def filter_out_muted_failed_are_alive_for_telegram(tests):
                     SELECT component, until FROM RankedEntries WHERE row_num = 1;'''
             cursor.execute(query)
             results = cursor.fetchall()
+            if len(results) == 0:
+                return ", ".join([a["container"] for a in tests])
         new_elements=[]
         for element in results:
             for element_2 in tests:
@@ -116,9 +118,11 @@ def filter_out_muted_failed_are_alive_for_telegram(tests):
                         pass
                     else:
                         new_elements.append(element_2)
+                else:
+                    new_elements.append(element)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
-    return "\n".join(new_elements)
+    return ", ".join([a["Name"] for a in new_elements])
 
 def filter_out_wrong_status_containers_for_telegram(containers):
     try:
@@ -134,16 +138,15 @@ def filter_out_wrong_status_containers_for_telegram(containers):
         restruct={}
         for a in results:
             restruct[a[0]]=a[1]
-        for element in ast.literal_eval(containers):
+        for element in containers:
             if element["Names"] in [a[0] for a in results]:
-                print(element["Names"])
-                if restruct[element["Names"]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
-                    print("skipped")
+                if restruct[element[element["Names"]]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+                    pass
                 else:
                     new_elements.append(element)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
-    return "\n".join(new_elements)
+    return ", ".join([a["Name"] for a in new_elements])
 
 def isalive():
     send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is alive", config["platform-url"]+" is alive")
@@ -189,13 +192,13 @@ def auto_alert_status():
             conn.commit()
             results = cursor.fetchall()
     except Exception:
-        send_alerts("Can't reach db, auto alert 1:", traceback.format_exc())
+        send_alerts("Can't reach db, auto alert 1:"+ traceback.format_exc())
         return
     is_alive_with_ports = auto_run_tests()
     components = [a[0].replace("*","") for a in results]
     components_original = [a[0] for a in results]
     containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in components) and (c["State"] != "running")]
-    containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["62149183138_certbot_1"]) and c["State"] != "exited"]
+    containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["certbot"]) and c["State"] != "exited"]
     containers_which_are_running_but_are_not_healthy = [c for c in containers_merged if any(c["Names"].startswith(value) for value in components) and "unhealthy" in c["Status"]]
     problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not + containers_which_are_running_but_are_not_healthy
     #containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) - set([n["Names"] for n in problematic_containers]))
@@ -206,7 +209,7 @@ def auto_alert_status():
         try:
             issues = ["","",""] # maybe make this a real object, later
             if len(names_of_problematic_containers) > 0:
-                issues[0]=str(problematic_containers)
+                issues[0]=problematic_containers
             if len(is_alive_with_ports) > 0:
                 issues[1]=is_alive_with_ports #this has to be refined
             if len(containers_which_are_not_expected) > 0:
@@ -242,25 +245,27 @@ def send_advanced_alerts(message):
     try:
         text_for_email = ""
         if len(message[0])>0:
-            text_for_email = "These containers are not in the correct status: " + str(message[0])+"\n"
+            text_for_email = "These containers are not in the correct status: " + ", ".join([a["Name"] for a in message[0]])+"\n"
         if len(message[1])>0:
-            text_for_email+= 'These containers are not answering correctly to their "is alive" test: '+ str(message[1])+"\n"
+            text_for_email+= 'These containers are not answering correctly to their "is alive" test: '+ ", ".join([a["container"] for a in message[1]])+"\n"
         if len(message[2])>0:
             text_for_email+= "These containers weren't found in docker: "+ ", ".join(message[2])+"\n"
-        send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", text_for_email)
-        
+        try:
+            send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", text_for_email)
+        except:
+            print("[ERROR] while sending email:",text_for_email)
         text_for_telegram = ""
-        wrong_status_containers = filter_out_wrong_status_containers_for_telegram(message[0]).split("\n")
-        failed_are_alive_containers = filter_out_muted_failed_are_alive_for_telegram(message[1]).split("\n")
-        containers_not_found = filter_out_muted_containers_for_telegram(message[2]).split("\n")
-        if len(wrong_status_containers)>0:
-            text_for_telegram = "These containers are not in the correct status: " + ", ".join(wrong_status_containers) +"\n"
-        if len(failed_are_alive_containers)>0:
-            text_for_telegram+= 'These containers are not answering correctly to their "is alive" test: '+ ", ".join(failed_are_alive_containers)+"\n"
-        if len(containers_not_found)>0:
-            text_for_telegram+= "These containers weren't found in docker: "+ ", ".join(containers_not_found)+"\n"
+        if len(message[0])>0:
+            text_for_telegram = "These containers are not in the correct status: " + str(filter_out_wrong_status_containers_for_telegram(message[0])) +"\n"
+        if len(message[1])>0:
+            text_for_telegram+= 'These containers are not answering correctly to their "is alive" test: '+ str(filter_out_muted_failed_are_alive_for_telegram(message[1]))+"\n"
+        if len(filter_out_muted_containers_for_telegram(message[2]))>0:
+            text_for_telegram+= "These containers weren't found in docker: "+ str(filter_out_muted_containers_for_telegram(message[2]))+"\n"
         if len(text_for_telegram)>0:
-            send_telegram(config["platform-url"]+" is alive", text_for_telegram)
+            try:
+                send_telegram(config["platform-url"]+" is alive", text_for_telegram)
+            except:
+                print("[ERROR] while sending telegram:",text_for_email)
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
         
