@@ -1459,7 +1459,10 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
                     temporary = f.read()
                     vname=file[file.rfind('\\')+1:file.rfind('-')]
                     temporary=temporary.replace('$#volume-name#$',vname)
-                    temporary=temporary.replace('$#volume-path#$',volume_path.replace("/kubernetes",""))
+                    if volume_path[0] != "/":
+                        temporary=temporary.replace('$#volume-path#$',"/mnt/data/generated/"+volume_path.replace("/kubernetes",""))
+                    else:
+                        temporary=temporary.replace('$#volume-path#$',volume_path.replace("/kubernetes",""))
                 with open(location+'/kubernetes/'+vname+'-persistentvolume.yaml', 'w') as f:
                     f.write(temporary)
      
