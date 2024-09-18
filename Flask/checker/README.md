@@ -26,9 +26,15 @@ To schedule the background healthchecks, you need to install the Apscheduler pac
 
 To connect to the MySQL database, you need to install the mysql-connector-python package: `pip install mysql-connector-python`
 
-To create the archive for certification, you'll need to install the zip package: `apt-get install zip`; you might need admin privileges to install it
+To create the archive for certification, you'll need to install the rar package: `apt-get install rar`; you might need admin privileges to install it
 
 If this doesn't run be sure to update Python (3.9 minimum), Flask and for python (use apt-get and pip)
+
+To automate the start and the restart of the service, you may use cron; here is an example:
+
+`10 1 * * * cd /path/to/installation/checker; PID=$(lsof -ti :4081); if [ ! -z "$PID" ]; then kill $PID; else echo "No process found on port 4081" >> sentinel-log.txt; fi; nohup waitress-serve --port 4081 --call flask_app:create_app >> sentinel-log.txt 2>&1 &`
+
+`*/5 * * * * cd /path/to/installation/checker; PID=$(lsof -ti :4081); if [ ! -z "$PID" ]; then echo "Don't need to restart sentinel" >> sentinel-log.txt; else echo "No process found on port 4081"; nohup waitress-serve --port 4081 --call flask_app:create_app >> sentinel-log.txt 2>&1; fi;`
 
 # Using the service
 
