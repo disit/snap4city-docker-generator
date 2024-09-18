@@ -1220,12 +1220,12 @@ def placeholders_in_folder(placeholders, path_of_folder, ignore_reading_errors=F
                     pass
                 else:
                     raise E
-                
+
 
 
 def add_utils(destination_path):
     copy('./utilsAndTools', destination_path)
-    
+
 def copy(source, dest):
     """Tries to copy a file from source to destination; if it's not file, try to copy as a folder, fail otherwise"""
     try:
@@ -1370,49 +1370,97 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     kompose convert --volumes persistentVolumeClaim
     sed -i 's@name: proxy@name: '''+hostname+'''@' ./proxy-service.yaml''')
 
-    for dname, dirs, files in os.walk(location+'/kubernetes'):
+    # removes all the volumes, they are not properly ordered
+    for dname, _, files in os.walk(location+'/kubernetes'):
+        for file in files:
+            if file.endswith('persistentvolumeclaim.yaml'):
+                os.remove(os.path.join(dname,file)) 
+
+    # this fixes the paths to be no longer relative to the generator
+    for dname, _, files in os.walk(location+'/kubernetes'):
         for file in files:
             path = '/Flask'+location[1:]
             with open(os.path.join(dname,file), 'r') as f:
                 data=f.read()
-            with open(os.path.join(dname,file+".old"), 'w') as f:
-                f.write(data)
             data = re.sub(r'(name: )([a-zA-Z0-9-]*)([\w|\W]*)(path: '+path+')(/kubernetes)(\s)',r'\1\2\3\4/volumes/\2-volume\6',data)
-            # /Flask/Output/d151c7ce869dbc472534b7286696cbf1bec2d9c9/192.168.1.18/kubernetes
-            # /Flask/Output/d151c7ce869dbc472534b7286696cbf1bec2d9c9/192.168.1.18/kubernetes\/volumes\/kafka\-volume
-            # /mnt/data/generated2.168.1.18/volumes/kafka-volume
-
             data = data.replace(path,final_path)
             with open(os.path.join(dname,file), 'w') as f:
                 f.write(data)
     data_volumes = ""
+    
+    # each number in file names is padded to be 3 digits long
+    for dname, _, files in os.walk(location+'/kubernetes'):
+        for file in files:
+            with open(os.path.join(dname,file),"r") as f:
+                buffer = f.read()
+            os.remove(os.path.join(dname,file)) 
+            a = re.split(r'\d+',file)
+            b = re.findall(r'\d+',file)
+            b = [str(i).zfill(3) for i in b]
+            concatenated = "".join([i + j for i, j in zip(a, b)])+a[-1]
+            with open(os.path.join(dname,concatenated),"w") as f:
+                f.write(buffer)
 
-    if True:
-        with open(location+'/kubernetes/docker-compose.yml', 'r') as f:
-            data_volumes = f.read()
-        lines = data_volumes.split("\n")
-        matches = []
-        for line in lines:
-            match = re.match(r'(\s*- )([\w\/\-\._]*:)([\w\/\-\._]*)(:r[w|o])', line.strip())  # Use strip() to remove leading/trailing whitespaces
-            if match:
-                matches.append(match.group(0))
-        data_lines = [a[2:a.find(':')] for a in matches]
-        for dname, dirs, files in os.walk(location+'/kubernetes'):
-            for file,volume_path in zip(sorted([file for file in files if 'persistentvolumeclaim' in file]),data_lines):
-                if 'persistentvolumeclaim' in file:
-                    temporary = ''
-                    vname=''
-                    with open('./dummy-persistentVolume.yaml', 'r') as f:
-                        temporary = f.read()
-                        vname=file[file.rfind('\\')+1:file.rfind('-')]
-                        if "/" not in vname:
-                            temporary=temporary.replace('$#volume-name#$',final_path+"/kubernetes"+vname)
+    # this reads all volumes
+    with open(location+'/kubernetes/docker-compose.yml', 'r') as f:
+        data_volumes = f.read()
+    lines = data_volumes.split("\n")
+    matches = []
+    for line in lines:
+        match = re.match(r'(\s*- )([\w\/\-\._]*:)([\w\/\-\._]*)(:r[w|o])', line.strip())
+        if match:
+            matches.append(match.group(0))
+    data_lines = [a[2:a.find(':')] for a in matches]
+
+    # store the name of the new volumes
+    proper_volume_names = []
+    # this makes all volumes as "container"-"claim"-"number"
+    for dname, _, files in os.walk(location+'/kubernetes'):
+        for file_seen in files:
+            if file_seen.endswith("-deployment.yaml"):
+                with open(os.path.join(dname,file_seen),"r") as file:
+                    current_content_lines = file.readlines()
+                    current_content = "".join(current_content_lines)
+                    matches = []
+                    proper_names = []
+                    for line in current_content_lines:
+                        match = re.match(r'^(\s*)(claimName: )([a-zA-Z0-9\-]*?)(\d*)$', line.strip())
+                        if match:
+                            proper_names.append(match.group(3)+match.group(4))
+                            matches.append(match.group(0))
+                    proper_base = file_seen[:-16]
+                    for i in range(len(proper_names)):
+                        if proper_names[i] != proper_base:
+                            current_content = current_content.replace(proper_names[i]+'\n', proper_base+"-claim"+f"{i:03}"+'\n')
                         else:
-                            temporary=temporary.replace('$#volume-name#$',vname)
-                        
-                        temporary=temporary.replace('$#volume-path#$',volume_path.replace("/kubernetes",""))
-                    with open(location+'/kubernetes/'+vname+'-persistentvolume.yaml', 'w') as f:
-                        f.write(temporary)
+                            parts = current_content.split(proper_base+"\n")
+                            current_content = (proper_base+'\n').join(parts[:6]) + proper_base+"-claim"+f"{i:03}"+'\n' + (proper_base+"-claim"+f"{i:03}"+'\n').join(parts[6:])
+                        proper_volume_names.append(proper_base+"-claim"+f"{i:03}")
+                with open(os.path.join(dname,file_seen), "w") as file_saved:
+                    file_saved.write(current_content)
+    
+    #makes the new pvc
+    for new_pvc in proper_volume_names:
+        with open(location+'/kubernetes/'+new_pvc+"-persistentvolumeclaim.yaml", "w") as f, open('./Modules/kubernetes/dummy-pvc.yaml', 'r') as g:
+            f.write(g.read().replace("$#pvc-name#$", new_pvc))
+            
+            
+    #makes the new pv
+    for dname, _, files in os.walk(location+'/kubernetes'):
+        for file,volume_path in zip(sorted([file for file in files if 'persistentvolumeclaim' in file]),data_lines):
+            print(file, volume_path)
+            if 'persistentvolumeclaim' in file:
+                temporary = ''
+                vname=''
+                with open('./Modules/kubernetes/dummy-persistentVolume.yaml', 'r') as f:
+                    temporary = f.read()
+                    vname=file[file.rfind('\\')+1:file.rfind('-')]
+                    temporary=temporary.replace('$#volume-name#$',vname)
+                    temporary=temporary.replace('$#volume-path#$',volume_path.replace("/kubernetes",""))
+                with open(location+'/kubernetes/'+vname+'-persistentvolume.yaml', 'w') as f:
+                    f.write(temporary)
+     
+    
 
     # WARNS to be solved
     # Service * won't be created if 'ports' is not specified
