@@ -5,9 +5,10 @@ metadata:
     io.kompose.service: $#pvc-name#$
   name: $#pvc-name#$
 spec:
+  volumeName: $#pvc-name#$
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: 100Mi
-  storageClassName: efs-sc
+  storageClassName: manual
