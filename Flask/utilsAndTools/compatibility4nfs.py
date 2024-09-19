@@ -27,7 +27,6 @@ for r, d, f in os.walk(thisdir):
         if 'deployment' in file:
             with open(thisdir+os.sep+file,'r') as opened:
                 origs.append(yaml.load(opened, Loader=yaml.FullLoader))
-
 problematicNames = ['iotapp-','mongo-','orionbrokerfilter-']
 
 #fix the security context for nfs reasons
@@ -54,6 +53,7 @@ for orig in origs:
         continue
     try:
         cur = orig['spec']['template']['spec']['volumes']
+        #print(len(cur),cur)
         for i in range(len(cur)):
             if lastkey == cur[i]:
                 lastkey = cur[i]
@@ -64,7 +64,7 @@ for orig in origs:
                     # if there is a number at the end of the pvc, drop it
                     # it is caused by kompose making each volume indipendent from each other
                     temp['persistentVolumeClaim']['claimName']='claimnamereplaceme'
-                    temp['name'] = temp['name'][:re.search(r"\d",temp['name']).end()-1]
+                    #temp['name'] = temp['name'][:re.search(r"\d",temp['name']).end()-1]
                 except AttributeError as E:
                     print('[Error] Did not fix because', E)
 
@@ -72,6 +72,7 @@ for orig in origs:
     except KeyError as E:
         print('No volumes for the deployment',orig['spec']['template']['spec']['containers'][0]['name'])
 
+#print("\n\n\n", origs, "\n\n\n")
 # try to merge the volumes of a single deployment
 for orig in origs:
     something = []
@@ -82,17 +83,18 @@ for orig in origs:
         #for i in range(len(orig['spec']['template']['spec']['volumes'])):
         #    print(orig['spec']['template']['spec']['volumes'][i],'\n')
         # filter the duplicates
+        print(orig, "old", orig['spec']['template']['spec']['volumes'], "new", list({v['name']:v for v in orig['spec']['template']['spec']['volumes']}.values()), "\n\n")
         orig['spec']['template']['spec']['volumes']=list({v['name']:v for v in orig['spec']['template']['spec']['volumes']}.values())
     except KeyError as E:
         print('No volumes for the deployment',orig['spec']['template']['spec']['containers'][0]['name'])
 
 data = ''
 print("Read the volumes from the docker-compose yaml")
-with open(os.getcwd()+os.sep+'..'+os.sep+'docker-compose.yml','r') as getall:
+with open(os.getcwd()+os.sep+'../kubernetes/'+os.sep+'docker-compose.yml','r') as getall:
     data=getall.read()
 
 # get the volumes in the docker yaml
-volumes = re.findall(" *- [\w/:.-]+:rw",data)
+volumes = re.findall(" *- [\w/:.-]+:r[ow]",data)
 volumes = [volume.strip()[2:].split(':',1) for volume in volumes]
 
 print("Converting the volumes mounts to be consistent with nfs requirements")
@@ -105,14 +107,14 @@ for orig in origs:
         for i in range(len(orig['spec']['template']['spec']['containers'][0]['volumeMounts'])):
             current = orig['spec']['template']['spec']['containers'][0]['volumeMounts'][i]
             try:
-                number = current['name'][re.search(r'\d',current['name']).end()-1:]
-                pos=re.search(r'\d',current['name']).end()-1
-                addeddict = {'mountPath':current['mountPath'],'name':current['name'][:pos],'subPath':tempvolumes.pop(0)[0]}
+                print(current)
+                print(tempvolumes[0],"\n")
+                addeddict = {'mountPath':current['mountPath'],'name':current['name'],'subPath':tempvolumes.pop(0)[0]}
                 templist.append(addeddict)
-                print(addeddict)
+                #print(addeddict)
             except AttributeError as E:
                 templist.append({'mountPath':current['mountPath'],'name':current['name'],'subPath':tempvolumes.pop(0)[0]})
-                print('Did not fix')
+                print('Did not fix', E)
             except IndexError as E:
                 print('[Error] Something went wrong:',E)
     except KeyError as E:
