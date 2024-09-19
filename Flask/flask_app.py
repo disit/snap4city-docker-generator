@@ -572,7 +572,7 @@ def create_app():
                         #happens if we merge a file into one another before coming here
                         pass
                 if modello=='Kubernetes':
-                    snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh',['./Output/'+token+'/'+ips[0]+'/post-setup-kubernetes.sh'])
+                    snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup-virtuoso-k8.sh',['./Output/'+token+'/'+ips[0]+'/post-setup-kubernetes.sh'])
                 else:
                     snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh',['./Output/'+token+'/'+ips[0]+'/post-setup.sh'])
                 os.rename('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh','./Output/'+token+'/'+ips[0]+'/post-setup.sh')

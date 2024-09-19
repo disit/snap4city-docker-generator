@@ -10,6 +10,6 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: $#volume-name#$-storageClass
+  storageClassName: manual
   hostPath:
     path: "$#volume-path#$"

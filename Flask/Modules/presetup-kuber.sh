@@ -18,7 +18,7 @@ else
 fi
 echo "setting shared path for volumes: $SCRIPTPATH"
 # replace standard folder with the computed folder
-sed -i "s?/mnt/data/generated/kubernetes?$SCRIPTPATH?g" *.yaml
+sed -i "s?/mnt/data/generated?$SCRIPTPATH?g" *.yaml
 #sed -i "s?/mnt/data/generated?$SCRIPT?g" *.yaml
 
 read -p "create $#k8-namespace#$ namespace? (yes/no) " choice

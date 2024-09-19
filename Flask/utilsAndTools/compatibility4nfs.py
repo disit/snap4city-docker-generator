@@ -32,7 +32,8 @@ problematicNames = ['iotapp-','mongo-','orionbrokerfilter-']
 #fix the security context for nfs reasons
 print("Setting security context for all pods as 0,0,0")
 for orig in origs:
-    orig['spec']['template']['spec']['securityContext']={'runAsUser':0,'runAsGroup':0,'fsGroup':0}
+    if orig['spec']['template']['spec']['securityContext'] in ["dashboard-builder", "dashboard-cron", "nifi", "proxy"]:
+        orig['spec']['template']['spec']['securityContext']={'runAsUser':0,'runAsGroup':0,'fsGroup':0}
     if orig['spec']['template']['spec']['containers'][0]['name']=='virtuoso-kb':
         orig['spec']['template']['spec']['containers'][0]['readynessProbe']={'exec':{'command':'["/bin/sh", "-c", "/root/servicemap/run.sh"]'},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
     elif orig['spec']['template']['spec']['containers'][0]['name']=='nifi':
@@ -83,7 +84,7 @@ for orig in origs:
         #for i in range(len(orig['spec']['template']['spec']['volumes'])):
         #    print(orig['spec']['template']['spec']['volumes'][i],'\n')
         # filter the duplicates
-        print(orig, "old", orig['spec']['template']['spec']['volumes'], "new", list({v['name']:v for v in orig['spec']['template']['spec']['volumes']}.values()), "\n\n")
+        
         orig['spec']['template']['spec']['volumes']=list({v['name']:v for v in orig['spec']['template']['spec']['volumes']}.values())
     except KeyError as E:
         print('No volumes for the deployment',orig['spec']['template']['spec']['containers'][0]['name'])
