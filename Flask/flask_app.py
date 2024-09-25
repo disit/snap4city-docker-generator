@@ -607,7 +607,7 @@ esac
                 if modello == 'Kubernetes':
                     snap4.copy('./Modules/kubernetes_README.md', './Output/'+token+'/'+ips[0]+'/kubernetes_README.md')
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_README.md',fine_as_is)
-                    snap4.docker_to_kubernetes('./Output/'+token+'/'+ips[0],fine_as_is['$#base-hostname#$'],fine_as_is['$#k8-namespace#$'])
+                    snap4.docker_to_kubernetes('./Output/'+token+'/'+ips[0],fine_as_is['$#base-hostname#$'],fine_as_is['$#k8-namespace#$'],ips[0])
 
             #refactor
             elif modello == "Normal":

@@ -1,5 +1,5 @@
 # note: this is still experimental
-
+cd servicemap-conf
 source update-ontology.sh localhost
 kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  bash -c "cd /root/servicemap; ./update-ontology.sh virtuoso-kb"
 kubectl -n $#k8-namespace#$ exec deployment/virtuoso-kb  --  isql-v localhost dba "$#virtuoso-kb-pwd#$" "EXEC=rdfs_rule_set ('urn:ontology', 'http://www.disit.org/km4city/resource/Ontology');"
@@ -108,6 +108,9 @@ echo
 echo fixing openldap admin password
 kubectl -n snap4k8s exec deployment/ldap-server -- bash /ldif_files/psw.sh
 
-
+cd ..
 echo "fixing keycloak (for this to work, the system must be able to recognize its own hostname)"
 python3 keycloak-conf/keycloak-rest.py $#base-url#$/auth admin $#keycloak-admin-pwd#$
+python3 keycloak-conf/keycloak-step-2.py
+echo running again to fix first execution
+python3 keycloak-conf/keycloak-step-2.py

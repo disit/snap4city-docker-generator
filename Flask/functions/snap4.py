@@ -19,6 +19,8 @@ from copy import deepcopy
 import re
 import gzip
 
+import yaml
+
 def make_iotapp_folder(origin, path, id_iotapp, placeholders):
     # make the folder and copy the files; do placeholders while at it
     os.makedirs(path+'/iotapp-'+str(id_iotapp).zfill(3))
@@ -1293,7 +1295,7 @@ def add_components_for_sentinel(mysql_location, mongos, nifis, iotapps, opensear
     add_brokers_for_sentinel(mysql_location, brokers)
 
 #TODO "end of files" volumes are not generated and they should be
-def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/generated'):
+def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/generated', ip="127.0.0.1"):
     # unfortunately, docker-compose config was edited in a such way it broke some usages, even if the devs say that's intended
     # nevermind that they deleted tests that were failing on that release
     # therefore yq is used to fix the mistake, which happens on the depends_on attribute
@@ -1465,9 +1467,25 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
                         temporary=temporary.replace('$#volume-path#$',volume_path.replace("/kubernetes",""))
                 with open(location+'/kubernetes/'+vname+'-persistentvolume.yaml', 'w') as f:
                     f.write(temporary)
-     
+                
+    ldapyaml = yaml.load(open(location+"/kubernetes/ldap-server-deployment.yaml"), Loader=yaml.FullLoader)
+    ldapyaml["spec"]["template"]["spec"]["initContainer"] = {"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /efsvolume/snap4volumes/ldap-conf)\" ] && { echo \"empty. do copy\"; cp -R /etc/ldap/slapd.d/* /efsvolume/snap4volumes/ldap-conf; cp -R /var/lib/ldap/* /efsvolume/snap4volumes/ldap-db; true; } || { echo \"not empty. no copy\"; true;}"]}
+    ldapyaml["spec"]["template"]["spec"]["containers"][0]["args"]=[]
+    yaml.dump(ldapyaml, open(location+"/kubernetes/ldap-server-deployment.yaml", "w"))
     
-
+    #proxyserviceyaml = yaml.load(open(location+"/kubernetes/proxy-service.yaml"), Loader=yaml.FullLoader)
+    #proxyserviceyaml["metadata"]["name"]["spec"]["containers"][0]["args"]=[]
+    #yaml.dump(proxyserviceyaml, open(location+"/kubernetes/proxy-service.yaml", "w"))
+    
+    some_containers = ["dashboard-builder", "dashboard-cron", "iotapp-", "nifi", "opensearch-n", "orionbrokerfilter", "personaldata", "servicemap", "synoptics", "wsserver"]
+    
+    for dname, _, files in os.walk(location+'/kubernetes'):
+        for file_seen in files:
+            if file_seen.startswith(tuple(some_containers)) and file_seen.endswith("-deployment.yaml"):
+                currentyaml = yaml.load(open(location+"/kubernetes/"+file_seen), Loader=yaml.FullLoader)
+                currentyaml["spec"]["template"]["spec"]["hostAliases"] = [{"ip": ip, "hostnames":[hostname]}]
+                yaml.dump(currentyaml, open(location+"/kubernetes/"+file_seen, "w"))
+                
     # WARNS to be solved
     # Service * won't be created if 'ports' is not specified
     #fixing cron
