@@ -1469,12 +1469,12 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
                     f.write(temporary)
                 
     ldapyaml = yaml.load(open(location+"/kubernetes/ldap-server-deployment.yaml"), Loader=yaml.FullLoader)
-    ldapyaml["spec"]["template"]["spec"]["initContainer"] = {"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /efsvolume/snap4volumes/ldap-conf)\" ] && { echo \"empty. do copy\"; cp -R /etc/ldap/slapd.d/* /efsvolume/snap4volumes/ldap-conf; cp -R /var/lib/ldap/* /efsvolume/snap4volumes/ldap-db; true; } || { echo \"not empty. no copy\"; true;}"]}
+    ldapyaml["spec"]["template"]["spec"]["initContainer"] = {"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /efsvolume/snap4volumes/ldap-conf)\" ] && { echo \"empty. do copy\"; cp -R /etc/ldap/slapd.d/* /efsvolume/snap4volumes/ldap-conf; cp -R /var/lib/ldap/* /efsvolume/snap4volumes/ldap-db; true; } || { echo \"not empty. no copy\"; true;}"], "image": "disitlab/preconf-openldap:v3", "name": "copy-open-ldap", "volumeMounts": [{"mountPath": "/snap4volumes/ldap-conf", "name":"ldap-server-claim000"},{"mountPath": "/snap4volumes/ldap-db", "name":"ldap-server-claim002"}]}
     ldapyaml["spec"]["template"]["spec"]["containers"][0]["args"]=[]
     yaml.dump(ldapyaml, open(location+"/kubernetes/ldap-server-deployment.yaml", "w"))
     
     builderldap = yaml.load(open(location+"/kubernetes/dashboard-builder-deployment.yaml"), Loader=yaml.FullLoader)
-    builderldap["spec"]["template"]["spec"]["initContainer"] = {"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"]}
+    builderldap["spec"]["template"]["spec"]["initContainer"] = {"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"], "image": "disitlab/dashboard-builder:v8.2.1", "name": "copy-dashboard-builder", "volumeMounts": [{"mountPath": "/snap4volumes/dashboard-img", "name":"dashboard-builder-claim005"}]}
     builderldap["spec"]["template"]["spec"]["containers"][0]["args"]=[]
     yaml.dump(builderldap, open(location+"/kubernetes/dashboard-builder-deployment.yaml", "w"))
     

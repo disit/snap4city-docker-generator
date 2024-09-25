@@ -573,9 +573,10 @@ def create_app():
                         pass
                 if modello=='Kubernetes':
                     snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup-virtuoso-k8.sh',['./Output/'+token+'/'+ips[0]+'/post-setup-kubernetes.sh'])
+                    os.rename('./Output/'+token+'/'+ips[0]+'/setup-virtuoso-k8.sh','./Output/'+token+'/'+ips[0]+'/post-setup.sh')
                 else:
                     snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh',['./Output/'+token+'/'+ips[0]+'/post-setup.sh'])
-                os.rename('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh','./Output/'+token+'/'+ips[0]+'/post-setup.sh')
+                    os.rename('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh','./Output/'+token+'/'+ips[0]+'/post-setup.sh')
                 if fine_as_is["$#base-protocol#$"] == "https":
                     snap4.fixvarnish('./Output/'+token+'/'+ips[0]+'/varnish/varnish-conf/default.vcl', False)
                     snap4.make_ngnix_micro_ssl('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)

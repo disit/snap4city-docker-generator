@@ -32,7 +32,7 @@ problematicNames = ['iotapp-','mongo-','orionbrokerfilter-']
 #fix the security context for nfs reasons
 print("Setting security context for all pods as 0,0,0")
 for orig in origs:
-    if orig['spec']['template']['spec']['securityContext'] in ["dashboard-builder", "dashboard-cron", "nifi", "proxy"]:
+    if 'securityContext' in orig['spec']['template']['spec'] and orig['spec']['template']['spec']['containers'][0]['name'] in ["dashboard-builder", "dashboard-cron", "nifi", "proxy"]:
         orig['spec']['template']['spec']['securityContext']={'runAsUser':0,'runAsGroup':0,'fsGroup':0}
     if orig['spec']['template']['spec']['containers'][0]['name']=='virtuoso-kb':
         orig['spec']['template']['spec']['containers'][0]['readynessProbe']={'exec':{'command':'["/bin/sh", "-c", "/root/servicemap/run.sh"]'},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
