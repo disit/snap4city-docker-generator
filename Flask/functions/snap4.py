@@ -1473,6 +1473,11 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     ldapyaml["spec"]["template"]["spec"]["containers"][0]["args"]=[]
     yaml.dump(ldapyaml, open(location+"/kubernetes/ldap-server-deployment.yaml", "w"))
     
+    builderldap = yaml.load(open(location+"/kubernetes/dashboard-builder-deployment.yaml"), Loader=yaml.FullLoader)
+    builderldap["spec"]["template"]["spec"]["initContainer"] = {"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"]}
+    builderldap["spec"]["template"]["spec"]["containers"][0]["args"]=[]
+    yaml.dump(builderldap, open(location+"/kubernetes/dashboard-builder-deployment.yaml", "w"))
+    
     #proxyserviceyaml = yaml.load(open(location+"/kubernetes/proxy-service.yaml"), Loader=yaml.FullLoader)
     #proxyserviceyaml["metadata"]["name"]["spec"]["containers"][0]["args"]=[]
     #yaml.dump(proxyserviceyaml, open(location+"/kubernetes/proxy-service.yaml", "w"))
