@@ -1469,7 +1469,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
                     f.write(temporary)
                 
     ldapyaml = yaml.load(open(location+"/kubernetes/ldap-server-deployment.yaml"), Loader=yaml.FullLoader)
-    ldapyaml["spec"]["template"]["spec"]["initContainer"] = {"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /efsvolume/snap4volumes/ldap-conf)\" ] && { echo \"empty. do copy\"; cp -R /etc/ldap/slapd.d/* /efsvolume/snap4volumes/ldap-conf; cp -R /var/lib/ldap/* /efsvolume/snap4volumes/ldap-db; true; } || { echo \"not empty. no copy\"; true;}"], "image": "disitlab/preconf-openldap:v3", "name": "copy-open-ldap", "volumeMounts": [{"mountPath": "/snap4volumes/ldap-conf", "name":"ldap-server-claim000"},{"mountPath": "/snap4volumes/ldap-db", "name":"ldap-server-claim002"}]}
+    ldapyaml["spec"]["template"]["spec"]["initContainer"] = {"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /efsvolume/snap4volumes/ldap-conf)\" ] && { echo \"empty. do copy\"; cp -R /etc/ldap/slapd.d/* /snap4volumes/ldap-conf; cp -R /var/lib/ldap/* /efsvolume/snap4volumes/ldap-db; true; } || { echo \"not empty. no copy\"; true;}"], "image": "disitlab/preconf-openldap:v3", "name": "copy-open-ldap", "volumeMounts": [{"mountPath": "/snap4volumes/ldap-conf", "name":"ldap-server-claim000"},{"mountPath": "/snap4volumes/ldap-db", "name":"ldap-server-claim002"}]}
     ldapyaml["spec"]["template"]["spec"]["containers"][0]["args"]=[]
     yaml.dump(ldapyaml, open(location+"/kubernetes/ldap-server-deployment.yaml", "w"))
     
