@@ -1484,12 +1484,15 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     
     some_containers = ["dashboard-builder", "dashboard-cron", "iotapp-", "nifi", "opensearch-n", "orionbrokerfilter", "personaldata", "servicemap", "synoptics", "wsserver"]
     
-    for dname, _, files in os.walk(location+'/kubernetes'):
-        for file_seen in files:
-            if file_seen.startswith(tuple(some_containers)) and file_seen.endswith("-deployment.yaml"):
-                currentyaml = yaml.load(open(location+"/kubernetes/"+file_seen), Loader=yaml.FullLoader)
-                currentyaml["spec"]["template"]["spec"]["hostAliases"] = [{"ip": ip, "hostnames":[hostname]}]
-                yaml.dump(currentyaml, open(location+"/kubernetes/"+file_seen, "w"))
+    
+    if "." in hostname:
+        copy('./utilsAndTools/ip-replace.sh', location+'/kubernetes/ip-replace.sh')  # assuming folders exist already
+        for dname, _, files in os.walk(location+'/kubernetes'):
+            for file_seen in files:
+                if file_seen.startswith(tuple(some_containers)) and file_seen.endswith("-deployment.yaml"):
+                    currentyaml = yaml.load(open(location+"/kubernetes/"+file_seen), Loader=yaml.FullLoader)
+                    currentyaml["spec"]["template"]["spec"]["hostAliases"] = [{"ip": ip, "hostnames":[hostname]}]
+                    yaml.dump(currentyaml, open(location+"/kubernetes/"+file_seen, "w"))
                 
     # WARNS to be solved
     # Service * won't be created if 'ports' is not specified

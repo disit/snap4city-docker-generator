@@ -16,7 +16,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.'''
 import yaml
 import re
 import os
-import copy
 
 #load the deployments into an array of yamls objects (nested dicts and lists)
 print("Loading in original kubernetes yaml...")
@@ -98,9 +97,9 @@ with open(os.getcwd()+os.sep+'../kubernetes/'+os.sep+'docker-compose.yml','r') a
 volumes = re.findall(" *- [\w/:.-]+:r[ow]",data)
 volumes = [volume.strip()[2:].split(':',1) for volume in volumes]
 
+origs = sorted(origs, key=lambda x: x['spec']['template']['spec']['containers'][0]['name'])
 print("Converting the volumes mounts to be consistent with nfs requirements")
 newlist = []
-tempvolumes = copy.deepcopy(volumes)
 for orig in origs:
     templist = []
     #print(orig['spec']['template']['spec']['containers'][0]['name'])
@@ -108,13 +107,11 @@ for orig in origs:
         for i in range(len(orig['spec']['template']['spec']['containers'][0]['volumeMounts'])):
             current = orig['spec']['template']['spec']['containers'][0]['volumeMounts'][i]
             try:
-                print(current)
-                print(tempvolumes[0],"\n")
-                addeddict = {'mountPath':current['mountPath'],'name':current['name'],'subPath':tempvolumes.pop(0)[0]}
+                addeddict = {'mountPath':current['mountPath'],'name':current['name'],'subPath':volumes.pop(0)[0]}
                 templist.append(addeddict)
                 #print(addeddict)
             except AttributeError as E:
-                templist.append({'mountPath':current['mountPath'],'name':current['name'],'subPath':tempvolumes.pop(0)[0]})
+                templist.append({'mountPath':current['mountPath'],'name':current['name'],'subPath':volumes.pop(0)[0]})
                 print('Did not fix', E)
             except IndexError as E:
                 print('[Error] Something went wrong:',E)
