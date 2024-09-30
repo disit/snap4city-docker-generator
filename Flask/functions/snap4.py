@@ -1480,7 +1480,6 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     
     keycloakyaml = yaml.load(open(location+"/kubernetes/keycloak-service.yaml"), Loader=yaml.FullLoader)
     keycloakyaml["spec"]["ports"] = [{"name": "8080", "port": 8080, "targetPort": 8080}]
-    keycloakyaml["spec"]["template"]["spec"]["containers"][0]["args"]=[]
     yaml.dump(keycloakyaml, open(location+"/kubernetes/keycloak-service.yaml", "w"))
     
     #proxyserviceyaml = yaml.load(open(location+"/kubernetes/proxy-service.yaml"), Loader=yaml.FullLoader)
@@ -1501,6 +1500,11 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
         psyaml = yaml.load(open(location+"/kubernetes/proxy-service.yaml"), Loader=yaml.FullLoader)
         psyaml["metadata"]["name"] = "proxy"
         yaml.dump(psyaml, open(location+"/kubernetes/proxy-service.yaml", "w"))
+    
+    for element in ["dashboard-builder-deployment.yaml", "dashboard-cron-deployment.yaml", "nifi-deployment.yaml", "proxy-deployment.yaml"]:
+        currentyaml = yaml.load(open(location+"/kubernetes/"+element), Loader=yaml.FullLoader)
+        currentyaml['spec']['template']['spec']['securityContext']={'runAsUser':0,'runAsGroup':0,'fsGroup':0}
+        yaml.dump(currentyaml, open(location+"/kubernetes/"+element, "w"))
                 
     # WARNS to be solved
     # Service * won't be created if 'ports' is not specified

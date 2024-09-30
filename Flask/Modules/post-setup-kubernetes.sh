@@ -1,11 +1,13 @@
 # note: this is still experimental
 cd servicemap-conf
 
-kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  bash -c "cd /root/servicemap; ./update-ontology-k8.sh virtuoso-kb"
-kubectl -n $#k8-namespace#$ exec deployment/virtuoso-kb  --  isql-v localhost dba "$#virtuoso-kb-pwd#$" "EXEC=rdfs_rule_set ('urn:ontology', 'http://www.disit.org/km4city/resource/Ontology');"
-kubectl -n $#k8-namespace#$ exec deployment/virtuoso-kb  --  isql-v localhost dba "$#virtuoso-kb-pwd#$" /root/servicemap/servicemap.vt
-kubectl -n $#k8-namespace#$ exec deployment/virtuoso-kb  --  isql-v localhost dba "$#virtuoso-kb-pwd#$" /root/servicemap/valuetypes.vt
-kubectl -n $#k8-namespace#$ exec deployment/virtuoso-kb  --  isql-v localhost dba "$#virtuoso-kb-pwd#$" /root/servicemap/servicemap-dbpedia.vt
+
+ANON=$(kubectl -n snap4city exec deployment/dashboard-builder -- php -r '$key = hash("sha256", "$#aes-encryption-key-16chars#$");
+    $iv = substr(hash("sha256", "$#aes-encryption-iv-16chars#$"), 0, 16);
+    $output = openssl_encrypt("$#virtuoso-kb-pwd#$", "AES-256-CBC", $key, 0, $iv);
+    $output = base64_encode($output);
+    echo $output;')
+echo the new anonymous hash is $ANON
 
 ##curl -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/iotdata-organization' -d @mapping_Sensors-ETL-IOT-v3.json
 

@@ -574,6 +574,8 @@ def create_app():
                 if modello=='Kubernetes':
                     snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup-virtuoso-k8.sh',['./Output/'+token+'/'+ips[0]+'/post-setup-kubernetes.sh'])
                     os.rename('./Output/'+token+'/'+ips[0]+'/setup-virtuoso-k8.sh','./Output/'+token+'/'+ips[0]+'/post-setup.sh')
+                    os.remove('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh')
+                    os.remove('./Output/'+token+'/'+ips[0]+'/setup.sh')
                 else:
                     snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh',['./Output/'+token+'/'+ips[0]+'/post-setup.sh'])
                     os.rename('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh','./Output/'+token+'/'+ips[0]+'/post-setup.sh')
