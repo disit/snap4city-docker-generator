@@ -93,6 +93,7 @@ services:
        - dashboard-img:/var/www/html/dashboardSmartCity/img
        - datatable-uploads:/var/www/html/processloader/DataTableManager/files
        - poitable-uploads:/var/www/html/processloader/POIManager/files
+       - protecteduploads:/protecteduploads
     environment:
       OWN_DB_HOST: "$#dashboard-db-host#$"
       OWN_DB_USER: "$#dashboard-db-user#$"
@@ -364,3 +365,4 @@ volumes:
   od-postgis-data:
   geo-db-data:
   geoserver-data:
+  protecteduploads:

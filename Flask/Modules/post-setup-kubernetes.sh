@@ -9,7 +9,7 @@ kubectl -n $#k8-namespace#$ exec deployment/virtuoso-kb  --  isql-v localhost db
 cd servicemap-conf
 
 
-ANON=$(kubectl -n snap4city exec deployment/dashboard-builder -- php -r '$key = hash("sha256", "$#aes-encryption-key-16chars#$");
+ANON=$(kubectl -n $#k8-namespace#$ exec deployment/dashboard-builder -- php -r '$key = hash("sha256", "$#aes-encryption-key-16chars#$");
     $iv = substr(hash("sha256", "$#aes-encryption-iv-16chars#$"), 0, 16);
     $output = openssl_encrypt("$#virtuoso-kb-pwd#$", "AES-256-CBC", $key, 0, $iv);
     $output = base64_encode($output);
@@ -21,16 +21,16 @@ echo the new anonymous hash is $ANON
 
 
 echo create opensearch iot index
-kubectl -n snap4city exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/snap4-iot-organization' -d @mapping_Sensors-ETL-IOT-ES7-v4.json
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/snap4-iot-organization' -d @mapping_Sensors-ETL-IOT-ES7-v4.json
 echo
 
 echo create opensearch kpi index
-kubectl -n snap4city exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/snap4-kpi' -d @mapping_Sensors-ETL-IOT-ES7-v4.json
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/snap4-kpi' -d @mapping_Sensors-ETL-IOT-ES7-v4.json
 echo
 
 
 echo setup role areamanager
-kubectl -n snap4city exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/roles/kibanauser_areamanager' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/roles/kibanauser_areamanager' -d @- << EOF
 {
   "cluster_permissions": [
     "*"
@@ -49,7 +49,7 @@ EOF
 echo
 
 echo setup rolemapping areamanager
-kubectl -n snap4city exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/rolesmapping/kibanauser_areamanager' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/rolesmapping/kibanauser_areamanager' -d @- << EOF
 {
   "backend_roles" : [ "AreaManager" ]
 }
@@ -57,7 +57,7 @@ EOF
 echo
 
 echo setup role manager
-kubectl -n snap4city exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/roles/kibanauser_manager' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/roles/kibanauser_manager' -d @- << EOF
 {
   "cluster_permissions": [
     "*"
@@ -76,7 +76,7 @@ EOF
 echo
 
 echo setup rolemapping manager
-kubectl -n snap4city exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/rolesmapping/kibanauser_manager' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/rolesmapping/kibanauser_manager' -d @- << EOF
 {
   "backend_roles" : [ "Manager" ]
 }
@@ -84,7 +84,7 @@ EOF
 echo
 
 echo setup role tooladmin
-kubectl -n snap4city exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/roles/kibanauser_tooladmin' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/roles/kibanauser_tooladmin' -d @- << EOF
 {
   "cluster_permissions": [
     "*"
@@ -103,7 +103,7 @@ EOF
 echo
 
 echo setup rolemapping tooladmin
-kubectl -n snap4city exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/rolesmapping/kibanauser_tooladmin' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/rolesmapping/kibanauser_tooladmin' -d @- << EOF
 {
   "backend_roles" : [ "ToolAdmin" ]
 }
@@ -115,7 +115,7 @@ curl --insecure -u admin:$#opensearch-admin-pwd#$ -XPOST "$#base-url#$/kibana/ap
 echo
 
 echo fixing openldap admin password
-kubectl -n snap4k8s exec deployment/ldap-server -- bash /ldif_files/psw.sh
+kubectl -n $#k8-namespace#$ exec deployment/ldap-server -- bash /ldif_files/psw.sh
 
 cd ..
 echo "fixing keycloak (for this to work, the system must be able to recognize its own hostname)"

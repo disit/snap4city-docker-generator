@@ -98,6 +98,7 @@ with open(os.getcwd()+os.sep+'../kubernetes/'+os.sep+'docker-compose.yml','r') a
 
 # get the volumes in the docker yaml
 volumes = re.findall(" *- [\w/:.-]+:r[ow]",data)
+volumes.insert(-3,"- /var/lib/varnish:exec")
 volumes = [volume.strip()[2:].split(':',1) for volume in volumes]
 
 origs = sorted(origs, key=lambda x: x['spec']['template']['spec']['containers'][0]['name'])

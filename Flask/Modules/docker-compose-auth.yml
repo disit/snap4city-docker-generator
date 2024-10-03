@@ -46,13 +46,14 @@ services:
     restart: unless-stopped
     container_name: postgres-db
     ports:
-      - 5432:5432
+      - 5433:5432
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "keycloak"]
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: $#dashboard-db-pwd#$
+      POSTGRES_PORT: 
     volumes:
       - postgres-volume:/var/lib/postgresql/data
     logging:
@@ -70,7 +71,7 @@ services:
       KC_DB: postgres
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: $#dashboard-db-pwd#$
-      KC_DB_URL: "jdbc:postgresql://postgres-db:5432/keycloak"
+      KC_DB_URL: "jdbc:postgresql://postgres-db:5433/keycloak"
       KC_METRICS_ENABLED: "true"
       KC_PROXY: edge
       KC_LOG_LEVEL: INFO
