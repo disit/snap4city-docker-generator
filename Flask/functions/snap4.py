@@ -1359,7 +1359,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     result = re.sub(regex5, subst5, result, 0, re.MULTILINE)
 
 
-    regex6=r"postgres-db[\w\n. :\-']*- published: )5432(\n\s*target: )5432"
+    regex6=r"(postgres-db[\w\n. :\-']*- published: )5432(\n\s*target: )5432"
     subst6='\\1 5433 \\2 5433'
     result = re.sub(regex6, subst6, result, 0, re.MULTILINE)
     
