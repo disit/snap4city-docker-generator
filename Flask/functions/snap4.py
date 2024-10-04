@@ -738,6 +738,8 @@ DELETE FROM Dashboard.MainMenu WHERE ID=2004;
             if element is not None:
                 f.write(element)
         f.write('\n' + filemanagerstring)
+        
+    fixes_for_filemodel(file_location)
     return
 
 def adjust_dashboard_menu_dump_servicemaps(amount_of_servicemaps, path, fine_as_is):
@@ -791,6 +793,7 @@ UPDATE Dashboard.MainMenuSubmenus SET `privileges` = '[\'RootAdmin\',\'ToolAdmin
             if element is not None:
                 f.write(element)
         f.write('\n' + filemanagerstring)
+    fixes_for_filemodel(file_location_1)
     return
 
 def make_sql_dcs(file_location_1, file_location_2, broker_ip, iotapps, broker_data):
@@ -1049,6 +1052,13 @@ def iotbroker_add(broker_url, broker_coords): #TODO remove iotbsf hardcoding  #T
 # '16562', 'userrootadmin', 'Organization:iot-name', 'BrokerID', 'Organization:iot-name', 'dashboard', NULL, NULL, '2021-07-18 10:30:30', NULL, NULL
 # 'dashboard' is supposed to be a string like 'iotobsf'
 
+def fixes_for_filemodel(sqlfilepath):
+    with open(sqlfilepath, "a+") as f:
+        f.write("""\nINSERT INTO `profiledb`.`delegation` (`id`, `username_delegator`, `username_delegated`, `element_id`, `element_type`, `insert_time`, `kind`) VALUES (NULL, 'userrootadmin', 'ANONYMOUS', 'Organization:fileModel', 'ModelID', NULL, 'READ_ACCESS');
+INSERT INTO `profiledb`.`delegation` (`id`, `username_delegator`, `element_id`, `element_type`, `insert_time`, `groupname_delegated`, `kind`) VALUES (NULL, 'userrootadmin', 'Organization:orion-1', 'BrokerID', NULL, 'ou=Organization,dc=ldap,dc=organization,dc=com', 'READ_ACCESS');
+INSERT INTO `profiledb`.`ownership` (`id`, `username`, `elementId`, `elementType`, `elementName`, `elementUrl`, `created`) VALUES (NULL, 'userrootadmin', 'Organization:fileModel', 'ModelID', 'Organization:fileModel', 'Organization:fileModel', NULL);""")
+        
+
 def make_servicemap_sql(how_many):
     total=[]
     for i in range(how_many):
@@ -1295,7 +1305,7 @@ def add_components_for_sentinel(mysql_location, mongos, nifis, iotapps, opensear
     add_brokers_for_sentinel(mysql_location, brokers)
 
 #TODO "end of files" volumes are not generated and they should be
-def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/generated', ip="127.0.0.1"):
+def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/generated', placeholders={},ip="127.0.0.1"):
     # unfortunately, docker-compose config was edited in a such way it broke some usages, even if the devs say that's intended
     # nevermind that they deleted tests that were failing on that release
     # therefore yq is used to fix the mistake, which happens on the depends_on attribute
@@ -1474,15 +1484,21 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     yaml.dump(ldapyaml, open(location+"/kubernetes/ldap-server-deployment.yaml", "w"))
     
     builderyaml = yaml.load(open(location+"/kubernetes/dashboard-builder-deployment.yaml"), Loader=yaml.FullLoader)
-    builderyaml["spec"]["template"]["spec"]["initContainers"] = [{"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"], "image": "disitlab/dashboard-builder:v8.2.1", "name": "copy-dashboard-builder", "volumeMounts": [{"mountPath": "/snap4volumes/dashboard-img", "name":"dashboard-builder-claim005"}]}]
+    builderyaml["spec"]["template"]["spec"]["initContainers"] = [{"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"], "image": "disitlab/dashboard-builder:v8.2.1", "name": "copy-dashboard-builder", "volumeMounts": [{"mountPath": "/snap4volumes/dashboard-img", "name":"dashboard-builder-claim006"}]}]
     builderyaml["spec"]["template"]["spec"]["containers"][0]["args"]=[]
+    builderyaml["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][2]["mountPath"] = "/protecteduploads"
     yaml.dump(builderyaml, open(location+"/kubernetes/dashboard-builder-deployment.yaml", "w"))
+    
+    opensearchyaml = yaml.load(open(location+"/kubernetes/opensearch-n001-deployment.yaml"), Loader=yaml.FullLoader)
+    opensearchyaml["spec"]["template"]["spec"]["initContainers"] = [{"command":["/bin/bash" , "-c", "'hashadmin=$(/usr/share/opensearch/plugins/opensearch-security/tools/hash.sh -p "+placeholders['$#opensearch-admin-pwd#$']+"); hashuser=$(/usr/share/opensearch/plugins/opensearch-security/tools/hash.sh -p " +placeholders['$#kibanauser-password#$']+ "); sed -i 's|admin_replacing|$hashadmin|' '/usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml'; sed -i 's|kibanaserver_replacing|$hashuser|' '/usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml'"], "name": "setup-opensearch", "volumeMounts": [{"mountPath": "/usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml", "name": "opensearch-n001-claim009"}]}]
+    yaml.dump(opensearchyaml, open(location+"/kubernetes/opensearch-n001-deployment.yaml", "w"))
     
     
     #use correct keystore and truststore please
     nifiyaml = yaml.load(open(location+"/kubernetes/nifi-deployment.yaml"), Loader = yaml.FullLoader)
-    nifiyaml["spec"]["template"]["spec"]["initContainers"] = [{"command:": ["/bin/bash", "-c", '/opt/nifi/nifi-toolkit-current/bin/tls-toolkit.sh standalone -n "localhost" -C "CN=admin, OU=NIFI" -S ' + nifiyaml["spec"]["template"]["spec"]["containers"][0]["env"][1]["value"] +' -P '+nifiyaml["spec"]["template"]["spec"]["containers"][0]["env"][15]["value"]+'; cp nifi-cert.pem /opt/nifi/nifi-current/conf; cp nifi-key.key /opt/nifi/nifi-current/conf; cp localhost/truststore.jks /opt/nifi/nifi-current/conf; cp localhost/nifi.properties /opt/nifi/nifi-current/conf; cp localhost/keystore.jks /opt/nifi/nifi-current/conf; cp CN=admin_OU=NIFI.p12 /opt/nifi/nifi-current/conf; cp CN=admin_OU=NIFI.password /opt/nifi/nifi-current/conf'], "image": "disitlab/snap4nifi:v0-1.16.2", "name": "setup-nifi", "volumeMounts":[{"mountPath": "/opt/nifi/nifi-current/conf", "name": "nifi-claim000"},{"mountPath": "/opt/nifi/nifi-current/logs", "name": "nifi-claim001"}]}]
+    nifiyaml["spec"]["template"]["spec"]["initContainers"] = [{"command": ["/bin/bash", "-c", '/opt/nifi/nifi-toolkit-current/bin/tls-toolkit.sh standalone -n "localhost" -C "CN=admin, OU=NIFI" -S ' + nifiyaml["spec"]["template"]["spec"]["containers"][0]["env"][1]["value"] +' -P '+nifiyaml["spec"]["template"]["spec"]["containers"][0]["env"][15]["value"]+'; cp nifi-cert.pem /opt/nifi/nifi-current/conf; cp nifi-key.key /opt/nifi/nifi-current/conf; cp localhost/truststore.jks /opt/nifi/nifi-current/conf; cp localhost/nifi.properties /opt/nifi/nifi-current/conf; cp localhost/keystore.jks /opt/nifi/nifi-current/conf; cp CN=admin_OU=NIFI.p12 /opt/nifi/nifi-current/conf; cp CN=admin_OU=NIFI.password /opt/nifi/nifi-current/conf'], "image": "disitlab/snap4nifi:v0-1.16.2", "name": "setup-nifi", "volumeMounts":[{"mountPath": "/opt/nifi/nifi-current/conf", "name": "nifi-claim000"},{"mountPath": "/opt/nifi/nifi-current/logs", "name": "nifi-claim001"}]}]
     nifiyaml['spec']['template']['spec']['securityContext']={'runAsUser':0,'runAsGroup':0,'fsGroup':0}
+    nifiyaml['spec']['template']['spec']['containers'][0]['readynessProbe']={'exec':{'command':'["/bin/sh", "-c", "./bin/nifi.sh set-single-user-credentials admin '+nifiyaml["spec"]["template"]["spec"]["containers"][0]["env"][1]["value"]+'"]'},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
     yaml.dump(nifiyaml, open(location+"/kubernetes/nifi-deployment.yaml", "w"))
     
     keycloakyaml = yaml.load(open(location+"/kubernetes/keycloak-service.yaml"), Loader=yaml.FullLoader)
@@ -1497,6 +1513,12 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     
     
     if "." in hostname:
+        with open(location+"/varnish/varnish-conf/default.vcl") as f:
+            content = f.read()
+            ip_pattern = r'\.host = "\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}";'
+            new_contents = re.sub(ip_pattern, '.host = "proxy";', content)
+            with open(location+"/varnish/varnish-conf/default.vcl", 'w') as file:
+                file.write(new_contents)
         copy('./utilsAndTools/ip-replace.sh', location+'/kubernetes/ip-replace.sh')  # assuming folders exist already
         for dname, _, files in os.walk(location+'/kubernetes'):
             for file_seen in files:
@@ -1510,10 +1532,16 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     
     for element in ["dashboard-builder-deployment.yaml", "dashboard-cron-deployment.yaml", "nifi-deployment.yaml", "proxy-deployment.yaml"]:
         currentyaml = yaml.load(open(location+"/kubernetes/"+element), Loader=yaml.FullLoader)
+        if current_content == "dashboard-builder-deployment.yaml":
+            currentyaml["spec"]["template"]["spec"]["initContainers"][0]["securityContext"]={'runAsUser':33}
         currentyaml['spec']['template']['spec']['securityContext']={'runAsUser':0,'runAsGroup':0,'fsGroup':0}
         if element == "proxy-deployment.yaml":
             currentyaml['spec']['template']['spec']['containers'][0]['image'] = "nginx"
+            currentyaml['spec']['template']['spec']['containers'][0]['securityContext'] = {'runAsUser':0}
+            
         yaml.dump(currentyaml, open(location+"/kubernetes/"+element, "w"))
+        
+    
                 
     # WARNS to be solved
     # Service * won't be created if 'ports' is not specified

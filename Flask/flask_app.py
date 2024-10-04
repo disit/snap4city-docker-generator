@@ -613,7 +613,7 @@ esac
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_README.md',fine_as_is)
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/servicemap-conf/update-ontology-k8.sh',fine_as_is)
                     
-                    snap4.docker_to_kubernetes('./Output/'+token+'/'+ips[0],fine_as_is['$#base-hostname#$'],fine_as_is['$#k8-namespace#$'],ips[0])
+                    snap4.docker_to_kubernetes('./Output/'+token+'/'+ips[0],fine_as_is['$#base-hostname#$'],namespace=fine_as_is['$#k8-namespace#$'],ip=ips[0], placeholders=fine_as_is)
 
             #refactor
             elif modello == "Normal":

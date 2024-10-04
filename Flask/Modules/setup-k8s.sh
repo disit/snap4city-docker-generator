@@ -1,4 +1,5 @@
 
+#!/bin/bash
 chmod -R a+w iotapp-*
 chmod u+x opensearch-conf/gen-certs.sh
 chmod a+w iot-directory-certificate
@@ -41,23 +42,7 @@ cd opensearch-conf
 
 #set up certificates nifi
 cd ..
-#!/bin/bash
-sudo apt-get install default-jdk
-wget https://archive.apache.org/dist/nifi/1.23.2/minifi-toolkit-1.23.2-bin.zip -nc
-unzip minifi-toolkit-1.23.2-bin.zip -d nifi-toolkit
-./nifi-toolkit/bin/tls-toolkit.sh standalone -n 'localhost' -C 'CN=admin, OU=NIFI' -S $#keystore-password#$ -P $#truststore-password#$
-
-cp nifi-cert.pem nifi/conf/
-cp nifi-key.key nifi/conf/
-
-cp truststore.jks  nifi/conf/
-cp nifi.properties  nifi/conf/
-cp keystore.jks  nifi/conf/
-
-cp nifi-current/CN=admin_OU=NIFI.p12      nifi/conf/
-cp nifi-current/CN=admin_OU=NIFI.password nifi/conf/
-rm nifi-current
-#docker-compose exec nifi ./bin/nifi.sh set-single-user-credentials $#nifi-user#$ $#nifi-password#$
+docker-compose exec nifi ./bin/nifi.sh set-single-user-credentials $#nifi-user#$ $#nifi-password#$
 echo "new credentials for nifi should have been applied now if no error was shown"
 docker-compose down
 file="nifi/conf/nifi.properties"

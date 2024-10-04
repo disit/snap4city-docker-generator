@@ -35,8 +35,8 @@ for orig in origs:
     #    orig['spec']['template']['spec']['securityContext']={'runAsUser':0,'runAsGroup':0,'fsGroup':0}
     if orig['spec']['template']['spec']['containers'][0]['name']=='virtuoso-kb':
         orig['spec']['template']['spec']['containers'][0]['readynessProbe']={'exec':{'command':'["/bin/sh", "-c", "/root/servicemap/run.sh"]'},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
-    elif orig['spec']['template']['spec']['containers'][0]['name']=='nifi':
-        orig['spec']['template']['spec']['containers'][0]['readynessProbe']={'exec':{'command':'["/bin/sh", "-c", "./bin/nifi.sh set-single-user-credentials $#nifi-user#$ $#nifi-password#$"]'},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
+    #elif orig['spec']['template']['spec']['containers'][0]['name']=='nifi':
+    #    orig['spec']['template']['spec']['containers'][0]['readynessProbe']={'exec':{'command':'["/bin/sh", "-c", "./bin/nifi.sh set-single-user-credentials $#nifi-user#$ $#nifi-password#$"]'},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
     if orig['spec']['template']['spec']['containers'][0]['name']=='proxy':
         orig['spec']['template']['spec']['containers'][0]['image'] = "nginx"
         

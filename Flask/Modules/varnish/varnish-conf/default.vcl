@@ -1,8 +1,7 @@
 vcl 4.1;
 
 backend default {
-    /*testing direct connection to proxy without looping out and in the networks; original was .host = "$#ip-proxy#$";*/
-    .host = "proxy";
+    .host = "$#ip-proxy#$";
     .port = "$#varnish-port#$";
 }
 
