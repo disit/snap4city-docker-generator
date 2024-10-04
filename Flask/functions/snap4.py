@@ -1484,7 +1484,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     yaml.dump(ldapyaml, open(location+"/kubernetes/ldap-server-deployment.yaml", "w"))
     
     builderyaml = yaml.load(open(location+"/kubernetes/dashboard-builder-deployment.yaml"), Loader=yaml.FullLoader)
-    builderyaml["spec"]["template"]["spec"]["initContainers"] = [{"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"], "image": "disitlab/dashboard-builder:v8.2.1", "name": "copy-dashboard-builder", "volumeMounts": [{"mountPath": "/snap4volumes/dashboard-img", "name":"dashboard-builder-claim006"}]}]
+    builderyaml["spec"]["template"]["spec"]["initContainers"] = [{"securityContext":{"runAsUser":33},"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"], "image": "disitlab/dashboard-builder:v8.2.1", "name": "copy-dashboard-builder", "volumeMounts": [{"mountPath": "/snap4volumes/dashboard-img", "name":"dashboard-builder-claim006"}]}]
     builderyaml["spec"]["template"]["spec"]["containers"][0]["args"]=[]
     builderyaml["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][2]["mountPath"] = "/protecteduploads"
     yaml.dump(builderyaml, open(location+"/kubernetes/dashboard-builder-deployment.yaml", "w"))
