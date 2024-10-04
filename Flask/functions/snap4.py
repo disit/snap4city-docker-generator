@@ -1327,11 +1327,6 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     with open(location+'/kubernetes/docker-compose.yml', 'r') as f:
         test_str = f.read()
 
-    # remove problematic volumes
-    regex = r"\s *(\w*)- ([\w-])+.*\w:rw"
-
-    subst = ""
-
     #result = re.sub(regex, subst, test_str, 0, re.MULTILINE)
     result = test_str
     # remove the volume section if it is empty
@@ -1363,6 +1358,15 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
 
     result = re.sub(regex5, subst5, result, 0, re.MULTILINE)
 
+
+    regex6=r"postgres-db[\w\n. :\-']*- published: )5432(\n\s*target: )5432"
+    subst6='\\1 5433 \\2 5433'
+    result = re.sub(regex6, subst6, result, 0, re.MULTILINE)
+    
+    regex7=r"postgres-db:5432"
+    subst7="postgres-db:5433"
+    result = re.sub(regex7, subst7, result, 0, re.MULTILINE)
+    
     #adjustments
 
     # servicemap port needs to be set to 8080
@@ -1381,6 +1385,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     os.system('''cd ''' + location + '''/kubernetes
     kompose convert --volumes persistentVolumeClaim
     sed -i 's@name: proxy@name: '''+hostname+'''@' ./proxy-service.yaml''')
+    
 
     # removes all the volumes, they are not properly ordered, and all the non-proxy ingresses, because they don't matter
     for dname, _, files in os.walk(location+'/kubernetes'):
