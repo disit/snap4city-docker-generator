@@ -45,7 +45,7 @@ services:
        - dashboard-img:/var/www/html/dashboardSmartCity/img
        - datatable-uploads:/var/www/html/processloader/DataTableManager/files
        - poitable-uploads:/var/www/html/processloader/POIManager/files
-       - protecteduploads:/protecteduploads
+       - protectedupload:/protectedupload
     environment:
       OWN_DB_HOST: "$#datamanager-db-host#$"
       OWN_DB_USER: "$#datamanager-db-user#$"
