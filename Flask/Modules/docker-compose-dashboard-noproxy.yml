@@ -3,7 +3,7 @@ services:
   dashboard-builder:
     container_name: dashboard-builder
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v8.2.1
+    image: disitlab/dashboard-builder:v8.4
     ports:
       - "70:80"
     volumes:
@@ -91,7 +91,7 @@ services:
   dashboard-cron:
     container_name: dashboard-cron
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v8.2.1
+    image: disitlab/dashboard-builder:v8.4
     user: root
     logging:
       driver: "json-file"
