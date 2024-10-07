@@ -1510,6 +1510,11 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     keycloakyaml["spec"]["ports"] = [{"name": "8080", "port": 8080, "targetPort": 8080}]
     yaml.dump(keycloakyaml, open(location+"/kubernetes/keycloak-service.yaml", "w"))
     
+    postgreskeycloakyaml = yaml.load(open(location+"/kubernetes/postgres-db-service.yaml"), Loader = yaml.FullLoader)
+    postgreskeycloakyaml["spec"]["ports"][0]["targetPort"] = 5432
+    yaml.dump(postgreskeycloakyaml, open(location+"/kubernetes/postgres-db-service.yaml", "w"))
+    
+    
     #proxyserviceyaml = yaml.load(open(location+"/kubernetes/proxy-service.yaml"), Loader=yaml.FullLoader)
     #proxyserviceyaml["metadata"]["name"]["spec"]["containers"][0]["args"]=[]
     #yaml.dump(proxyserviceyaml, open(location+"/kubernetes/proxy-service.yaml", "w"))
