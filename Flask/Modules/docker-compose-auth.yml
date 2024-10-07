@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
     container_name: postgres-db
     ports:
-      - 5432:5432
+      - 5433:5432
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "keycloak"]
     environment:
