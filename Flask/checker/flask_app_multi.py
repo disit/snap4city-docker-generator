@@ -1,4 +1,3 @@
-
 '''Copyright (C) 2023 DISIT Lab http://www.disit.org - University of Florence
 
 This program is free software: you can redistribute it and/or modify
@@ -58,12 +57,16 @@ db_conn_info = {
     }
 
 def send_telegram(chat_id, message):
+    print(message)
+    return
     if isinstance(message, list):
         message[2]=filter_out_muted_containers_for_telegram(message[2])
     asyncio.run(bot.send_message(chat_id=chat_id, text=str(message)))
     return
 
 def send_email(sender_email, sender_password, receiver_emails, subject, message):
+    print(message)
+    return
     smtp_server = config['smtp-server']
     smtp_port = config['smtp-port']
     server = smtplib.SMTP(smtp_server, smtp_port)
@@ -96,7 +99,7 @@ def filter_out_muted_containers_for_telegram(containers):
                 new_elements.append(element)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
-    return ','.join(new_elements)
+    return ", ".join(new_elements)
 
 def filter_out_muted_failed_are_alive_for_telegram(tests):
     try:
@@ -139,8 +142,8 @@ def filter_out_wrong_status_containers_for_telegram(containers):
         for a in results:
             restruct[a[0]]=a[1]
         for element in containers:
-            if element in [a[0] for a in results]:
-                if restruct[element[element]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+            if element not in [a[0] for a in results]:
+                if restruct[element[element["Names"]]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
                     pass
                 else:
                     new_elements.append(element)
@@ -174,6 +177,28 @@ def auto_run_tests():
         print("Something went wrong during tests running because of:",traceback.format_exc())
 
 def auto_alert_status():
+    results = None
+    
+    # grab all but containers on this host
+    with mysql.connector.connect(**db_conn_info) as conn:
+        cursor = conn.cursor(buffered=True)
+        query = '''SELECT distinct position FROM checker.component_to_category;'''
+        cursor.execute(query)
+        conn.commit()
+        results = cursor.fetchall()
+        total_answer=[]
+        for r in results:
+            obtained = requests.post(r[0]+"/read_containers", headers=request.headers).text
+            try:
+                total_answer = total_answer + json.loads(obtained)
+            except:
+                try:
+                    obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
+                    total_answer = total_answer + json.loads(obtained)
+                except:
+                    pass
+        
+    # now grab containers from this host
     containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
     containers_stats = [b for b in (subprocess.run('docker stats --format json -a --no-stream', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
     containers_merged = []
@@ -195,6 +220,7 @@ def auto_alert_status():
         send_alerts("Can't reach db, auto alert 1:"+ traceback.format_exc())
         return
     is_alive_with_ports = auto_run_tests()
+    containers_merged = containers_merged + total_answer
     components = [a[0].replace("*","") for a in results]
     components_original = [a[0] for a in results]
     containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in components) and (c["State"] != "running")]
@@ -236,7 +262,7 @@ def auto_alert_status():
 def send_alerts(message):
     try:
         send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", message)
-        send_telegram(config['telegram-channel'], message)
+        send_telegram(config["platform-url"]+" is alive", message)
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
 
@@ -256,18 +282,19 @@ def send_advanced_alerts(message):
             print("[ERROR] while sending email:",text_for_email)
         text_for_telegram = ""
         if len(message[0])>0:
-            text_for_telegram = "These containers are not in the correct status: " + str(filter_out_wrong_status_containers_for_telegram(message[0])) +"\n"
+            text_for_telegram = "These containers are not in the correct status: " + str(filter_out_wrong_status_containers_for_telegram([a["Name"] for a in message[0]])) +"\n"
         if len(message[1])>0:
             text_for_telegram+= 'These containers are not answering correctly to their "is alive" test: '+ str(filter_out_muted_failed_are_alive_for_telegram(message[1]))+"\n"
         if len(filter_out_muted_containers_for_telegram(message[2]))>0:
             text_for_telegram+= "These containers weren't found in docker: "+ str(filter_out_muted_containers_for_telegram(message[2]))+"\n"
         if len(text_for_telegram)>0:
             try:
-                send_telegram(config['telegram-channel'], text_for_telegram)
-            except:
-                print("[ERROR] while sending telegram:",text_for_email)
+                send_telegram(config["platform-url"]+" is alive", text_for_telegram)
+            except Exception as E:
+                print("[ERROR] while sending telegram due to",str(E),"- text would have been:",text_for_email)
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
+ 
         
     
 scheduler = BackgroundScheduler()
@@ -276,6 +303,7 @@ scheduler.add_job(isalive, 'cron', hour=8, minute=0)
 scheduler.add_job(isalive, 'cron', hour=20, minute=0)
 scheduler.start()
 auto_alert_status()
+send_telegram(config["telegram-channel"], config["platform-url"] + " is alive")
 def create_app():
     app = Flask(__name__)
     app.secret_key = b'\x8a\x17\x93kT\xc0\x0b6;\x93\xfdp\x8bLl\xe6u\xa9\xf5x'
@@ -428,10 +456,6 @@ def create_app():
     def check():
         return get_container_data()
             
-            
-    def send_request(url, headers):
-        return requests.post(url, headers=headers)
-    
     @app.route("/advanced_read_containers", methods=['POST'])
     def check_adv():
         if not config['is-master']:
@@ -445,15 +469,16 @@ def create_app():
                 conn.commit()
                 results = cursor.fetchall()
                 total_answer=[]
-                # concurrent
-                with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-                    futures = [executor.submit(send_request, r[0]+"/sentinel/read_containers", request.headers) for r in results]
-                    for future in concurrent.futures.as_completed(futures):
-                        total_answer += json.loads(future.result().text)
-                # consecutive
-                #for r in results:
-                #    obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
-                #    total_answer = total_answer + json.loads(obtained)
+                for r in results:
+                    obtained = requests.post(r[0]+"/read_containers", headers=request.headers).text
+                    try:
+                        total_answer = total_answer + json.loads(obtained)
+                    except:
+                        try:
+                            obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
+                            total_answer = total_answer + json.loads(obtained)
+                        except:
+                            pass
                 return total_answer
         except Exception:
             print("Something went wrong because of:",traceback.format_exc())
@@ -506,6 +531,7 @@ def create_app():
                         cursor.execute(query_1,(command_ran, request.form.to_dict()['container'],r[0],))
                         conn.commit()
                         log_to_db('test_ran', "Executing the is alive test on "+request.form.to_dict()['container']+" resulted in: "+command_ran, request, which_test="is alive " + str(r[2]))
+                    print(total_result)
                     return jsonify(total_result, command_ran_explained)
             except Exception:
                 print("Something went wrong during tests running because of:",traceback.format_exc())
@@ -611,8 +637,12 @@ def create_app():
                     cursor.execute(query, (container_id,))
                     conn.commit()
                     results = cursor.fetchall()
-                    r = requests.post(results[0][0]+"/sentinel/reboot_container", headers=request.headers, data={"id": container_id, "psw": psw})
-                    return r.text
+                    try:
+                        r = requests.post(results[0][0]+"/sentinel/reboot_container", headers=request.headers, data={"id": container_id, "psw": psw})
+                        return r.text
+                    except:
+                        r = requests.post(results[0][0]+"/reboot_container", headers=request.headers, data={"id": container_id, "psw": psw})
+                        return r.text
             except Exception:
                 print("Something went wrong during advanced container rebooting because of:",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
@@ -747,13 +777,11 @@ def create_app():
         except Exception:
             print("Probably fucked up the authentication:",traceback.format_exc())
             return render_template("error_showing.html", r = traceback.format_exc()), 401
-        r = '<br>'.join(subprocess.run('docker logs '+container_id+" --tail "+str(config["default-log-length"]), shell=True, capture_output=True, text=True, encoding="utf_8").stderr.split('\n'))
-        print('docker logs '+container_id+" --tail "+str(config["default-log-length"]))
+        r = '<br>'.join(subprocess.run('docker logs '+container_id+" --tail "+str(config["default-log-length"]), shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
+        #print('docker logs '+container_id+" --tail "+str(config["default-log-length"]))
         #container_name = subprocess.run('docker ps -a -f id='+container_id+' --format "{{.Names}}"', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n')[0]
         return render_template('log_show.html', container_id = container_id, r = r, container_name=container_id)
         
-
-    
     @app.route("/advanced-container/<container_id>")
     def get_container_logs_advanced(container_id):
         if not config['is-master']:
@@ -770,8 +798,12 @@ def create_app():
                 results = cursor.fetchall()
                 if len(results) == 0:
                     return render_template("error_showing.html", r = "It appears that the container "+container_id+" doesn't exist in the cluster."), 500
-                r = requests.get(results[0][0]+"/sentinel/container/"+container_id, headers=request.headers, data={"id": container_id, "psw": psw})
-                return r.text
+                try:
+                    r = requests.get(results[0][0]+"/sentinel/container/"+container_id, headers=request.headers, data={"id": container_id, "psw": psw})            
+                    return r.text
+                except:
+                    r = requests.get(results[0][0]+"/container/"+container_id, headers=request.headers, data={"id": container_id, "psw": psw})
+                    return r.text
         except Exception:
             print("Something went wrong during advanced container rebooting because of:",traceback.format_exc())
             return render_template("error_showing.html", r = traceback.format_exc() + str(results)), 500
@@ -855,7 +887,7 @@ def create_app():
     def generate_pdf():
         data_stored = []
         for container_data in get_container_data(True):
-            r = '<br>'.join(subprocess.run('docker logs '+container_data['ID'] + ' --tail '+config["default-log-length"], shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
+            r = '<br>'.join(subprocess.run('docker logs '+container_data['ID'] + ' --tail '+str(config["default-log-length"]), shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
             data_stored.append({"header": container_data['Name'], "string": r})
         
         # Create a PDF document
@@ -939,38 +971,6 @@ def create_app():
                 return root
         return None
     
-    @app.route('/download')
-    def redirect_to_download():
-        return redirect('/sentinel/downloads/')
-    
-    @app.route('/downloads/')
-    @app.route('/downloads/<path:subpath>')
-    def list_files(subpath=''):
-        # Determine the full path relative to the base directory
-        full_path = os.path.join(os.path.join(os.getcwd(), "certifications/"), subpath)
-        if ".." in subpath:
-            return render_template("error_showing.html", r = "Issues during the retrieving of the resource: illegal path"), 500
-        # If it's a directory, list contents
-        if os.path.isdir(full_path):
-            try:
-                files = os.listdir(full_path)
-                files_list = [{"name": f, "data": [os.path.join(subpath, f)]} for f in files]
-                for a in files_list:
-                    if a['name'] in next(os.walk(full_path))[1]:
-                        a['data'].append('dir')
-                    else:
-                        a['data'].append('file')
-                return render_template("download_files.html", files=files_list, subpath=subpath)
-            except FileNotFoundError:
-                return render_template("error_showing.html", r = "Issues during the retrieving of the folder: "+ traceback.format_exc()), 500
-        # If it's a file, serve the file
-        elif os.path.isfile(full_path):
-            directory = os.path.dirname(full_path)
-            filename = os.path.basename(full_path)
-            return send_from_directory(directory, filename, as_attachment=True)
-        else:
-            return render_template("error_showing.html", r = "Issues during the retrieving of the file: "+ traceback.format_exc()), 500
-    
     @app.route('/clear_certifications', methods=['GET'])
     def clear_certifications():
         user = ""
@@ -1006,7 +1006,7 @@ def create_app():
         
         if target_folder:
             password = ''.join(random.choice(string.digits + string.ascii_letters) for _ in range(16))
-            make_certification = subprocess.run(f'cd {target_folder}; mkdir {subfolder}; bash make_dumps_of_database.sh; rar a -k -p{password} snap4city-certification-{password}.rar iotapp-00*/flows.json d*conf iot-directory-conf m*conf n*conf ownership-conf/config.php nifi/conf servicemap-conf/servicemap.properties ../placeholder_used.txt *dump.* servicemap-iot-conf/iotdeviceapi.dtd servicemap-superservicemap-conf/settings.xml synoptics-conf/ mongo_dump virtuoso_dump php ../checker/*; cp snap4city-certification-{password}.rar {subfolder}/snap4city-certification-{password}.rar', shell=True, capture_output=True, text=True, encoding="utf_8")
+            make_certification = subprocess.run(f'cd {target_folder}; mkdir {subfolder}; bash make_dumps_of_database.sh; rar a -k -p{password} snap4city-certification-{password}.rar iotapp-00*/flows.json d*conf iot-directory-conf m*conf n*conf ownership-conf/config.php nifi/conf servicemap-conf/servicemap.properties ../placeholder_used.txt *dump.* php-css-dump servicemap-iot-conf/iotdeviceapi.dtd servicemap-superservicemap-conf/settings.xml synoptics-conf/ mongo_dump virtuoso_dump php ../checker/flask_app.py sysinfo.txt ; cp snap4city-certification-{password}.rar {subfolder}/snap4city-certification-{password}.rar', shell=True, capture_output=True, text=True, encoding="utf_8")
             if len(make_certification.stderr) > 0:
                 return send_file(target_folder + f'/{subfolder}/snap4city-certification-{password}.rar')
                 # bypass this shit, for now
@@ -1038,7 +1038,7 @@ def create_app():
                 results = cursor.fetchall()
                 error = False
                 errorText = ""
-                subfolder = "certifications/certcluster"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                subfolder = "certcluster"+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 subprocess.run(f'rm -f *snap4city*-certification-*.rar', shell=True)
                 for r in results:
                     file_name, content_disposition = "", ""
@@ -1061,7 +1061,7 @@ def create_app():
                     return render_template("error_showing.html", r = errorText.replace("\n","<br>")), 500
                 else:
                     password = ''.join(random.choice(string.digits + string.ascii_letters) for _ in range(16))
-                    subprocess.run(f'rar a -k -p{password} snap4city-clustered-certification-{password}.rar *snap4city-certification-*.rar; mkdir -p {subfolder}; cp snap4city-clustered-certification-{password}.rar {subfolder}/snap4city-clustered-certification-{password}.rar', shell=True, capture_output=True, text=True, encoding="utf_8").stdout
+                    subprocess.run(f'rar a -k -p{password} snap4city-clustered-certification-{password}.rar *snap4city-certification-*.rar; mkdir {subfolder}; cp snap4city-clustered-certification-{password}.rar {subfolder}/snap4city-clustered-certification-{password}.rar', shell=True, capture_output=True, text=True, encoding="utf_8").stdout
                     return send_file(f'snap4city-clustered-certification-{password}.rar')
         except Exception:
             return render_template("error_showing.html", r = traceback.format_exc()), 500
