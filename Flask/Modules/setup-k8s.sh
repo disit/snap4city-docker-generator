@@ -38,13 +38,12 @@ chown -R 1000:1000 certbot
 sysctl -w vm.max_map_count=262144
 
 cd opensearch-conf
-./gen-certs.sh
+./gen-certs-k8.sh
 
 #set up certificates nifi
 cd ..
-docker-compose exec nifi ./bin/nifi.sh set-single-user-credentials $#nifi-user#$ $#nifi-password#$
+kubectl -n $#k8-namespace#$ exec deployment/nifi exec -- bash /opt/nifi/nifi-current/bin/nifi.sh set-single-user-credentials $#nifi-user#$ $#nifi-password#$
 echo "new credentials for nifi should have been applied now if no error was shown"
-docker-compose down
 file="nifi/conf/nifi.properties"
 #parsing the file
 while IFS='=' read -r key value
@@ -56,26 +55,9 @@ done < "$file"
 echo "Truststore password = " ${nifi_security_truststorePasswd}
 echo "Keystore password =   " ${nifi_security_keystorePasswd}
 
-sed -i "s|ctsBtRBKHRAx69EqUghvvgEvjnaLjFEB|$#nifi-password#$|" "docker-compose.yml"
-sed -i "s|keystorepassword_replace_me|${nifi_security_keystorePasswd}|" "docker-compose.yml"
-sed -i "s|truststorepassword_replace_me|${nifi_security_truststorePasswd}|" "docker-compose.yml"
+sed -i "s|ctsBtRBKHRAx69EqUghvvgEvjnaLjFEB|$#nifi-password#$|" "kubernetes/docker-compose.yml"
+sed -i "s|keystorepassword_replace_me|${nifi_security_keystorePasswd}|" "kubernetes/docker-compose.yml"
+sed -i "s|truststorepassword_replace_me|${nifi_security_truststorePasswd}|" "kubernetes/docker-compose.yml"
 
 echo "updated nifi in compose file"
-echo "fixing chmod perms for generated nifi files"
-sudo chmod a+rw nifi/conf/*
 
-echo fixing opensearch internal users
-
-hashadmin=$(docker run opensearchproject/opensearch:1.2.3 plugins/opensearch-security/tools/hash.sh -p $#opensearch-admin-pwd#$)
-hashuser=$(docker run opensearchproject/opensearch:1.2.3 plugins/opensearch-security/tools/hash.sh -p $#kibanauser-password#$)
-
-echo the new hash for the admin password is $hashadmin
-echo the new hash for the user password is $hashuser
-
-#create the file which will be used
-cd opensearch-conf
-cp internal_users.yml.tpl internal_users.yml
-
-# we are replacing old hashes, and we need to escape some characters while using sed
-sed -i "s|admin_replacing|$hashadmin|" "internal_users.yml"
-sed -i "s|kibanaserver_replacing|$hashuser|" "internal_users.yml"

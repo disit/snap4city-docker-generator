@@ -53,7 +53,6 @@ services:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: $#dashboard-db-pwd#$
-      POSTGRES_PORT: 
     volumes:
       - postgres-volume:/var/lib/postgresql/data
     logging:
