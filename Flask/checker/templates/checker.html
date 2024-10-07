@@ -638,50 +638,49 @@
 		var something = Object.keys(categorizedData).sort();
 		document.getElementById("category_menu").innerHTML="";
 		jQuery.each(something, function (item, val_2) {
-			if (true) {
-				var val = categorizedData[val_2];
-				var i = val_2;
-				const box = document.createElement("div");
-				box.setAttribute("class", "p-5 text-center");
-				box.setAttribute("style", "border-radius: 3rem; background-color: "+cg.next().value);
-				box.setAttribute("id",i);
-				if (!closed_categories.has(i)) box.style.display = "block"; else box.style.display = "none";
-					const centerer = document.createElement("div");
-					centerer.setAttribute("name", i);
-					const name_of_table = document.createElement("h1");
-					if (!closed_categories.has(i)) 
-						name_of_table.setAttribute("class", "btn btn-light btn-lg"); 
-					else 
-						name_of_table.setAttribute("class", "btn btn-dark btn-lg");
-					name_of_table.setAttribute("onclick", "collapse_category('"+i+"', this)");
-					name_of_table.setAttribute("id", i+"-status");
-					name_of_table.innerHTML = i;
-					var menupage = document.getElementById("category_menu");
-					menupage.appendChild(name_of_table);
-					var div_for_category_name = document.createElement("h1");
-					div_for_category_name.innerHTML=i;
-					tableContainer.appendChild(centerer);
-					box.appendChild(div_for_category_name);
-					box.appendChild(createTable(headerData, val, i));
-					let a = 'table-'+i.replace(/\s+/g, '');
-					const parser = new DOMParser();
-					extra_data_locations.filter(innerArray => innerArray[0] === i).forEach(innerArray => {
-						getExtraData(innerArray, box);
-					});
-					if (add_complex_test_table_depending_on_category(i)) {
-						const complex_tests = document.createElement("div");
-						complex_tests.setAttribute("style", "background-color: white;");
-						complex_tests.innerHTML=add_complex_test_table_depending_on_category(i);
-						box.appendChild(complex_tests);
-					}
-					centerer.appendChild(box);
-					const category_logs = document.createElement("p");
-					category_logs.setAttribute("id", i+"-logs");
-					category_logs.setAttribute("class", "ui-widget-header");
-					category_logs.setAttribute("style", "text-align: left; min-height: 250px;");
-					box.appendChild(category_logs);
-					if (logs_for_categories[i+"-logs"]) category_logs.innerHTML=logs_for_categories[i+"-logs"];
-			}
+			var val = categorizedData[val_2];
+			var i = val_2;
+			const box = document.createElement("div");
+			box.setAttribute("class", "p-5 text-center");
+			box.setAttribute("style", "border-radius: 3rem; background-color: "+cg.next().value);
+			box.setAttribute("id",i);
+			if (!closed_categories.has(i)) box.style.display = "none"; else box.style.display = "block";
+				const centerer = document.createElement("div");
+				centerer.setAttribute("name", i);
+				const name_of_table = document.createElement("h1");
+				if (!closed_categories.has(i)) 
+					name_of_table.setAttribute("class", "btn btn-light btn-lg"); 
+				else 
+					name_of_table.setAttribute("class", "btn btn-light btn-lg");
+				name_of_table.setAttribute("onclick", "collapse_category('"+i+"', this)");
+				name_of_table.setAttribute("id", i+"-status");
+				name_of_table.innerHTML = i;
+				var menupage = document.getElementById("category_menu");
+				menupage.appendChild(name_of_table);
+				var div_for_category_name = document.createElement("h1");
+				div_for_category_name.innerHTML=i;
+				tableContainer.appendChild(centerer);
+				box.appendChild(div_for_category_name);
+				box.appendChild(createTable(headerData, val, i));
+				let a = 'table-'+i.replace(/\s+/g, '');
+				const parser = new DOMParser();
+				extra_data_locations.filter(innerArray => innerArray[0] === i).forEach(innerArray => {
+					getExtraData(innerArray, box);
+				});
+				if (add_complex_test_table_depending_on_category(i)) {
+					const complex_tests = document.createElement("div");
+					complex_tests.setAttribute("style", "background-color: white;");
+					complex_tests.innerHTML=add_complex_test_table_depending_on_category(i);
+					box.appendChild(complex_tests);
+				}
+				centerer.appendChild(box);
+				const category_logs = document.createElement("p");
+				category_logs.setAttribute("id", i+"-logs");
+				category_logs.setAttribute("class", "ui-widget-header");
+				category_logs.setAttribute("style", "text-align: left; min-height: 250px;");
+				box.appendChild(category_logs);
+				if (logs_for_categories[i+"-logs"]) category_logs.innerHTML=logs_for_categories[i+"-logs"];
+			
 			else console.log("Skipped unmanaged containers");
 			
 			});
@@ -858,12 +857,12 @@
 		if (element.style.display === "none") {
 		button.className="btn btn-light btn-lg";
 			element.style.display = "block";
-			closed_categories.delete(category_element_id);
+			closed_categories.add(category_element_id);
 		} 
 		else {
 			button.className="btn btn-dark btn-lg";
 			element.style.display = "none";
-			closed_categories.add(category_element_id);
+			closed_categories.delete(category_element_id);
 		}
 		update_routine();
 	};
@@ -921,7 +920,7 @@
 		</ul>
 		<ul class="navbar-nav mr-auto">
 			<li class="nav-item active">
-				<a class="navbar-brand">SnapSentinel: Platform Process Monitoring and Control</a>
+				<a class="navbar-brand">Snap4Sentinel: Platform Process Monitoring and Control</a>
 			</li>
 		</ul>
 		<ul class="dropdown" style="margin-top: auto; margin-bottom: auto;">
