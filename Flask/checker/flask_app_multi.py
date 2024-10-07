@@ -143,7 +143,7 @@ def filter_out_wrong_status_containers_for_telegram(containers):
             restruct[a[0]]=a[1]
         for element in containers:
             if element not in [a[0] for a in results]:
-                if restruct[element[element["Names"]]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+                if restruct[element].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
                     pass
                 else:
                     new_elements.append(element)
@@ -188,7 +188,7 @@ def auto_alert_status():
         results = cursor.fetchall()
         total_answer=[]
         for r in results:
-            obtained = requests.post(r[0]+"/read_containers", headers=request.headers).text
+            obtained = requests.post(r[0]+"/read_containers").text
             try:
                 total_answer = total_answer + json.loads(obtained)
             except:
