@@ -57,16 +57,12 @@ db_conn_info = {
     }
 
 def send_telegram(chat_id, message):
-    print(message)
-    return
     if isinstance(message, list):
         message[2]=filter_out_muted_containers_for_telegram(message[2])
     asyncio.run(bot.send_message(chat_id=chat_id, text=str(message)))
     return
 
 def send_email(sender_email, sender_password, receiver_emails, subject, message):
-    print(message)
-    return
     smtp_server = config['smtp-server']
     smtp_port = config['smtp-port']
     server = smtplib.SMTP(smtp_server, smtp_port)
