@@ -21,16 +21,16 @@ echo the new anonymous hash is $ANON
 
 
 echo create opensearch iot index
-kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/snap4-iot-organization' -d @mapping_Sensors-ETL-IOT-ES7-v4.json
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/snap4-iot-organization' -d @/root/servicemap/mapping_Sensors-ETL-IOT-ES7-v4.json
 echo
 
 echo create opensearch kpi index
-kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/snap4-kpi' -d @mapping_Sensors-ETL-IOT-ES7-v4.json
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/snap4-kpi' -d @/root/servicemap/mapping_Sensors-ETL-IOT-ES7-v4.json
 echo
 
 
 echo setup role areamanager
-kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/roles/kibanauser_areamanager' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec -i deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/_plugins/_security/api/roles/kibanauser_areamanager' -d @- << EOF
 {
   "cluster_permissions": [
     "*"
@@ -49,15 +49,15 @@ EOF
 echo
 
 echo setup rolemapping areamanager
-kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/rolesmapping/kibanauser_areamanager' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec -i deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/_plugins/_security/api/rolesmapping/kibanauser_areamanager' -d @- << EOF 
 {
-  "backend_roles" : [ "AreaManager" ]
-}
+  "backend_roles" : [ "AreaManager" } 
+} 
 EOF
 echo
 
 echo setup role manager
-kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/roles/kibanauser_manager' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec -i deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/_plugins/_security/api/roles/kibanauser_manager' -d @- << EOF
 {
   "cluster_permissions": [
     "*"
@@ -76,7 +76,7 @@ EOF
 echo
 
 echo setup rolemapping manager
-kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/rolesmapping/kibanauser_manager' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec -i deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/_plugins/_security/api/rolesmapping/kibanauser_manager' -d @- << EOF
 {
   "backend_roles" : [ "Manager" ]
 }
@@ -84,7 +84,7 @@ EOF
 echo
 
 echo setup role tooladmin
-kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/roles/kibanauser_tooladmin' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec -i deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/_plugins/_security/api/roles/kibanauser_tooladmin' -d @- << EOF
 {
   "cluster_permissions": [
     "*"
@@ -103,7 +103,7 @@ EOF
 echo
 
 echo setup rolemapping tooladmin
-kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/_plugins/_security/api/rolesmapping/kibanauser_tooladmin' -d @- << EOF
+kubectl -n $#k8-namespace#$ exec -i deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/_plugins/_security/api/rolesmapping/kibanauser_tooladmin' -d @- << EOF
 {
   "backend_roles" : [ "ToolAdmin" ]
 }

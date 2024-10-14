@@ -42,13 +42,12 @@ rm client.csr
 #docker-compose exec opensearch-n1 bash -lic "plugins/opensearch-security/tools/hash.sh"
 echo "generate truststore"
 rm -f trust-store.p12
-echo "hopefully there's keytool from java available"
-keytool -import -file ../nifi/conf/root-ca.pem -alias snap4ca -storepass $#truststore-password#$ -storetype pkcs12 -noprompt -keystore /conf/trust-store.p12
+keytool -import -file root-ca.pem -alias snap4ca -storepass $#truststore-password#$ -storetype pkcs12 -noprompt -keystore trust-store.p12
 # p12 made with openssl does not work with java
 #openssl pkcs12 -export -nokeys -in root-ca.pem -out root-ca.p12 -passout pass:snap4ca
 #chmod a+r root-ca.p12
 cp trust-store.p12 ../nifi/conf/trust-store.p12
 cp trust-store.p12 ../datamanager-conf/trust-store.p12
 cp cacerts.orig cacerts
-keytool -importcert -keystore ../nifi/conf/cacerts -file /conf/root-ca.pem -alias $#truststore-password#$ -storepass changeit -noprompt
+keytool -importcert -keystore cacerts -file root-ca.pem -alias snap4ca -storepass changeit -noprompt
 cp cacerts ../servicemap-conf

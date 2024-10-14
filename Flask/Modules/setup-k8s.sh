@@ -42,7 +42,11 @@ cd opensearch-conf
 
 #set up certificates nifi
 cd ..
-kubectl -n $#k8-namespace#$ exec deployment/nifi exec -- bash /opt/nifi/nifi-current/bin/nifi.sh set-single-user-credentials $#nifi-user#$ $#nifi-password#$
+cd opensearch-conf
+cp internal_users.yml.tpl internal_users.yml
+cd ..
+
+#kubectl -n $#k8-namespace#$ exec deployment/nifi exec -- bash /opt/nifi/nifi-current/bin/nifi.sh set-single-user-credentials $#nifi-user#$ $#nifi-password#$
 echo "new credentials for nifi should have been applied now if no error was shown"
 file="nifi/conf/nifi.properties"
 #parsing the file
