@@ -258,7 +258,7 @@ def auto_alert_status():
 def send_alerts(message):
     try:
         send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", message)
-        send_telegram(config["platform-url"]+" is alive", message)
+        send_telegram(config["platform-url"], message)
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
 
@@ -285,7 +285,7 @@ def send_advanced_alerts(message):
             text_for_telegram+= "These containers weren't found in docker: "+ str(filter_out_muted_containers_for_telegram(message[2]))+"\n"
         if len(text_for_telegram)>0:
             try:
-                send_telegram(config["platform-url"]+" is alive", text_for_telegram)
+                send_telegram(config["platform-url"], text_for_telegram)
             except Exception as E:
                 print("[ERROR] while sending telegram due to",str(E),"- text would have been:",text_for_email)
     except Exception:
