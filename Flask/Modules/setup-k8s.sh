@@ -1,4 +1,3 @@
-
 #!/bin/bash
 chmod -R a+w iotapp-*
 chmod u+x opensearch-conf/gen-certs.sh
@@ -34,6 +33,7 @@ mkdir -p certbot/work
 mkdir -p certbot/www/.well-known/acme-challenge
 chmod a+w certbot/www
 chown -R 1000:1000 certbot
+chown -R 1000 geoserver-data
 #chmod a+w ckan-conf
 sysctl -w vm.max_map_count=262144
 
