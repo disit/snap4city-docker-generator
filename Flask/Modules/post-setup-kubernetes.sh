@@ -51,7 +51,7 @@ echo
 echo setup rolemapping areamanager
 kubectl -n $#k8-namespace#$ exec -i deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/_plugins/_security/api/rolesmapping/kibanauser_areamanager' -d @- << EOF 
 {
-  "backend_roles" : [ "AreaManager" } 
+  "backend_roles" : [ "AreaManager" ] 
 } 
 EOF
 echo

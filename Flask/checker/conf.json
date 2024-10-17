@@ -14,5 +14,6 @@
 	"sender-email": "change@at.me",
 	"sender-email-password": "replacethispassword",
 	"email-recipients": ["first_address@to.besent", "second_address@to.besent", "more_addresses@to.besent"],
-	"platform-url": "$#base-url#$"
+	"platform-url": "$#base-url#$",
+	"platform-explanation": "Some information"
 }
