@@ -1,16 +1,18 @@
-# volume-shared
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
+apiVersion: v1
+kind: PersistentVolume
 metadata:
-  name: efs-shared-volume
-provisioner: efs.csi.aws.com
-parameters:
-  provisioningMode: efs-ap
-  fileSystemId: fs-0be70e3933b7efd15
-  directoryPerms: "775"
-  gidRangeStart: "1000" # optional
-  gidRangeEnd: "2000" # optional
-  basePath: "/dynamic_provisioning" # optional
+  name: s4c-shared-volume
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /local-volume-path/shared-volume
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -19,7 +21,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: efs-shared-volume
+  storageClassName: manual
   resources:
     requests:
       storage: 5Gi
@@ -33,7 +35,7 @@ spec:
     - name: app
       image: disitlab/s4c-setup-tools
       command: ["/bin/sh"]
-      args: ["-c", "while true; do echo $(date -u) >> /data/out.log; sleep 15m; done"]
+      args: ["-c", "while true; do echo $(date -u) >> /data/out.log; sleep 10m; done"]
       volumeMounts:
         - name: persistent-storage
           mountPath: /data
@@ -41,3 +43,4 @@ spec:
     - name: persistent-storage
       persistentVolumeClaim:
         claimName: s4c-pvc-shared-volume
+
