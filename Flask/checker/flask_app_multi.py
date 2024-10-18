@@ -18,7 +18,6 @@ import requests
 import mysql.connector
 import json
 import os
-import ast
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak
@@ -35,7 +34,6 @@ import string
 import traceback
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
-import concurrent.futures
 
 f = open("conf.json")
 config = json.load(f)
@@ -62,7 +60,27 @@ def send_telegram(chat_id, message):
     asyncio.run(bot.send_message(chat_id=chat_id, text=str(message)))
     return
 
+def format_error_to_send(instance_of_problem, containers, because = None, explain_reason=None):
+    using_these = ', '.join('"{0}"'.format(w) for w in containers.split(","))
+    if because:
+        becauses=because.split(",")
+    with mysql.connector.connect(**db_conn_info) as conn:
+        cursor = conn.cursor(buffered=True)
+        query2 = 'SELECT category, component, position FROM checker.component_to_category where component in ({}) order by category;'.format(using_these)
+        cursor.execute(query2)
+        now_it_is = cursor.fetchall()
+    newstr=""
+    for a in now_it_is:
+        curstr="In category " + a[0] + ", located in " + a[2] + " the docker container named " + a[1] + " " + instance_of_problem
+        if because:
+            newstr += curstr + explain_reason + becauses.pop(0)+"\n"
+        else:
+            newstr += curstr+"\n"
+    return newstr
+
 def send_email(sender_email, sender_password, receiver_emails, subject, message):
+    
+    composite_message = config['platform-explanation'] + "\n" + message
     smtp_server = config['smtp-server']
     smtp_port = config['smtp-port']
     server = smtplib.SMTP(smtp_server, smtp_port)
@@ -72,7 +90,7 @@ def send_email(sender_email, sender_password, receiver_emails, subject, message)
     msg['From'] = sender_email
     msg['To'] = ','.join(receiver_emails)
     msg['Subject'] = subject
-    msg.attach(MIMEText(str(message), 'plain'))
+    msg.attach(MIMEText(str(composite_message), 'html'))
     server.send_message(msg)
     server.quit()
     return
@@ -116,12 +134,18 @@ def filter_out_muted_failed_are_alive_for_telegram(tests):
                     if element[1].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
                         pass
                     else:
-                        new_elements.append(element_2)
+                        if element_2 in new_elements:
+                            pass
+                        else:
+                            new_elements.append(element_2)
                 else:
-                    new_elements.append(element)
+                    if element_2 in new_elements:
+                        pass
+                    else:
+                        new_elements.append(element_2)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
-    return ", ".join([a["Name"] for a in new_elements])
+    return ", ".join([a["container"] for a in new_elements])
 
 def filter_out_wrong_status_containers_for_telegram(containers):
     try:
@@ -138,11 +162,13 @@ def filter_out_wrong_status_containers_for_telegram(containers):
         for a in results:
             restruct[a[0]]=a[1]
         for element in containers:
-            if element not in [a[0] for a in results]:
-                if restruct[element].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+            if element["Name"] in [a[0] for a in results]:
+                if restruct[element[element]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
                     pass
                 else:
                     new_elements.append(element)
+            else:
+                new_elements.append(element)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
     return ", ".join([a["Name"] for a in new_elements])
@@ -171,6 +197,7 @@ def auto_run_tests():
             return badstuff
     except Exception:
         print("Something went wrong during tests running because of:",traceback.format_exc())
+        return badstuff
 
 def auto_alert_status():
     results = None
@@ -258,7 +285,7 @@ def auto_alert_status():
 def send_alerts(message):
     try:
         send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", message)
-        send_telegram(config["platform-url"], message)
+        send_telegram(config['telegram-channel'], message)
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
 

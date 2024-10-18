@@ -75,7 +75,6 @@ def format_error_to_send(instance_of_problem, containers, because = None, explai
     return newstr
 
 def send_telegram(chat_id, message):
-    return
     if isinstance(message, list):
         message[2]=filter_out_muted_containers_for_telegram(message[2])
     asyncio.run(bot.send_message(chat_id=chat_id, text=str(message)))
@@ -84,8 +83,6 @@ def send_telegram(chat_id, message):
 def send_email(sender_email, sender_password, receiver_emails, subject, message):
     
     composite_message = config['platform-explanation'] + "\n" + message
-    print("em",composite_message)
-    return
     smtp_server = config['smtp-server']
     smtp_port = config['smtp-port']
     server = smtplib.SMTP(smtp_server, smtp_port)
@@ -119,7 +116,7 @@ def filter_out_muted_containers_for_telegram(containers):
                 new_elements.append(element)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
-    return ','.join(new_elements)
+    return ", ".join(new_elements)
 
 def filter_out_muted_failed_are_alive_for_telegram(tests):
     try:
@@ -202,8 +199,8 @@ def auto_run_tests():
                     badstuff.append({"container":r[1], "result":command_ran, "command":r[2]})
             return badstuff
     except Exception:
-        return badstuff
         print("Something went wrong during tests running because of:",traceback.format_exc())
+        return badstuff
 
 def auto_alert_status():
     containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
