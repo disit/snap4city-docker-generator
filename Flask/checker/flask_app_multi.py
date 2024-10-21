@@ -18,7 +18,6 @@ import requests
 import mysql.connector
 import json
 import os
-import ast
 from reportlab.lib.units import inch
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, PageBreak
@@ -35,7 +34,6 @@ import string
 import traceback
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
-import concurrent.futures
 
 f = open("conf.json")
 config = json.load(f)
@@ -56,6 +54,24 @@ db_conn_info = {
         "auth_plugin": 'mysql_native_password'
     }
 
+def format_error_to_send(instance_of_problem, containers, because = None, explain_reason=None):
+    using_these = ', '.join('"{0}"'.format(w) for w in containers.split(","))
+    if because:
+        becauses=because.split(",")
+    with mysql.connector.connect(**db_conn_info) as conn:
+        cursor = conn.cursor(buffered=True)
+        query2 = 'SELECT category, component, position FROM checker.component_to_category where component in ({}) order by category;'.format(using_these)
+        cursor.execute(query2)
+        now_it_is = cursor.fetchall()
+    newstr=""
+    for a in now_it_is:
+        curstr="In category " + a[0] + ", located in " + a[2] + " the docker container named " + a[1] + " " + instance_of_problem
+        if because:
+            newstr += curstr + explain_reason + becauses.pop(0)+"\n"
+        else:
+            newstr += curstr+"\n"
+    return newstr
+
 def send_telegram(chat_id, message):
     if isinstance(message, list):
         message[2]=filter_out_muted_containers_for_telegram(message[2])
@@ -72,7 +88,7 @@ def send_email(sender_email, sender_password, receiver_emails, subject, message)
     msg['From'] = sender_email
     msg['To'] = ','.join(receiver_emails)
     msg['Subject'] = subject
-    msg.attach(MIMEText(str(message), 'plain'))
+    msg.attach(MIMEText(str(message), 'html'))
     server.send_message(msg)
     server.quit()
     return
@@ -116,12 +132,18 @@ def filter_out_muted_failed_are_alive_for_telegram(tests):
                     if element[1].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
                         pass
                     else:
-                        new_elements.append(element_2)
+                        if element_2 in new_elements:
+                            pass
+                        else:
+                            new_elements.append(element_2)
                 else:
-                    new_elements.append(element)
+                    if element_2 in new_elements:
+                        pass
+                    else:
+                        new_elements.append(element_2)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
-    return ", ".join([a["Name"] for a in new_elements])
+    return ", ".join([a["container"] for a in new_elements])
 
 def filter_out_wrong_status_containers_for_telegram(containers):
     try:
@@ -138,11 +160,13 @@ def filter_out_wrong_status_containers_for_telegram(containers):
         for a in results:
             restruct[a[0]]=a[1]
         for element in containers:
-            if element not in [a[0] for a in results]:
-                if restruct[element].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+            if element["Name"] in [a[0] for a in results]:
+                if restruct[element[element]].strftime("%Y-%m-%d %H:%M:%S")>datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
                     pass
                 else:
                     new_elements.append(element)
+            else:
+                new_elements.append(element)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
     return ", ".join([a["Name"] for a in new_elements])
@@ -157,7 +181,7 @@ def auto_run_tests():
         with mysql.connector.connect(**db_conn_info) as conn:
             cursor = conn.cursor(buffered=True)
             # to run malicious code, malicious code must be present in the db or the machine in the first place
-            query = '''select command, container_name from tests_table;'''
+            query = '''select command, container_name, command_explained from tests_table;'''
             cursor.execute(query)
             conn.commit()
             results = cursor.fetchall()
@@ -167,7 +191,7 @@ def auto_run_tests():
                 command_ran = subprocess.run(r[0], shell=True, capture_output=True, text=True, encoding="cp437").stdout
                 total_result += command_ran
                 if "Failure" in command_ran:
-                    badstuff.append({"container":r[1], "result":command_ran})
+                    badstuff.append({"container":r[1], "result":command_ran, "command":r[2]})
             return badstuff
     except Exception:
         print("Something went wrong during tests running because of:",traceback.format_exc())
@@ -258,36 +282,42 @@ def auto_alert_status():
 def send_alerts(message):
     try:
         send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", message)
-        send_telegram(config["platform-url"], message)
+        send_telegram(config["telegram-channel"], message)
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
 
 
 def send_advanced_alerts(message):
     try:
-        text_for_email = ""
+        text_for_email, em1, em2, em3 = "", "", "", ""
         if len(message[0])>0:
+            em1 = format_error_to_send("is not in the correct status ",", ".join([a["Name"] for a in message[0]]),", ".join([a["Status"] for a in message[0]]),"as its status currently is: ")
             text_for_email = "These containers are not in the correct status: " + ", ".join([a["Name"] for a in message[0]])+"\n"
         if len(message[1])>0:
+            em2 = format_error_to_send("is not answering correctly to its 'is alive' test ",", ".join([a["container"] for a in message[1]]),", ".join([a["command"] for a in message[1]]),"given the failure of: ")
             text_for_email+= 'These containers are not answering correctly to their "is alive" test: '+ ", ".join([a["container"] for a in message[1]])+"\n"
         if len(message[2])>0:
+            em3 = format_error_to_send("wasn't found running in docker ",", ".join(message[2]))
             text_for_email+= "These containers weren't found in docker: "+ ", ".join(message[2])+"\n"
         try:
-            send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", text_for_email)
+            send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", em1+"\n"+em2+"\n"+em3)
         except:
             print("[ERROR] while sending email:",text_for_email)
-        text_for_telegram = ""
+        text_for_telegram, t1, t2, t3 = "", "", "", ""
         if len(message[0])>0:
-            text_for_telegram = "These containers are not in the correct status: " + str(filter_out_wrong_status_containers_for_telegram([a["Name"] for a in message[0]])) +"\n"
+            t1=format_error_to_send("is not in the correct status ",filter_out_wrong_status_containers_for_telegram(message[0]))
+            text_for_telegram = "These containers are not in the correct status: " + str(filter_out_wrong_status_containers_for_telegram(message[0])) +"\n"
         if len(message[1])>0:
+            t2=format_error_to_send("is not answering correctly to its 'is alive' test ",filter_out_muted_failed_are_alive_for_telegram(message[1]))
             text_for_telegram+= 'These containers are not answering correctly to their "is alive" test: '+ str(filter_out_muted_failed_are_alive_for_telegram(message[1]))+"\n"
         if len(filter_out_muted_containers_for_telegram(message[2]))>0:
+            t3=format_error_to_send("wasn't found running in docker ",filter_out_muted_containers_for_telegram(message[2]))
             text_for_telegram+= "These containers weren't found in docker: "+ str(filter_out_muted_containers_for_telegram(message[2]))+"\n"
         if len(text_for_telegram)>0:
             try:
-                send_telegram(config["platform-url"], text_for_telegram)
-            except Exception as E:
-                print("[ERROR] while sending telegram due to",str(E),"- text would have been:",text_for_email)
+                send_telegram(config['telegram-channel'], t1+"\n"+t2+"\n"+t3)
+            except:
+                print("[ERROR] while sending telegram:",t1+"\n"+t2+"\n"+t3,"\nDue to",traceback.format_exc())
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
  
@@ -299,7 +329,6 @@ scheduler.add_job(isalive, 'cron', hour=8, minute=0)
 scheduler.add_job(isalive, 'cron', hour=20, minute=0)
 scheduler.start()
 auto_alert_status()
-send_telegram(config["telegram-channel"], config["platform-url"] + " is alive")
 def create_app():
     app = Flask(__name__)
     app.secret_key = b'\x8a\x17\x93kT\xc0\x0b6;\x93\xfdp\x8bLl\xe6u\xa9\xf5x'

@@ -1375,6 +1375,13 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     result=result.replace(" 70"," 80")
     # wsserver needs the port to be fixed
     result=result.replace("9100","8000")
+    # heatmap-api needs the port to be fixed
+    result=result.replace("8001","8080")
+    # geoserver-db needs the port to be fixed
+    result=result.replace("5434","5434")
+    # geoserver needs the port to be fixed
+    result=result.replace("8600", "8080")
+    
     with open(location+'/kubernetes/docker-compose.yml', 'w') as f:
         f.write(result)
 
