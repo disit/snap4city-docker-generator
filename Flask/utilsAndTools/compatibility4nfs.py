@@ -17,6 +17,8 @@ import yaml
 import re
 import os
 
+claimnamereplaceme = 's4c-pvc-shared-volume'
+
 #load the deployments into an array of yamls objects (nested dicts and lists)
 print("Loading in original kubernetes yaml...")
 thisdir = os.getcwd()+os.sep+'..'+os.sep+'kubernetes'
@@ -26,19 +28,20 @@ for r, d, f in os.walk(thisdir):
         if 'deployment' in file:
             with open(thisdir+os.sep+file,'r') as opened:
                 origs.append(yaml.load(opened, Loader=yaml.FullLoader))
+
 problematicNames = ['iotapp-','mongo-','orionbrokerfilter-']
 
 #fix the security context for nfs reasons
 print("Setting security context for all pods as 0,0,0")
-for orig in origs:
+#for orig in origs:
     #if 'securityContext' in orig['spec']['template']['spec'] and orig['spec']['template']['spec']['containers'][0]['name'] in ["dashboard-cron", "dashboard-builder", "nifi", "proxy"]:
     #    orig['spec']['template']['spec']['securityContext']={'runAsUser':0,'runAsGroup':0,'fsGroup':0}
-    if orig['spec']['template']['spec']['containers'][0]['name']=='virtuoso-kb':
-        orig['spec']['template']['spec']['containers'][0]['readynessProbe']={'exec':{'command':'["/bin/sh", "-c", "/root/servicemap/run.sh"]'},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
+    #if orig['spec']['template']['spec']['containers'][0]['name']=='virtuoso-kb':
+    #    orig['spec']['template']['spec']['containers'][0]['readynessProbe']={'exec':{'command':'["/bin/sh", "-c", "/root/servicemap/run.sh"]'},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
     #elif orig['spec']['template']['spec']['containers'][0]['name']=='nifi':
-    #    orig['spec']['template']['spec']['containers'][0]['readynessProbe']={'exec':{'command':'["/bin/sh", "-c", "./bin/nifi.sh set-single-user-credentials $#nifi-user#$ $#nifi-password#$"]'},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
-    if orig['spec']['template']['spec']['containers'][0]['name']=='proxy':
-        orig['spec']['template']['spec']['containers'][0]['image'] = "nginx"
+    #    orig['spec']['template']['spec']['containers'][0]['readynessProbe']={'exec':{'command':'["/bin/sh", "-c", "./bin/nifi.sh set-single-user-credentials admin Yn25yfQJJzLPB8rm"]'},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
+    #if orig['spec']['template']['spec']['containers'][0]['name']=='proxy':
+    #    orig['spec']['template']['spec']['containers'][0]['image'] = "nginx"
         
     #elif orig['spec']['template']['spec']['containers'][0]['name']=='ldap-server':
     #    orig['spec']['template']['spec']['containers'][0]['initContainer']={'image':'disitlab/preconf-openldap:v3','command':'/bin/sh -c [ -z "$(ls -A /efsvolume/snap4volumes/ldap-conf)" ] && { echo "empty. do copy"; cp -R /etc/ldap/slapd.d/* /efsvolume/snap4volumes/ldap-conf; cp -R /var/lib/ldap/* /efsvolume/snap4volumes/ldap-db; true; } || { echo "not empty. no copy"; true;}'}
@@ -52,7 +55,10 @@ print("The readyness probes will be ran a few seconds after startup then each on
 print("Merging all volumes, respectively in each container, into a single one")
 lastkey = None
 for orig in origs:
-    if any(x in orig['spec']['template']['spec']['containers'][0]['name'] for x in problematicNames):
+    name = orig['spec']['template']['spec']['containers'][0]['name']
+    if any(x in name for x in problematicNames):
+        for vol in orig['spec']['template']['spec']['volumes']:
+          vol['persistentVolumeClaim']['claimName']=claimnamereplaceme
         continue
     try:
         cur = orig['spec']['template']['spec']['volumes']
@@ -66,7 +72,8 @@ for orig in origs:
                 try:
                     # if there is a number at the end of the pvc, drop it
                     # it is caused by kompose making each volume indipendent from each other
-                    temp['persistentVolumeClaim']['claimName']='claimnamereplaceme'
+                    if 'claim' in temp['name']:
+                        temp['persistentVolumeClaim']['claimName']=claimnamereplaceme
                     #temp['name'] = temp['name'][:re.search(r"\d",temp['name']).end()-1]
                 except AttributeError as E:
                     print('[Error] Did not fix because', E)
@@ -106,22 +113,45 @@ print("Converting the volumes mounts to be consistent with nfs requirements")
 newlist = []
 for orig in origs:
     templist = []
-    #print(orig['spec']['template']['spec']['containers'][0]['name'])
+    claimPaths = {}
+    name = orig['spec']['template']['spec']['containers'][0]['name']
+    print(name)
     try:
+        claimName = orig['spec']['template']['spec']['volumes'][0]['name']
         for i in range(len(orig['spec']['template']['spec']['containers'][0]['volumeMounts'])):
             current = orig['spec']['template']['spec']['containers'][0]['volumeMounts'][i]
+            if not 'claim' in current['name']:
+                templist.append(current)
+                volumes.pop(0)
+                continue
+            subPath = volumes.pop(0)[0].replace('/mnt/data/generated/kubernetes/','')
+            claimPaths[current['name']] = subPath
             try:
-                addeddict = {'mountPath':current['mountPath'],'name':current['name'],'subPath':volumes.pop(0)[0]}
+                addeddict = {'mountPath':current['mountPath'],'name':claimName,'subPath':subPath}
                 templist.append(addeddict)
                 #print(addeddict)
             except AttributeError as E:
-                templist.append({'mountPath':current['mountPath'],'name':current['name'],'subPath':volumes.pop(0)[0]})
+                templist.append({'mountPath':current['mountPath'],'name':claimName,'subPath':subPath})
                 print('Did not fix', E)
             except IndexError as E:
                 print('[Error] Something went wrong:',E)
+        orig['spec']['template']['spec']['containers'][0]['volumeMounts']=templist
+
+        if name!='varnish' :
+          orig['spec']['template']['spec']['volumes']=orig['spec']['template']['spec']['volumes'][:1]
+        else:
+          orig['spec']['template']['spec']['volumes']= [v for v in orig['spec']['template']['spec']['volumes'] if '000' in v['name'] or not 'claim' in v['name']]
+          #print(orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'])
+          if hasattr(orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'],'readOnly'):
+            orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'].readOnly=False
+        if 'initContainers' in orig['spec']['template']['spec'] :
+            print("  initContainer")
+            for initCont in orig['spec']['template']['spec']['initContainers'] :
+              for mount in initCont['volumeMounts']:
+                 mount['subPath'] = claimPaths[mount['name']]
+                 mount['name'] = claimName
     except KeyError as E:
         print('no volume in this deployment!')
-    orig['spec']['template']['spec']['containers'][0]['volumeMounts']=templist
     newlist.append(templist)
 
 #save the new files

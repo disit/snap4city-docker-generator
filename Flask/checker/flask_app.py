@@ -115,7 +115,7 @@ def filter_out_muted_containers_for_telegram(containers):
                 new_elements.append(element)
     except Exception:
         print("Something went wrong during container filtering because of:",traceback.format_exc())
-    return ','.join(new_elements)
+    return ", ".join(new_elements)
 
 def filter_out_muted_failed_are_alive_for_telegram(tests):
     try:
@@ -199,6 +199,7 @@ def auto_run_tests():
             return badstuff
     except Exception:
         print("Something went wrong during tests running because of:",traceback.format_exc())
+        return badstuff
 
 def auto_alert_status():
     containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
