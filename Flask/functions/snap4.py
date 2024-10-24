@@ -1378,7 +1378,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     # heatmap-api needs the port to be fixed
     result=result.replace("8001","8080")
     # geoserver-db needs the port to be fixed
-    result=result.replace("5434","5434")
+    result=result.replace("5434","5432")
     # geoserver needs the port to be fixed
     result=result.replace("8600", "8080")
     
@@ -1505,6 +1505,9 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     opensearchyaml["spec"]["template"]["spec"]["initContainers"] = [{"command":["/bin/bash" , "-c", "hashadmin=$(/usr/share/opensearch/plugins/opensearch-security/tools/hash.sh -p "+placeholders['$#opensearch-admin-pwd#$']+"); hashuser=$(/usr/share/opensearch/plugins/opensearch-security/tools/hash.sh -p " +placeholders['$#kibanauser-password#$']+ "); sed \"s|admin_replacing|$hashadmin|\" /internal_users.yml | sed \"s|kibanaserver_replacing|$hashuser|\" > /internal_users.yml.tmp; cp /internal_users.yml.tmp /internal_users.yml; rm /internal_users.yml.tmp"], "image": "opensearchproject/opensearch:1.2.3", "name": "setup-opensearch", "securityContext": { "runAsUser": 0 }, "volumeMounts": [{"mountPath": "/internal_users.yml", "name": "opensearch-n001-claim009"}]}]
     yaml.dump(opensearchyaml, open(location+"/kubernetes/opensearch-n001-deployment.yaml", "w"))
     
+    proxyyaml = yaml.load(open(location+"/kubernetes/proxy-service.yaml"), Loader=yaml.FullLoader)
+    proxyyaml["spec"]["ports"].append({"name": "90", "port": 90, "targetPort": 90})
+    yaml.dump(nifiyaml, open(location+"/kubernetes/proxy-service.yaml", "w"))
     
     #use correct keystore and truststore please
     nifiyaml = yaml.load(open(location+"/kubernetes/nifi-deployment.yaml"), Loader = yaml.FullLoader)
@@ -1521,7 +1524,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     postgreskeycloakyaml["spec"]["ports"][0]["targetPort"] = 5432
     yaml.dump(postgreskeycloakyaml, open(location+"/kubernetes/postgres-db-service.yaml", "w"))
     
-    
+   
     #proxyserviceyaml = yaml.load(open(location+"/kubernetes/proxy-service.yaml"), Loader=yaml.FullLoader)
     #proxyserviceyaml["metadata"]["name"]["spec"]["containers"][0]["args"]=[]
     #yaml.dump(proxyserviceyaml, open(location+"/kubernetes/proxy-service.yaml", "w"))

@@ -49,5 +49,6 @@ keytool -import -file root-ca.pem -alias snap4ca -storepass $#truststore-passwor
 cp trust-store.p12 ../nifi/conf/trust-store.p12
 cp trust-store.p12 ../datamanager-conf/trust-store.p12
 cp cacerts.orig cacerts
-keytool -importcert -keystore cacerts -file root-ca.pem -alias snap4ca -storepass $#truststore-password#$ -noprompt
+# do NOT change the storepass, it's changeit, leave it like that
+keytool -importcert -keystore cacerts -file root-ca.pem -alias snap4ca -storepass changeit -noprompt
 cp cacerts ../servicemap-conf

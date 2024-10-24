@@ -49,5 +49,6 @@ docker run --rm -v $PWD:/conf/ disitlab/personaldata:v3.1 keytool -import -file 
 cp trust-store.p12 ../nifi/conf/trust-store.p12
 cp trust-store.p12 ../datamanager-conf/trust-store.p12
 cp cacerts.orig cacerts
-docker run --rm -v $PWD:/conf/ disitlab/personaldata:v3.1 keytool -importcert -keystore /conf/cacerts -file /conf/root-ca.pem -alias snap4ca -storepass $#truststore-password#$ -noprompt
+# do NOT change the storepass, it's changeit, leave it like that
+docker run --rm -v $PWD:/conf/ disitlab/personaldata:v3.1 keytool -importcert -keystore /conf/cacerts -file /conf/root-ca.pem -alias snap4ca -storepass changeit -noprompt
 cp cacerts ../servicemap-conf
