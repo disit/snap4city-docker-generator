@@ -38,56 +38,21 @@ chown -R 1000 geoserver-data
 sysctl -w vm.max_map_count=262144
 
 
-read -p "try to use jdk8 for jdk? " choice
-
-case "$choice" in
-  y|Y|yes ) JDK8_HOME="$HOME/jdk8"
-            CURRENT_JAVA_HOME=$(readlink -f $(which java) | sed "s:/bin/java::")
-            ORIGINAL_PATH="$PATH"
-
-            # # Check if JDK 8 is installed
-            if [ ! -d "$JDK8_HOME" ]; then
-              echo "JDK 8 is not installed. Downloading and installing JDK 8..."
-
-              # Download and extract JDK 8 (using AdoptOpenJDK as an example)
-              mkdir -p "$JDK8_HOME"
-              curl -L -o jdk8.tar.gz https://builds.openlogic.com/downloadJDK/openlogic-openjdk/8u422-b05/openlogic-openjdk-8u422-b05-linux-x64.tar.gz
-
-              # Extract the tarball
-              tar -xzf jdk8.tar.gz --strip-components=1 -C "$JDK8_HOME"
-              rm jdk8.tar.gz
-
-              echo "JDK 8 has been installed locally at $JDK8_HOME"
-            else
-              echo "JDK 8 is already installed at $JDK8_HOME"
-            fi
-
-            # Temporarily switch to JDK 8
-            export JAVA_HOME="$JDK8_HOME"
-            export PATH="$JAVA_HOME/bin:$PATH"
-
-            echo "Switched to JDK 8"
-            java -version
-
-            # Run the specified command here
-            cd opensearch-conf
-            ./gen-certs-k8.sh
-            # Switch back to original JDK
-            export JAVA_HOME="$CURRENT_JAVA_HOME"
-            export PATH="$ORIGINAL_PATH"
-
-            echo "Switched back to original JDK"
-            java -version;;
-  n|N|no ) cd opensearch-conf
-           ./gen-certs-k8.sh;;
-  * ) echo "invalid"
-      exit 1;;
-esac
-
-
+if ! command -v java &> /dev/null; then
+    echo "JDK is not installed!"
+else
+    java_version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+    
+    if [[ "$java_version" == 1.8* ]]; then
+        echo "JDK 8 is installed and in use."
+    else
+        echo "Alert: JDK is installed, but it is not JDK 8 (found version $java_version)."
+    fi
+fi
 
 cd opensearch-conf
 ./gen-certs-k8.sh
+
 
 #set up certificates nifi
 cd ..
