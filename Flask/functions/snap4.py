@@ -1397,9 +1397,12 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     # removes all the volumes, they are not properly ordered, and all the non-proxy ingresses, because they don't matter
     for dname, _, files in os.walk(location+'/kubernetes'):
         for file in files:
-            if file.endswith('persistentvolumeclaim.yaml'):
+            # this might break something but eh
+            if "certbot" in file:
                 os.remove(os.path.join(dname,file)) 
-            if "ingress" in file:
+            elif file.endswith('persistentvolumeclaim.yaml'):
+                os.remove(os.path.join(dname,file)) 
+            elif "ingress" in file:
                 if "proxy" not in file:
                     os.remove(os.path.join(dname,file))
 
@@ -1531,6 +1534,9 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
         proxyingressyaml["spec"]["tls"]=[{"hosts":[hostname], "secretName": "https-cert"}]
     yaml.dump(proxyingressyaml, open(location+"/kubernetes/proxy-ingress.yaml", "w"))
     
+    kafkayaml = yaml.load(open(location+"/kubernetes/kafka-deployment.yaml"), Loader = yaml.FullLoader)
+    kafkayaml["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][0]["mountPath"]="/bitnami/kafka"
+    yaml.dump(kafkayaml, open(location+"/kubernetes/kafka-deployment.yaml", "w"))
     #proxyserviceyaml = yaml.load(open(location+"/kubernetes/proxy-service.yaml"), Loader=yaml.FullLoader)
     #proxyserviceyaml["metadata"]["name"]["spec"]["containers"][0]["args"]=[]
     #yaml.dump(proxyserviceyaml, open(location+"/kubernetes/proxy-service.yaml", "w"))

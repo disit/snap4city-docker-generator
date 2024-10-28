@@ -615,6 +615,112 @@ esac
                     
                     snap4.docker_to_kubernetes('./Output/'+token+'/'+ips[0],fine_as_is['$#base-hostname#$'],namespace=fine_as_is['$#k8-namespace#$'],ip=ips[0], placeholders=fine_as_is, is_https=fine_as_is["$#base-protocol#$"] == "https")
 
+            if modello == "Kubernetes-multi":
+                
+                time=post['$#Time#$']
+                iotapps=int(post['# of IoT-Apps'])
+                brokers=int(post['# of Iot-Brokers'])
+                servicemaps=int(post['# of ServiceMaps'])
+                opensearchs=int(post['# of Opensearch nodes'])
+                nifis=int(post['# of Nifi nodes'])
+                virtuosos=int(post['# of ServiceMaps'])
+                for i in range(int(post['# of IoT-Apps'])):  #iotapps go in second vm, hence the second folder
+                    snap4.make_iotapp_folder('./Modules/iotapp-id','./Output/'+token+'/'+ips[1],i+1, fine_as_is)
+                    if i == 0:
+                        snap4.copy('./Modules/iotapp+n/flows.json', './Output/'+token+'/'+ips[1]+'/iotapp-001/flows.json')
+                        snap4.placeholders_in_file('./Output/'+token+'/'+ips[1]+'/iotapp-001/flows.json', fine_as_is)
+                        snap4.make_iotapp_yaml('docker-compose-iotapp-checker-normal.yml','./Output/'+token+'/'+ips[1]+'/', i+1, fine_as_is, 1880+i)
+                    else:
+                        snap4.make_iotapp_yaml('docker-compose-iotapp.yml','./Output/'+token+'/'+ips[1]+'/', i+1, fine_as_is, 1880+i)
+                snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[0]+'/keycloak-conf')
+                snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,iotapps,1880,fine_as_is)
+                #snap4.make_apache_proxy_conf_micro('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps'],),1880,fine_as_is)
+                snap4.make_sql_micro('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', 'orion-001', iotapps, snap4.make_iotb_data(fine_as_is))
+                snap4.make_sql_dcl('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql','./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', ["127.0.0.1"]*brokers, iotapps, snap4.make_iotb_data(fine_as_is))
+                #snap4.remove_heatmap_mentions('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
+                snap4.fix_coordinates_micro(servicemaps, './Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
+                snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
+                #probably needs fixing
+                snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
+                snap4.make_multiple_brokers(brokers,'./Output/'+token+'/'+ips[0],'docker-compose-iotobsf.yml',fine_as_is)
+                snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.xml.gz',brokers,fine_as_is)
+                for nifi in range(nifis):
+                    snap4.make_nifi_conf('./Output/'+token+'/nifi-'+str(nifi)+'/nifi/conf/flow.xml.gz',brokers,fine_as_is)
+                for i in range(virtuosos):
+                    snap4.make_n_servicemaps(servicemaps,'./Output/'+token+'/virtuoso'+str(i), fine_as_is)
+                for i in range(virtuosos*2):
+                    snap4.copy('./Modules/setup-servicemap-dcs.sh','./Output/'+token+'/virtuoso-kb-'+str(list_virtuoso[i%servicemaps])+'/setup-servicemap-dcs-'+str(i+1).zfill(3)+'.sh')
+                    snap4.copy('./Modules/post-setup-dcs.sh','./Output/'+token+'/virtuoso-kb-'+str(list_virtuoso[i%servicemaps])+'/post-setup-dcs-'+str(i+1).zfill(3)+'.sh')
+                    fine_as_is['$#id#$']=str(i+1).zfill(3)
+                    snap4.placeholders_in_file('./Output/'+token+'/virtuoso-kb-'+str(list_virtuoso[i%servicemaps])+'/setup-servicemap-dcs-'+str(i+1).zfill(3)+'.sh', fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/virtuoso-kb-'+str(list_virtuoso[i%servicemaps])+'/post-setup-dcs-'+str(i+1).zfill(3)+'.sh', fine_as_is)
+                    fine_as_is.pop('$#id#$')
+                    snap4.merge_sh('./Output/'+token+'/virtuoso-kb-'+str(list_virtuoso[i%servicemaps])+'/setup.sh',['./Output/'+token+'/virtuoso-kb-'+str(list_virtuoso[i%servicemaps])+'/setup-servicemap-dcs-'+str(i+1).zfill(3)+'.sh'])
+                    snap4.merge_sh('./Output/'+token+'/virtuoso-kb-'+str(list_virtuoso[i%servicemaps])+'/post-setup.sh',['./Output/'+token+'/virtuoso-kb-'+str(list_virtuoso[i%servicemaps])+'/post-setup-dcs-'+str(i+1).zfill(3)+'.sh'])
+                for i in range(2):
+                    for j in range(virtuosos):
+                        snap4.fix_service_map_config('./Output/'+token+'/virtuoso-kb-'+str(list_virtuoso[i%servicemaps])+'/servicemap-'+str(i+1).zfill(3)+'-conf/servicemap.properties','virtuoso-kb-'+str(i+1).zfill(3))
+
+                if brokers == 1:
+                    snap4.make_ldif('./Output/'+token+'/'+ips[0]+'/ldap', 'default.ldif', ['1000'], ['orion-1'])
+                elif brokers == 2:
+                    snap4.make_ldif('./Output/'+token+'/'+ips[0]+'/ldap', 'default.ldif', ['1000','1001'], ['orion-1','orion-2'],2)
+                snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup.sh',['./Output/'+token+'/'+ips[0]+'/setup-opensearch.sh'])
+                for file in select:
+                    try:
+                        if file[5] == 3:  # file needs placeholders adjustments
+                            snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+file[3]+file[4], fine_as_is)
+                        elif file[5] == 2:  # we usually already dealt with special files
+                            snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+file[3]+file[4], fine_as_is)
+                        elif file[5] == 1:  # file is fine as is
+                            pass
+                    except FileNotFoundError:
+                        #happens if we merge a file into one another before coming here
+                        pass
+                if modello=='Kubernetes':
+                    snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup-virtuoso-k8.sh',['./Output/'+token+'/'+ips[0]+'/post-setup-kubernetes.sh'])
+                    os.rename('./Output/'+token+'/'+ips[0]+'/setup-virtuoso-k8.sh','./Output/'+token+'/'+ips[0]+'/post-setup.sh')
+                    os.remove('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh')
+                    os.remove('./Output/'+token+'/'+ips[0]+'/setup.sh')
+                else:
+                    snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh',['./Output/'+token+'/'+ips[0]+'/post-setup.sh'])
+                    os.rename('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh','./Output/'+token+'/'+ips[0]+'/post-setup.sh')
+                if fine_as_is["$#base-protocol#$"] == "https":
+                    snap4.fixvarnish('./Output/'+token+'/'+ips[0]+'/varnish/varnish-conf/default.vcl', False)
+                    snap4.make_ngnix_micro_ssl('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',iotapps,1880,fine_as_is)
+                    snap4.copy('./Modules/enc.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt.sh')
+                    snap4.copy('./Modules/letsencrypt-renew.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh')
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt.sh', fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/letsencrypt-renew.sh', fine_as_is)
+                    with open('./Output/'+token+'/'+ips[0]+'/post-setup.sh', 'r') as f:
+                        quick_fix=f.read()
+                        quick_fix="""#!/bin/bash
+
+read -p "Did you run the certificate generation yet? (yes/no) " yn
+
+case $yn in
+	yes ) echo Proceeding with post_setup...;;
+	no ) echo It is expected to run the certificate generation before running this file. Go execute it before running this script again;
+		exit;;
+	* ) echo Invalid response;
+		exit 1;;
+esac
+""" + quick_fix
+                    with open('./Output/'+token+'/'+ips[0]+'/post-setup.sh', 'w') as f:
+                        f.write(quick_fix)
+                else:
+                    snap4.fixvarnish('./Output/'+token+'/'+ips[0]+'/varnish/varnish-conf/default.vcl', True)
+                    snap4.make_ngnix_micro('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)
+
+                snap4.merge_yaml('./Output/'+token+'/'+ips[0])
+                if modello == 'Kubernetes':
+                    snap4.copy('./utilsAndTools/update-ontology-k8.sh', './Output/'+token+'/'+ips[0]+'/servicemap-conf/update-ontology-k8.sh')
+                    snap4.copy('./Modules/kubernetes_README.md', './Output/'+token+'/'+ips[0]+'/kubernetes_README.md')
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_README.md',fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/servicemap-conf/update-ontology-k8.sh',fine_as_is)
+                    snap4.docker_to_kubernetes('./Output/'+token+'/'+ips[0],fine_as_is['$#base-hostname#$'],namespace=fine_as_is['$#k8-namespace#$'],ip=ips[0], placeholders=fine_as_is, is_https=fine_as_is["$#base-protocol#$"] == "https")
+
+            
             #refactor
             elif modello == "Normal":
                 if len(ips)!=2:

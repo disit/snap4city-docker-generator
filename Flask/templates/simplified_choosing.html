@@ -73,10 +73,145 @@
       add_ip_field(1,form);
       form = addSubmit(form);
       document.getElementById("Installation model").appendChild(form);
-    } else if (x == 'Kubernetes') {
-      //if you are looking here without seeing the kuber option, know that we
-      //aren't done, but you can hack it in and see the wip
-      //no promises on results
+    } else if (x == 'Kubernetes-multi') {
+      var inputX = document.createElement("input");
+      inputX.setAttribute("type", "number");
+      inputX.setAttribute("placeholder", "# of IoT-Apps (1-1050)");
+      inputX.setAttribute("name", "# of IoT-Apps");
+      inputX.setAttribute("min", 1);
+      inputX.setAttribute("max", 1050);
+      inputX.setAttribute("class", "form-control");
+      inputX.required = true;
+
+      var label_for_X = document.createElement("label");
+      var label_text_X = document.createTextNode("# of IoT-Apps");
+      inputX.setAttribute("id", 'X');
+      label_for_X.setAttribute("for", "X");
+      label_for_X.appendChild(label_text_X);
+      form.appendChild(label_for_X);
+
+      form.appendChild(inputX);
+      form.appendChild(document.createElement("br"));
+
+      var inputY = document.createElement("select");
+      inputY.setAttribute('class', "form-select");
+      inputY.setAttribute("name", "# of Iot-Brokers");
+      var option1 = document.createElement("option");
+      option1.text = "1";
+      option1.value = "1";
+      inputY.add(option1);
+      var option2 = document.createElement("option");
+      option2.text = "2";
+      option2.value = "2";
+      inputY.add(option2);
+
+      var label_for_Y = document.createElement("label");
+      var label_text_Y = document.createTextNode("# of IoT brokers");
+      inputY.setAttribute("id", 'Y');
+      label_for_Y.setAttribute("for", "Y");
+      label_for_Y.appendChild(label_text_Y);
+      form.appendChild(label_for_Y);
+
+      form.append(inputY);
+      form.appendChild(document.createElement("br"));
+
+      //add_ip_explanation(form)
+      add_ip_field(1,form,'fixed-ip-k8s',"127.0.0.1");
+
+      //document.getElementById("configs").value;
+
+      document.getElementById("Installation model").appendChild(form);
+      //document.getElementById("ip_field-1").setAttribute("value","127.0.0.1");
+
+      var inputZ = document.createElement("select");
+      inputZ.setAttribute('class', "form-select");
+      inputZ.setAttribute("name", "# of ServiceMaps");
+      var option1_sm = document.createElement("option");
+      option1_sm.text = "1";
+      option1_sm.value = "1";
+      inputZ.add(option1_sm);
+      var option2_sm = document.createElement("option");
+      option2_sm.text = "2";
+      option2_sm.value = "2";
+      inputZ.add(option2_sm);
+      var option3_sm = document.createElement("option");
+      option3_sm.text = "3";
+      option3_sm.value = "3";
+      inputZ.add(option3_sm);
+
+      var label_for_Z = document.createElement("label");
+      var label_text_Z = document.createTextNode("# of ServiceMaps");
+      inputZ.setAttribute("id", 'Z');
+      label_for_Z.setAttribute("for", "Z");
+      label_for_Z.appendChild(label_text_Z);
+      form.appendChild(label_for_Z);
+
+      form.append(inputZ);
+      form.appendChild(document.createElement("br"));
+
+      var inputV = document.createElement("input");
+      inputV.setAttribute("type", "number");
+      inputV.setAttribute("placeholder", "# of Opensearch nodes");
+      inputV.setAttribute("name", "# of Opensearch nodes");
+      inputV.setAttribute("min", 1);
+      inputV.setAttribute("max", 10);
+      inputV.setAttribute("class", "form-control");
+      inputV.required = true;
+
+      var label_for_V = document.createElement("label");
+      var label_text_V = document.createTextNode("# of Opensearch nodes");
+      inputV.setAttribute("id", 'V');
+      label_for_V.setAttribute("for", "V");
+      label_for_V.appendChild(label_text_V);
+      form.appendChild(label_for_V);
+
+      form.appendChild(inputV);
+      form.appendChild(document.createElement("br"));
+
+      var inputV = document.createElement("input");
+      inputV.setAttribute("type", "number");
+      inputV.setAttribute("placeholder", "# of Opensearch nodes");
+      inputV.setAttribute("name", "# of Opensearch nodes");
+      inputV.setAttribute("min", 1);
+      inputV.setAttribute("max", 10);
+      inputV.setAttribute("class", "form-control");
+      inputV.required = true;
+      //////////////////////////////////////////
+      var inputN = document.createElement("input");
+      inputN.setAttribute("type", "number");
+      inputN.setAttribute("placeholder", "# of Nifi nodes");
+      inputN.setAttribute("name", "# of Nifi nodes");
+      inputN.setAttribute("min", 1);
+      inputN.setAttribute("max", 10);
+      inputN.setAttribute("class", "form-control");
+      inputN.required = true;
+
+      var label_for_N = document.createElement("label");
+      var label_text_N = document.createTextNode("# of Nifi nodes");
+      inputN.setAttribute("id", 'N');
+      label_for_N.setAttribute("for", "N");
+      label_for_N.appendChild(label_text_N);
+      form.appendChild(label_for_N);
+
+      form.appendChild(inputN);
+      form.appendChild(document.createElement("br"));
+//////////////////////////////////////////
+      var inputVI = document.createElement("input");
+      inputVI.setAttribute('hidden', '');
+      inputVI.setAttribute("type", "number");
+      inputVI.setAttribute("placeholder", "# of Virtuoso nodes");
+      inputVI.setAttribute("name", "# of Virtuoso nodes");
+      inputVI.setAttribute("value", 1);
+      inputVI.setAttribute("min", 1);
+      inputVI.setAttribute("max", 10);
+      inputVI.setAttribute("class", "form-control");
+      inputVI.setAttribute("id", "virtuoso");
+      inputVI.required = true;
+      
+      form = addSubmit(form);
+
+
+    }else if (x == 'Kubernetes') {
       var inputX = document.createElement("input");
       inputX.setAttribute("type", "number");
       inputX.setAttribute("placeholder", "# of IoT-Apps (1-1050)");
@@ -827,6 +962,7 @@ function variable_iotapps_server(caller) {
             <option value="DataCityMedium">DataCityMid X, K, S, W (draft)</option>
             <option value="DataCityLarge">DataCityLarge X, R, M, K, S, W (draft)</option>
             <option value="Kubernetes">Kubernetes from Micro (experimental/draft)</option>
+            <option value="Kubernetes-multi">Kubernetes with multi-component (I don't work yet)</option>
             {%endif%}
           </select>
           <br>
