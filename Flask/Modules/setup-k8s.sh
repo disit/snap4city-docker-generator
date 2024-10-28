@@ -1,6 +1,6 @@
 #!/bin/bash
 chmod -R a+w iotapp-*
-chmod u+x opensearch-conf/gen-certs.sh
+chmod u+x opensearch-conf/*.sh
 chmod a+w iot-directory-certificate
 mkdir -p iot-directory-log
 chmod a+w iot-directory-log
@@ -20,7 +20,6 @@ chmod a+w servicemap-iot-conf/logs/list-static-attr
 chmod a+w servicemap-iot-conf/logs/move/
 chmod a+w nifi/conf -R
 chmod a+w nifi/conf/flow.xml.gz
-chmod a+w nifi/extensions
 mkdir -p nifi/logs
 chmod 777 varnish/docker-entrypoint
 mkdir -p ownership-conf/logs
@@ -82,7 +81,7 @@ case "$choice" in
   n|N|no ) cd opensearch-conf
            ./gen-certs-k8.sh;;
   * ) echo "invalid"
-      exit(1);;
+      exit 1;;
 esac
 
 

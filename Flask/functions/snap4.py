@@ -1478,7 +1478,6 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     #makes the new pv
     for dname, _, files in os.walk(location+'/kubernetes'):
         for file,volume_path in zip(sorted([file for file in files if 'persistentvolumeclaim' in file]),data_lines):
-            print(file, volume_path)
             if 'persistentvolumeclaim' in file:
                 temporary = ''
                 vname=''

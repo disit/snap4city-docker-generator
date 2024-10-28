@@ -615,8 +615,7 @@ esac
                     
                     snap4.docker_to_kubernetes('./Output/'+token+'/'+ips[0],fine_as_is['$#base-hostname#$'],namespace=fine_as_is['$#k8-namespace#$'],ip=ips[0], placeholders=fine_as_is, is_https=fine_as_is["$#base-protocol#$"] == "https")
 
-            if modello == "Kubernetes-multi":
-                
+            elif modello == "Kubernetes-multi":
                 time=post['$#Time#$']
                 iotapps=int(post['# of IoT-Apps'])
                 brokers=int(post['# of Iot-Brokers'])

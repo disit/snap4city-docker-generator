@@ -2,7 +2,6 @@ mkdir -p varnish/logs
 mkdir -p nifi/logs
 chmod a+w nifi/conf -R
 chmod a+w nifi/conf/flow.xml.gz
-chmod a+w nifi/extensions
 chmod a+w nifi/logs
 chmod 777 varnish/docker-entrypoint
 chmod u+x opensearch-conf/gen-certs.sh
