@@ -1529,6 +1529,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     
     proxyingressyaml = yaml.load(open(location+"/kubernetes/proxy-ingress.yaml"), Loader = yaml.FullLoader)
     proxyingressyaml["metadata"]["annotations"]["nginx.ingress.kubernetes.io/proxy-read-timeout"] = "3600"
+    proxyingressyaml["metadata"]["annotations"]["nginx.ingress.kubernetes.io/proxy-buffer-size"] = "10k"
     proxyingressyaml["spec"]["rules"][0]["host"]=hostname
     if is_https:
         proxyingressyaml["spec"]["tls"]=[{"hosts":[hostname], "secretName": "https-cert"}]
