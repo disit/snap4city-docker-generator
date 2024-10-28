@@ -579,7 +579,7 @@ def create_app():
                 else:
                     snap4.merge_sh('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh',['./Output/'+token+'/'+ips[0]+'/post-setup.sh'])
                     os.rename('./Output/'+token+'/'+ips[0]+'/setup-virtuoso.sh','./Output/'+token+'/'+ips[0]+'/post-setup.sh')
-                if fine_as_is["$#base-protocol#$"] == "https":
+                if fine_as_is["$#base-protocol#$"] == "https" and modello!='Kubernetes':
                     snap4.fixvarnish('./Output/'+token+'/'+ips[0]+'/varnish/varnish-conf/default.vcl', False)
                     snap4.make_ngnix_micro_ssl('./Output/'+token+'/'+ips[0]+'/nginx-proxy-conf',int(post['# of IoT-Apps'],),1880,fine_as_is)
                     snap4.copy('./Modules/enc.sh', './Output/'+token+'/'+ips[0]+'/letsencrypt.sh')
@@ -612,8 +612,11 @@ esac
                     snap4.copy('./Modules/kubernetes_README.md', './Output/'+token+'/'+ips[0]+'/kubernetes_README.md')
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_README.md',fine_as_is)
                     snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/servicemap-conf/update-ontology-k8.sh',fine_as_is)
+                    if fine_as_is["$#base-protocol#$"] == "https":
+                        snap4.docker_to_kubernetes('./Output/'+token+'/'+ips[0],fine_as_is['$#base-hostname#$'],namespace=fine_as_is['$#k8-namespace#$'],ip=ips[0], placeholders=fine_as_is, is_https=True)
+                    else:
+                        snap4.docker_to_kubernetes('./Output/'+token+'/'+ips[0],fine_as_is['$#base-hostname#$'],namespace=fine_as_is['$#k8-namespace#$'],ip=ips[0], placeholders=fine_as_is, is_https=False)
                     
-                    snap4.docker_to_kubernetes('./Output/'+token+'/'+ips[0],fine_as_is['$#base-hostname#$'],namespace=fine_as_is['$#k8-namespace#$'],ip=ips[0], placeholders=fine_as_is, is_https=fine_as_is["$#base-protocol#$"] == "https")
 
             elif modello == "Kubernetes-multi":
                 time=post['$#Time#$']

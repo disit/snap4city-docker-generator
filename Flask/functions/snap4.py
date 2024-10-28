@@ -1393,6 +1393,11 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     kompose convert --volumes persistentVolumeClaim
     sed -i 's@name: proxy@name: '''+hostname+'''@' ./proxy-service.yaml''')
     
+    
+    #delete certbot, not needed here
+    ogyaml = yaml.load(open(location+"/kubernetes/docker-compose.yaml"), Loader=yaml.FullLoader)
+    del ogyaml['services']['certbot']
+    yaml.dump(ogyaml, open(location+"/kubernetes/docker-compose.yaml", "w"))
 
     # removes all the volumes, they are not properly ordered, and all the non-proxy ingresses, because they don't matter
     for dname, _, files in os.walk(location+'/kubernetes'):
@@ -1405,6 +1410,8 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
             elif "ingress" in file:
                 if "proxy" not in file:
                     os.remove(os.path.join(dname,file))
+                    
+
 
     # this fixes the paths to be no longer relative to the generator
     for dname, _, files in os.walk(location+'/kubernetes'):
