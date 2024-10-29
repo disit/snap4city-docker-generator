@@ -1395,9 +1395,9 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     
     
     #delete certbot, not needed here
-    ogyaml = yaml.load(open(location+"/kubernetes/docker-compose.yaml"), Loader=yaml.FullLoader)
+    ogyaml = yaml.load(open(location+"/kubernetes/docker-compose.yml"), Loader=yaml.FullLoader)
     del ogyaml['services']['certbot']
-    yaml.dump(ogyaml, open(location+"/kubernetes/docker-compose.yaml", "w"))
+    yaml.dump(ogyaml, open(location+"/kubernetes/docker-compose.yml", "w"))
 
     # removes all the volumes, they are not properly ordered, and all the non-proxy ingresses, because they don't matter
     for dname, _, files in os.walk(location+'/kubernetes'):
