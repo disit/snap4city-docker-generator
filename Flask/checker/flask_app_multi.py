@@ -731,7 +731,7 @@ def create_app():
             amount_of_lines = form_dict.pop('top_lines')
             json_data['processes']=json_data['processes'][:int(amount_of_lines)]
         except Exception as E:
-            # eh
+            json_data['processes']=json_data['processes'][:40]
             pass
     # Convert parsed data to JSON
         return json_data
