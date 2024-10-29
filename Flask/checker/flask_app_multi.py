@@ -700,7 +700,7 @@ def create_app():
             print("Something went wrong during rebooting because of:",traceback.format_exc())
             return render_template("error_showing.html", r = traceback.format_exc()), 500
         
-    @app.route("/get_all_top", methods=["GET"])
+    @app.route("/get_top", methods=["GET"])
     def get_all_top():
         with mysql.connector.connect(**db_conn_info) as conn:
             cursor = conn.cursor(buffered=True)

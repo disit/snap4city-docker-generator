@@ -428,6 +428,10 @@ def create_app():
             pass
     # Convert parsed data to JSON
         return render_template("top-viewer.html", data=json_data), 200
+    
+    @app.route("/get_top", methods=["GET"])
+    def get_top_single():
+        return get_local_top()
         
 
     @app.route("/organize_containers", methods=["GET"])
