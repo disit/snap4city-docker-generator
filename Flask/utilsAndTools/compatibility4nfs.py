@@ -142,8 +142,7 @@ for orig in origs:
         else:
           orig['spec']['template']['spec']['volumes']= [v for v in orig['spec']['template']['spec']['volumes'] if '000' in v['name'] or not 'claim' in v['name']]
           #print(orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'])
-          if hasattr(orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'],'readOnly'):
-            orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'].readOnly=False
+          orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'].pop('readOnly', '')
         if 'initContainers' in orig['spec']['template']['spec'] :
             print("  initContainer")
             for initCont in orig['spec']['template']['spec']['initContainers'] :
