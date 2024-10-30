@@ -1536,6 +1536,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     proxyingressyaml = yaml.load(open(location+"/kubernetes/proxy-ingress.yaml"), Loader = yaml.FullLoader)
     proxyingressyaml["metadata"]["annotations"]["nginx.ingress.kubernetes.io/proxy-read-timeout"] = "3600"
     proxyingressyaml["metadata"]["annotations"]["nginx.ingress.kubernetes.io/proxy-buffer-size"] = "10k"
+    proxyingressyaml["spec"]["rules"][0]["http"]["paths"].append({"path":"/auth","pathType":"Prefix","backend":{"service":{"name":"keycloak", "port":{"number":8080}}}})
     proxyingressyaml["spec"]["rules"][0]["host"]=hostname
     if is_https:
         proxyingressyaml["metadata"]["annotations"]["cert-manager.io/cluster-issuer"] = "letsencrypt-prod"
