@@ -240,6 +240,9 @@ def auto_alert_status():
     for average, timing in zip(load_averages, [1, 5, 15]):
         if average > config["load-threshold"]:
             load_issues += "Load threshold above "+str(config["load-threshold"]) + " with " + str(average) + "during the last " + str(timing) + " minute(s).\n"
+    memory_issues = ""
+    if top["memory_usage"]["used"]/top["memory_usage"]["total"] > config["memory_threshold"]:
+        memory_issues = "Memory usage above " + str(config["memory_threshold"]) + " with " + str(top["memory_usage"]["used"]) + " " + top["memory_measuring_unit"] + " out of " + top["memory_usage"]["total"] + " " + top["memory_measuring_unit"] + " currently in use\n"
     if len(names_of_problematic_containers) > 0 or len(is_alive_with_ports) > 0 or len(containers_which_are_not_expected):
         try:
             issues = ["","","",""]
@@ -251,6 +254,8 @@ def auto_alert_status():
                 issues[2]=containers_which_are_not_expected
             if len(load_issues)>0:
                 issues[3]=load_issues
+            if len(memory_issues)>0:
+                issues[4]=memory_issues
             send_advanced_alerts(issues)
         except Exception:
             print(traceback.format_exc())
@@ -362,9 +367,11 @@ def send_advanced_alerts(message):
             text_for_email+= "These containers weren't found in docker: "+ ", ".join(message[2])+"\n"
         if len(message[3])>0:
             text_for_email+= message[3]
+        if len(message[4])>0:
+            text_for_email+= message[4]
         try:
             if len(text_for_email) > 5:
-                send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", em1+"\n"+em2+"\n"+em3+"\n"+message[3])
+                send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", em1+"\n"+em2+"\n"+em3+"\n"+message[3]+"\n"+message[4])
         except:
             print("[ERROR] while sending email:",text_for_email)
         text_for_telegram, t1, t2, t3 = "", "", "", ""
@@ -379,11 +386,13 @@ def send_advanced_alerts(message):
             text_for_telegram+= "These containers weren't found in docker: "+ str(filter_out_muted_containers_for_telegram(message[2]))+"\n"
         if len(message[3])>0:
             text_for_telegram+= message[3]
+        if len(message[4])>0:
+            text_for_telegram+= message[4]
         if len(text_for_telegram)>5:  #todo check me better
             try:
-                send_telegram(config['telegram-channel'], t1+"\n"+t2+"\n"+t3+"\n"+message[3])
+                send_telegram(config['telegram-channel'], t1+"\n"+t2+"\n"+t3+"\n"+message[3]+"\n"+message[4])
             except:
-                print("[ERROR] while sending telegram:",t1+"\n"+t2+"\n"+t3+"\n"+message[3],"\nDue to",traceback.format_exc())
+                print("[ERROR] while sending telegram:",t1+"\n"+t2+"\n"+t3+"\n"+message[3]+"\n"+message[4],"\nDue to",traceback.format_exc())
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
         

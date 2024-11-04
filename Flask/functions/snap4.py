@@ -1305,7 +1305,7 @@ def add_components_for_sentinel(mysql_location, mongos, nifis, iotapps, opensear
     add_brokers_for_sentinel(mysql_location, brokers)
 
 #TODO "end of files" volumes are not generated and they should be
-def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/generated', placeholders={},ip="127.0.0.1", is_https=False):
+def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/generated', placeholders={},ip="127.0.0.1", is_https=False, somemoreconf = {}):
     # unfortunately, docker-compose config was edited in a such way it broke some usages, even if the devs say that's intended
     # nevermind that they deleted tests that were failing on that release
     # therefore yq is used to fix the mistake, which happens on the depends_on attribute
@@ -1522,7 +1522,8 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     nifiyaml = yaml.load(open(location+"/kubernetes/nifi-deployment.yaml"), Loader = yaml.FullLoader)
     nifiyaml["spec"]["template"]["spec"]["initContainers"] = [{"command": ["/bin/bash", "-c", '/opt/nifi/nifi-toolkit-current/bin/tls-toolkit.sh standalone -n "localhost" -C "CN=admin, OU=NIFI" -S ' + nifiyaml["spec"]["template"]["spec"]["containers"][0]["env"][1]["value"] +' -P '+nifiyaml["spec"]["template"]["spec"]["containers"][0]["env"][15]["value"]+'; cp nifi-cert.pem /opt/nifi/nifi-current/conf; cp nifi-key.key /opt/nifi/nifi-current/conf; cp localhost/truststore.jks /opt/nifi/nifi-current/conf; cp localhost/nifi.properties /opt/nifi/nifi-current/conf; cp localhost/keystore.jks /opt/nifi/nifi-current/conf; cp CN=admin_OU=NIFI.p12 /opt/nifi/nifi-current/conf; cp CN=admin_OU=NIFI.password /opt/nifi/nifi-current/conf; /opt/nifi/nifi-current/bin/nifi.sh set-single-user-credentials admin '+ nifiyaml["spec"]["template"]["spec"]["containers"][0]["env"][1]["value"]], "image": "disitlab/snap4nifi:v0-1.16.2", "name": "setup-nifi", "volumeMounts":[{"mountPath": "/opt/nifi/nifi-current/conf", "name": "nifi-claim000"},{"mountPath": "/opt/nifi/nifi-current/logs", "name": "nifi-claim001"}]}]
     nifiyaml["spec"]["template"]["spec"]["securityContext"]={'runAsUser':0,'runAsGroup':0,'fsGroup':0}
-#    nifiyaml['spec']['template']['spec']['containers'][0]['readinessProbe']={'exec':{'command':["/bin/sh", "-c", '/opt/nifi/nifi-current/bin/nifi.sh set-single-user-credentials admin '+nifiyaml["spec"]["template"]["spec"]["containers"][0]["env"][1]["value"]]},'initialDelaySeconds':25,'timeoutSeconds':30,'periodSeconds': 1000000000}
+    if "nifi-amount" in somemoreconf.keys():
+        nifiyaml["spec"]["replicas"] = somemoreconf["nifi-amount"]
     yaml.dump(nifiyaml, open(location+"/kubernetes/nifi-deployment.yaml", "w"))
     
     keycloakyaml = yaml.load(open(location+"/kubernetes/keycloak-service.yaml"), Loader=yaml.FullLoader)
