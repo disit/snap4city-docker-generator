@@ -36,6 +36,12 @@ import re
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
 
+# README
+# for each information sent, it should instead be sent a json with key "result" being the original answer and key "errors" explaining all things, if any, that went wrong
+# containers status
+# tops
+
+
 f = open("conf.json")
 config = json.load(f)
 
