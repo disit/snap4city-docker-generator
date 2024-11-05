@@ -73,7 +73,8 @@
     </div>
 
     <script>
-        var snapshots = {{data | tojson}};
+        //todo check what happens in case of multi by stiching together the single instance one, alert as response is fine
+        var snapshots = {{data["result"] | tojson}};
         if (typeof snapshots === 'object' && snapshots !== null && !Array.isArray(snapshots))
             snapshots = [snapshots];
         const snapshotSelect = document.getElementById('snapshot-select');

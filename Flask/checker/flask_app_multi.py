@@ -714,6 +714,7 @@ def create_app():
             conn.commit()
             results = cursor.fetchall()
             total_answer=[]
+            errors = []
             for r in results:
                 obtained = requests.post(r[0]+"/get_local_top", headers=request.headers).text
                 try:
@@ -724,9 +725,10 @@ def create_app():
                         currentjson=json.loads(obtained)
                         currentjson["source"]=r[0]
                         total_answer.append(json.loads(obtained))
-                    except:
-                        pass
-            return total_answer
+                    except Exception as E:
+                        errors.append("Reading top from "+r[0]+" failed: the backed received this exception: "+str(E))
+            tobereturned_answer = {"result":total_answer, "error":errors}
+            return tobereturned_answer
         return render_template("top-viewer.html", data=total_answer), 200
         
 
