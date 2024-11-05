@@ -238,10 +238,10 @@ def auto_alert_status():
     load_averages = re.findall(r"(\d+\.\d+)", top["system_info"]["load_average"])[-3:]
     load_issues=""
     for average, timing in zip(load_averages, [1, 5, 15]):
-        if average > config["load-threshold"]:
+        if float(average) > config["load-threshold"]:
             load_issues += "Load threshold above "+str(config["load-threshold"]) + " with " + str(average) + "during the last " + str(timing) + " minute(s).\n"
     memory_issues = ""
-    if top["memory_usage"]["used"]/top["memory_usage"]["total"] > config["memory_threshold"]:
+    if float(top["memory_usage"]["used"])/float(top["memory_usage"]["total"]) > config["memory_threshold"]:
         memory_issues = "Memory usage above " + str(config["memory_threshold"]) + " with " + str(top["memory_usage"]["used"]) + " " + top["memory_measuring_unit"] + " out of " + top["memory_usage"]["total"] + " " + top["memory_measuring_unit"] + " currently in use\n"
     if len(names_of_problematic_containers) > 0 or len(is_alive_with_ports) > 0 or len(containers_which_are_not_expected):
         try:
@@ -441,13 +441,13 @@ def create_app():
     @app.route("/get_local_top", methods=["GET"])
     def get_local_top():
         json_data=get_top()
+        json_data["source"] = "Main System"
         try:
             form_dict = request.form.to_dict()
             amount_of_lines = form_dict.pop('top_lines')
             json_data['processes']=json_data['processes'][:int(amount_of_lines)]
         except Exception as E:
             json_data['processes']=json_data['processes'][:40]
-    # Convert parsed data to JSON
         return render_template("top-viewer.html", data=json_data), 200
     
     @app.route("/get_top", methods=["GET"])
@@ -590,16 +590,12 @@ def create_app():
                 conn.commit()
                 results = cursor.fetchall()
                 total_answer=[]
-                # concurrent
                 with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
                     futures = [executor.submit(send_request, r[0]+"/sentinel/read_containers", request.headers) for r in results]
                     for future in concurrent.futures.as_completed(futures):
                         total_answer += json.loads(future.result().text)
-                # consecutive
-                #for r in results:
-                #    obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
-                #    total_answer = total_answer + json.loads(obtained)
-                return total_answer
+                tobereturned_answer = {"result":total_answer, "error":[]}
+                return tobereturned_answer
         except Exception:
             print("Something went wrong because of:",traceback.format_exc())
             return render_template("error_showing.html", r = traceback.format_exc()), 500

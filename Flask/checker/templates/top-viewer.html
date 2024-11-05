@@ -49,9 +49,9 @@
     <div class="data-section" id="memory-usage">
         <h2>Memory Usage</h2>
         <ul>
-            <li>Total: <span id="mem_total"></span> kB</li>
-            <li>Free: <span id="mem_free"></span> kB</li>
-            <li>Used: <span id="mem_used"></span> kB</li>
+            <li>Total: <span id="mem_total"></span> <span id="mem_measuring_unit_1"></span></li>
+            <li>Free: <span id="mem_free"></span> <span id="mem_measuring_unit_2"></span></li>
+            <li>Used: <span id="mem_used"></span> <span id="mem_measuring_unit_3"></span></li>
         </ul>
     </div>
 
@@ -73,7 +73,7 @@
     </div>
 
     <script>
-        const snapshots = {{data | tojson}};
+        var snapshots = {{data | tojson}};
         if (typeof snapshots === 'object' && snapshots !== null && !Array.isArray(snapshots))
             snapshots = [snapshots];
         const snapshotSelect = document.getElementById('snapshot-select');
@@ -98,6 +98,10 @@
             document.getElementById('mem_total').textContent = snapshot.memory_usage.total;
             document.getElementById('mem_free').textContent = snapshot.memory_usage.free;
             document.getElementById('mem_used').textContent = snapshot.memory_usage.used;
+
+            document.getElementById('mem_measuring_unit_1').textContent = snapshot.memory_measuring_unit;
+            document.getElementById('mem_measuring_unit_2').textContent = snapshot.memory_measuring_unit;
+            document.getElementById('mem_measuring_unit_3').textContent = snapshot.memory_measuring_unit;
 
             // Clear existing process rows
             const processTable = document.getElementById('process-table');

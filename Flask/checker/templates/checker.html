@@ -5,7 +5,6 @@
 {% endblock %}
 {% block content %}
 <!-- data-bs-theme="dark" -->
-<!-- todo add Object.keys(returned["errors"]).length === 0 stuff when backend also sends errors -->
 <script>
 	var donotupdate = false;
 	var test_results;
@@ -65,6 +64,36 @@
 	
 	$(document).ready(async function askcontainers() {
 	{% block additional_content_admin_log_datatable_trigger %}{% endblock %}
+	
+	// Select the target div to observe
+	const targetDiv = document.getElementById('floating-div');
+
+	// Create a new instance of MutationObserver
+	const observer = new MutationObserver((mutations) => {
+		mutations.forEach((mutation) => {
+			// Check if the mutation type is "childList" (addition or removal of child nodes)
+			if (mutation.type === 'childList') {
+				if (targetDiv.childNodes.length < 2) {
+					document.getElementById('alerts').innerHTML = "No alerts to be shown";
+					document.getElementById('alerts').onClick = "";
+					targetDiv.style["display"] = "none";
+				}
+			}
+		});
+	});
+
+	// Configure the observer to listen for child node changes
+	const config = {
+		childList: true, // Observe addition/removal of child elements
+		subtree: true    // Observe all descendant nodes
+	};
+
+	// Start observing the target div for configured mutations
+	observer.observe(targetDiv, config);
+
+	// To stop observing, you can use observer.disconnect() later if needed
+
+	
 	$('.close').on('click', 
 		function() {
 			$('#passwordModal').modal('hide');
@@ -168,9 +197,12 @@
 				url: './advanced_read_containers',
 				type: 'POST',
 				success: function(response) {
-					makeTable(response);
+					makeTable(response.result);
+					if(response.error.length > 0)
+						for (var a of response.error) {add_alert(a)};
 				},
 				error: function(error) {
+					add_alert(error);
 					logging(error);
 				},
 				timeout: {{timeout}}
@@ -178,6 +210,7 @@
 		}
 		catch (exception_var) {
 			logging(exception_var);
+			add_alert(exception_var);
 		}
 		
 	};
@@ -202,12 +235,14 @@
 					},
 				error: function(error) {
 					logging(error);
+					add_alert(error);
 				},
 				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
 			logging(exception_var);
+			add_alert(exception_var);
 		}
 	};
 	
@@ -230,6 +265,7 @@
 		}
 		catch (exception_var) {
 			logging(exception_var);
+			add_alert(exception_var);
 		}
 	};
 	
@@ -241,22 +277,25 @@
 				success: function(response) {
 					for (const element of response) {
 						try {
-						document.getElementById(element[3]+'-result').innerHTML=element[2];
+							document.getElementById(element[3]+'-result').innerHTML=element[2];
 						}
 						catch (exception_var) {
 							logging("Error in obtaining complex tests: "+ exception_var + ' - ' + element);
+							add_alert("Error in obtaining complex tests: "+ exception_var + ' - ' + element);
 						}
 					}
 					logging(response);
 				},
 				error: function(error) {
 					logging(error);
+					add_alert(error);
 				},
 				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
 			logging(exception_var);
+			add_alert(exception_var);
 		}
 	};
 	
@@ -286,13 +325,15 @@
 					stored_pings_results[container] = response;
 				},
 				error: function(error) {
-					logging(error);
+					logging(exception_var);
+					add_alert(exception_var);
 				},
 				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
 			logging(exception_var);
+			add_alert(exception_var);
 		}
 		element.value = "Check the port...";
 	};
@@ -307,12 +348,14 @@
 				},
 				error: function(error) {
 					logging(error);
+					add_alert(error);
 				},
 				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
 			logging(exception_var);
+			add_alert(exception_var);
 		}
 	};
 	
@@ -354,6 +397,7 @@
 		}
 		catch (exception_var) {
 			logging(exception_var);
+			add_alert(exception_var);
 		}
 		test_element.value = oldtext;
 	};
@@ -367,6 +411,7 @@
 		}
 		catch (exception_var) {
 			logging(exception_var);
+			add_alert(exception_var);
 		}
 	};
 	
@@ -399,6 +444,7 @@
 								return;
 							}
 							else {
+								send_alert(exception_var);
 								logging(exception_var);
 							}
 						}
@@ -408,12 +454,14 @@
 				},
 				error: function(error) {
 					logging(error);
+					add_alert(error);
 				},
 				timeout: {{timeout}}
 			});
 		}
 		catch (exception_var) {
 			logging(exception_var);
+			add_alert(exception_var);
 		}
 	};
 	
@@ -437,6 +485,27 @@
 			console.error(exception_var+", please kill me");
 		}
 	};
+	
+	function alerts() {
+		if (document.getElementById("alerts").innerHTML == "No alerts to be shown") 
+			{return}
+		var floatdiv = document.getElementById("floating-div");
+		if (floatdiv.style["display"] == "none" || floatdiv.style["display"] == "") {
+			floatdiv.style["display"] = "flex";
+			document.getElementById("alerts").innerHTML = "Hide alerts";
+		}
+		else {
+			floatdiv.style["display"] = "none";
+			document.getElementById("alerts").innerHTML = "Show alerts";
+		}
+	}
+	
+	function add_alert(body) {
+		var floatdiv = document.getElementById("floating-div");
+		floatdiv.innerHTML+='<div class="alert my-alert alert-danger alert-dismissible" role="alert"><div>'+body+'</div><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+		if (document.getElementById("alerts").innerHTML == "No alerts to be shown") 
+			{document.getElementById("alerts").innerHTML = "Show alerts";}
+	}
 	
 	function renderContentInIframe(content, destination_element, description_data) {
 		var iframe = document.createElement('iframe');
@@ -463,11 +532,13 @@
 				}
 				catch (exception_var) {
 					logging('An orphan test with the name '+element[3]+' gave a result of: ' +element[2]);
+					add_alert('An orphan test with the name '+element[3]+' gave a result of: ' +element[2]);
 				} 
 			}) 
 		}
 		catch (exception_var) {
 			logging(exception_var);
+			add_alert(exception_var);
 		}
 	};
 	
@@ -480,6 +551,7 @@
 			}
 			catch (exception_var) {
 				console.error(exception_var);
+				add_alert(exception_var);
 			}
 		})
 		return container;
@@ -1057,6 +1129,7 @@
 {% block additional_content_admin_log %}{% endblock %}
 <nav class="navbar sticky-bottom bg-body-tertiary">
 	<div class="container-fluid">
+		<a class="navbar-brand"><button id="alerts" class="btn btn-danger" onClick="alerts()">No alerts to be shown</button></a>
 		<a class="navbar-brand">Welcome, {{user}}</a>
 		<a class="navbar-brand" href="mailto: replaceme">Need help? Send us an Email!</a>
 		<a class="navbar-brand" href="#">
@@ -1064,6 +1137,9 @@
 		</a>
 	</div>
 </nav>
+
+    <div class="floating-div" id="floating-div">
+    </div>
 <style>
 	.category_menu {
 	display: flex;
@@ -1089,5 +1165,18 @@
 	}
 	#draggable { max-width: 700px; max-height: 300px; padding: 0.5em; float: left; margin: 0 10px 10px 0; border-style: solid; border-color: blue; background: white;}
 	#draggable p { cursor: move; }
+	.floating-div {
+			display: none;
+            position: fixed;     /* Stays in place while scrolling */
+            bottom: 2cm;           /* Anchored to the bottom */
+            left: 1cm;             /* Anchored to the left */
+            padding: 20px;       /* Space inside the div */
+            color: white;        /* Text color */
+            border-radius: 10px; /* Optional rounded corner */
+        }
+	.my-alert {
+			background-color: #f8d7d2e0;
+			margin-right: 10px;
+	}
 </style>
 {% endblock %}

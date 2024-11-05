@@ -36,11 +36,6 @@ import re
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
 
-# README
-# for each information sent, it should instead be sent a json with key "result" being the original answer and key "errors" explaining all things, if any, that went wrong
-# containers status
-# tops
-
 
 f = open("conf.json")
 config = json.load(f)
@@ -593,6 +588,7 @@ def create_app():
                 conn.commit()
                 results = cursor.fetchall()
                 total_answer=[]
+                errors=[]
                 for r in results:
                     obtained = requests.post(r[0]+"/read_containers", headers=request.headers).text
                     try:
@@ -601,9 +597,10 @@ def create_app():
                         try:
                             obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
                             total_answer = total_answer + json.loads(obtained)
-                        except:
-                            pass
-                return total_answer
+                        except Exception as E:
+                            errors.append("Reading containers from "+r[0]+" failed: the backed received this exception: "+str(E))
+                tobereturned_answer = {"result":total_answer, "error":errors}
+                return tobereturned_answer
         except Exception:
             print("Something went wrong because of:",traceback.format_exc())
             return render_template("error_showing.html", r = traceback.format_exc()), 500
