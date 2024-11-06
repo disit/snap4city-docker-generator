@@ -448,7 +448,8 @@ def create_app():
             json_data['processes']=json_data['processes'][:int(amount_of_lines)]
         except Exception as E:
             json_data['processes']=json_data['processes'][:40]
-        return render_template("top-viewer.html", data=json_data), 200
+        jsontobereturned = {"result":json_data, "error":[]}
+        return render_template("top-viewer.html", data=jsontobereturned), 200
     
     @app.route("/get_top", methods=["GET"])
     def get_top_single():
