@@ -1,13 +1,17 @@
 #!/bin/bash
 
-script_dir=$(dirname "$0")
-echo "Enter the replacement string for 127.0.0.1:"
-read replacement_string
+if [ "$#" -ne 2 ]; then
+    echo "Error: Two parameters required."
+    echo "Usage: $0 <ip_to_be_replaced> <path_of_folder>"
+    exit 1
+fi
+
+replacement_string=$1
+script_dir=$2
+
 for yaml_file in "$script_dir"/*.yaml; do
 
     filename=$(basename "$yaml_file")
-
-    # Skip specific files and files with "persistent-volume" in the name
     if [[ "$filename" == "kafka-deployment-new.yaml" || \
           "$filename" == "kafka-deployment.yaml" || \
           "$filename" == *"persistentvolume.yaml" ]]; then

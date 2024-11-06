@@ -53,10 +53,3 @@ case "$choice" in
   * ) echo "invalid";;
 esac
 
-read -p "expose main component to port 80? (yes/no) " choice
-
-case "$choice" in
-  y|Y|yes ) kubectl create ingress main-ingress --class=nginx --rule="dashboard-builder/*=dashboard-builder:80";kubectl port-forward --namespace=ingress-nginx service/dashboard-builder 80:80;;
-  n|N|no ) echo "skipping";;
-  * ) echo "invalid";;
-esac
