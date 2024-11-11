@@ -520,6 +520,8 @@ def create_app():
                 #this or copy paste the first section of the post_setup.sh
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/scripts/virtuoso/run.sh',fine_as_is)
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/compatibility4nfs.py',fine_as_is)
+                snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/nifi-multi-k8/values.yaml',fine_as_is)
+                
             snap4.copy('./checker', './Output/'+token+'/checker')
             snap4.add_components_for_sentinel('./Output/'+token+'/checker/out.sql',
                                               max(len([value for (key,value) in sorted(detailed_ips.items()) if "broker" in key]),1),
