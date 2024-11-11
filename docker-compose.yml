@@ -19,7 +19,7 @@ services:
       - version
       - allow_compress
       - add_utils
-      - send-aws-k8s
+      - send_aws_k8s
       - allow_update
       - MYSQL_ROOT_PASSWORD
       - time_wait_update_db
