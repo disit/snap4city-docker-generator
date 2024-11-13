@@ -32,8 +32,8 @@ if "allow_update" not in os.environ:
     os.environ['allow_update']="False"
 if "add_utils" not in os.environ:
     os.environ['add_utils']="False"
-if 'send-aws-k8s' not in os.environ:
-    os.environ['send-aws-k8s'] ="False"
+if 'send_aws_k8s' not in os.environ:
+    os.environ['send_aws_k8s'] ="False"
 
 def print_date_time_sql():
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
@@ -515,11 +515,13 @@ def create_app():
                     snap4.copy('./Modules'+file[3]+file[4], './Output/'+token+'/'+str(ips[file[-1]])+file[3]+file[4])
             descriptor=''
             fine_as_is['$#iot-amount#$']=post['# of IoT-Apps']
-            if os.environ['send-aws-k8s'] == "True":
+            if os.environ['send_aws_k8s'] == "True":
                 snap4.add_utils('./Output/'+token+'/'+ips[0]+'/kubernetes_eks')
                 #this or copy paste the first section of the post_setup.sh
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/scripts/virtuoso/run.sh',fine_as_is)
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/compatibility4nfs.py',fine_as_is)
+                snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/nifi-multi-k8/values.yaml',fine_as_is)
+                
             snap4.copy('./checker', './Output/'+token+'/checker')
             snap4.add_components_for_sentinel('./Output/'+token+'/checker/out.sql',
                                               max(len([value for (key,value) in sorted(detailed_ips.items()) if "broker" in key]),1),
