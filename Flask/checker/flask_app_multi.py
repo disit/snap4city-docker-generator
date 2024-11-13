@@ -181,7 +181,7 @@ def send_email(sender_email, sender_password, receiver_emails, subject, message)
     msg['From'] = sender_email
     msg['To'] = ','.join(receiver_emails)
     msg['Subject'] = subject
-    msg.attach(MIMEText(str(composite_message), 'text/plain'))
+    msg.attach(MIMEText(str(composite_message), 'plain'))
     server.send_message(msg)
     server.quit()
     return
