@@ -14,6 +14,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.'''
 import subprocess
+from threading import Lock
 from flask import Flask, jsonify, render_template, request, send_file, send_from_directory, redirect
 import requests
 import mysql.connector
@@ -351,6 +352,15 @@ def send_alerts(message):
         send_telegram(config['telegram-channel'], message)
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
+        
+        
+mutex = Lock()
+def queued_running(command):
+    answer = None
+    with mutex:
+        answer = subprocess.run('command', shell=True, capture_output=True, text=True, encoding="utf_8")
+    return answer
+    
 
 
 def send_advanced_alerts(message):

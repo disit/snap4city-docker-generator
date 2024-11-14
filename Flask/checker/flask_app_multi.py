@@ -13,6 +13,7 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.'''
 import subprocess
+from threading import Lock
 from flask import Flask, jsonify, render_template, request, send_file, send_from_directory, redirect
 import requests
 import mysql.connector
@@ -56,6 +57,13 @@ db_conn_info = {
         "auth_plugin": 'mysql_native_password'
     }
 
+
+def send_telegram(chat_id, message):
+    if isinstance(message, list):
+        message[2]=filter_out_muted_containers_for_telegram(message[2])
+    asyncio.run(bot.send_message(chat_id=chat_id, text=str(message)))
+    return
+
 def format_error_to_send(instance_of_problem, containers, because = None, explain_reason=None):
     using_these = ', '.join('"{0}"'.format(w) for w in containers.split(","))
     if because:
@@ -73,13 +81,6 @@ def format_error_to_send(instance_of_problem, containers, because = None, explai
         else:
             newstr += curstr+"\n"
     return newstr
-
-def send_telegram(chat_id, message):
-    if isinstance(message, list):
-        message[2]=filter_out_muted_containers_for_telegram(message[2])
-    asyncio.run(bot.send_message(chat_id=chat_id, text=str(message)))
-    return
-
 
 def get_top():
     process = subprocess.Popen(['top', '-b', '-n', '1'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -355,6 +356,14 @@ def auto_alert_status():
             send_alerts("Couldn't reach database while not needing to send error messages: "+traceback.format_exc())
             return
 
+
+mutex = Lock()
+def queued_running(command):
+    answer = None
+    with mutex:
+        answer = subprocess.run('command', shell=True, capture_output=True, text=True, encoding="utf_8")
+    return answer
+    
     
 def send_alerts(message):
     try:
