@@ -1,0 +1,610 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch-n1-headless
+  labels:
+    app: opensearch-n1-headless
+spec:
+  ports:
+    - port: 9200
+      name: http
+    - port: 9300
+      name: transport
+  clusterIP: None # Headless service for DNS discovery
+  selector:
+    app: opensearch-n1-headless
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --volumes persistentVolumeClaim
+    kompose.service.expose: 'true'
+    kompose.service.type: nodeport
+    kompose.version: 1.34.0 (cbf2835db)
+    kompose.volume.storage-class-name: local-path
+  labels:
+    io.kompose.service: opensearch-n1
+  name: opensearch-n1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      io.kompose.service: opensearch-n1
+  serviceName: "opensearch-n1-headless"  # Headless service needed for stable network identities
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --volumes persistentVolumeClaim
+        kompose.service.expose: 'true'
+        kompose.service.type: nodeport
+        kompose.version: 1.34.0 (cbf2835db)
+        kompose.volume.storage-class-name: local-path
+      labels:
+        io.kompose.service: opensearch-n1
+    spec:
+      resources: 
+
+      containers:
+      - env:
+        - name: DISABLE_INSTALL_DEMO_CONFIG
+          value: 'true'
+        - name: JAVA_HOME
+          value: /usr/share/opensearch/jdk
+        - name: discovery.type
+          value: single-node
+        - name: network.host
+          value: 0.0.0.0
+        image: opensearchproject/opensearch:latest
+        name: opensearch-n1
+        ports:
+        - containerPort: 9200
+        volumeMounts:
+        - mountPath: /usr/share/opensearch/data
+          name: opensearch-data
+        - mountPath: /usr/share/opensearch/config/admin-key.pem
+          name: opensearch-n001-claim000
+          subPath: admin-key.pem
+        - mountPath: /usr/share/opensearch/config/admin.pem
+          name: opensearch-n001-claim001
+          subPath: admin.pem
+        - mountPath: /usr/share/opensearch/config/node1-key.pem
+          name: opensearch-n001-claim002
+          subPath: esnode-key.pem
+        - mountPath: /usr/share/opensearch/config/node1.pem
+          name: opensearch-n001-claim003
+          subPath: esnode.pem
+        - mountPath: /usr/share/opensearch/config/opensearch.yml
+          name: opensearch-n001-claim004
+          subPath: opensearch.yml
+        - mountPath: /usr/share/opensearch/config/root-ca.pem
+          name: opensearch-n001-claim005
+          subPath: root-ca.pem
+        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/action_groups.yml
+          name: opensearch-n001-claim007
+          subPath: action_groups.yml
+        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/config.yml
+          name: opensearch-n001-claim008
+          subPath: config.yml
+        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml
+          name: opensearch-n001-claim009
+          subPath: internal_users.yml
+        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/roles.yml
+          name: opensearch-n001-claim010
+          subPath: roles.yml
+        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/roles_mapping.yml
+          name: opensearch-n001-claim011
+          subPath: roles_mapping.yml
+        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/tenants.yml
+          name: opensearch-n001-claim012
+          subPath: tenants.yml
+      initContainers:
+      - command:
+        - /bin/bash
+        - -c
+        - hashadmin=$(/usr/share/opensearch/plugins/opensearch-security/tools/hash.sh
+          -p $#opensearch-admin-pwd#$); hashuser=$(/usr/share/opensearch/plugins/opensearch-security/tools/hash.sh
+          -p $#kibanauser-password#$); sed "s|admin_replacing|$hashadmin|" /internal_users.yml
+          | sed "s|kibanaserver_replacing|$hashuser|" > /internal_users.yml.tmp; cp
+          /internal_users.yml.tmp /internal_users.yml; rm /internal_users.yml.tmp
+        image: opensearchproject/opensearch:latest
+        name: setup-opensearch
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml
+          name: opensearch-n001-claim009
+          subPath: internal_users.yml
+      volumes:
+      - name: opensearch-n001-claim000
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim001
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim002
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim003
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim004
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim005
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim012
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim007
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim008
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim009
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim010
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+      - name: opensearch-n001-claim011
+        hostPath:
+          path: /mnt/data/generated/opensearch-conf
+          type: Directory
+  volumeClaimTemplates:
+  - metadata:
+      name: opensearch-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 10Gi
+  - metadata:
+      name: opensearch-n001-claim000
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim001
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim002
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim003
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim004
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim005
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim007
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim008
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim009
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim010
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim011
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+  - metadata:
+      name: opensearch-n001-claim012
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 1Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch-dashboards
+  labels:
+    app: opensearch-dashboards
+spec:
+  ports:
+    - port: 5601
+      name: http
+  selector:
+    app: opensearch-dashboards
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opensearch-dashboards
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opensearch-dashboards
+  template:
+    metadata:
+      labels:
+        app: opensearch-dashboards
+    spec:
+      containers:
+        - name: opensearch-dashboards
+          image: opensearchproject/opensearch-dashboards:latest
+          env:
+            - name: OPENSEARCH_HOSTS
+              value: "http://opensearch:9200" # URL for OpenSearch service
+          ports:
+            - containerPort: 5601
+              name: http
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim000
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim000
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim001
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim001
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim002
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim002
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim003
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim003
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim004
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim004
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim005
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim005
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim007
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim007
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim008
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim008
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim009
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim009
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim010
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim010
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim011
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim011
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: opensearch-n001-claim012
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/generated/opensearch-conf
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opensearch-n001-claim012
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+
