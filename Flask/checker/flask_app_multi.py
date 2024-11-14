@@ -401,7 +401,7 @@ def send_advanced_alerts(message):
         
     
 scheduler = BackgroundScheduler()
-scheduler.add_job(auto_alert_status, trigger='interval', minutes=15)
+scheduler.add_job(auto_alert_status, trigger='interval', minutes=5)
 scheduler.add_job(isalive, 'cron', hour=8, minute=0)
 scheduler.add_job(isalive, 'cron', hour=20, minute=0)
 scheduler.start()
@@ -725,7 +725,6 @@ def create_app():
         except Exception as E:
             json_data['processes']=json_data['processes'][:40]
             pass
-    # Convert parsed data to JSON
         return json_data
         
         

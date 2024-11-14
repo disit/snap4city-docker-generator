@@ -45,7 +45,6 @@
 		else {
 			document.getElementById("buttonForUpdates").innerHTML = "Resume containers refresh";
 			donotupdate = true;
-			//after 30 minutes, resume updates in case user forgot to turn them on
 			await smartSleep(1800000);
 			document.getElementById("buttonForUpdates").innerHTML = "Stop containers refresh";
 			donotupdate = false;
@@ -102,7 +101,7 @@
 			if (!donotupdate) {
 				update_routine();
 			}
-			await smartSleep(120000);
+			await smartSleep(180000);
 		}
 	});
 	
@@ -722,7 +721,7 @@
 				centerer.setAttribute("name", i);
 				const name_of_table = document.createElement("h1");
 				if (!closed_categories.has(i)) 
-					name_of_table.setAttribute("class", "btn btn-light btn-lg"); 
+					name_of_table.setAttribute("class", "btn btn-dark btn-lg"); 
 				else 
 					name_of_table.setAttribute("class", "btn btn-light btn-lg");
 				name_of_table.setAttribute("onclick", "collapse_category('"+i+"', this)");
@@ -759,8 +758,8 @@
 			});
 		get_summary_new();
 		who_has_issues();
-		get_complex_tests();
 		data_tables=$("table[id^='table-']").DataTable(dict_of_hidden_columns);
+		get_complex_tests();
 		
 		$('.open-modal').on('click', function() {
 			var id = $(this).data('containerid');

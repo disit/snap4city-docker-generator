@@ -398,7 +398,7 @@ def send_advanced_alerts(message):
         
     
 scheduler = BackgroundScheduler()
-scheduler.add_job(auto_alert_status, trigger='interval', minutes=15)
+scheduler.add_job(auto_alert_status, trigger='interval', minutes=5)
 scheduler.add_job(isalive, 'cron', hour=8, minute=0)
 scheduler.add_job(isalive, 'cron', hour=20, minute=0)
 scheduler.start()
@@ -441,7 +441,7 @@ def create_app():
     @app.route("/get_local_top", methods=["GET"])
     def get_local_top():
         json_data=get_top()
-        json_data["source"] = "Main System"
+        json_data["source"] = config["platform-url"]
         try:
             form_dict = request.form.to_dict()
             amount_of_lines = form_dict.pop('top_lines')
