@@ -360,8 +360,10 @@ def auto_alert_status():
 mutex = Lock()
 def queued_running(command):
     answer = None
+    print("Locking executor due to running", command)
     with mutex:
         answer = subprocess.run('command', shell=True, capture_output=True, text=True, encoding="utf_8")
+    print ("Unlocked executor")
     return answer
     
     
@@ -764,7 +766,7 @@ def create_app():
             something = str(base64.b64decode(request.headers["Authorization"][len("Basic "):]))[:-1]
             psw = something[something.find(":")+1:]
             if psw == request.form.to_dict()['psw']:
-                result = subprocess.run('docker restart '+request.form.to_dict()['id'], shell=True, capture_output=True, text=True, encoding="utf_8").stdout
+                result = queued_running('docker restart '+request.form.to_dict()['id']).stdout
                 log_to_db('rebooting_containers', 'docker restart '+request.form.to_dict()['id']+' resulted in: '+result, request)
                 return result
             else:
