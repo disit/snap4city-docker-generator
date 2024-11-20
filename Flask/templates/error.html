@@ -1,12 +1,12 @@
 {% extends "main.html" %}
-{% block title %}Error {{code|string}}{% endblock %}
+{% block title %}Error {{error|string}}{% endblock %}
 {% block head %}
 {{ super() }}
 {% endblock %}
 {% block content %}
 <div class="container">
   <br>
-<p class="h1">Error {{code|string}}.</p>
+<p class="h1">Error {{error|string}}.</p>
 There was an error: {{reason}}. 
 <br>
 <a href="selecting_model" class="link">Click here to return to the main page</a>.

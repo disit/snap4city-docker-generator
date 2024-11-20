@@ -37,44 +37,65 @@ def make_iotapp_folder(origin, path, id_iotapp, placeholders):
     return
 
 def ensure_validity(placeholders, ips):
-    if int(placeholders["# of IoT-Apps"]) > 1051:
-        print("[LOG] Tried a configuration with too many iotapps.")
+    try:
+        if int(placeholders["# of IoT-Apps"]) > 1051:
+            print("[LOG] Tried a configuration with too many iotapps.")
+            return False
+        if int(placeholders["# of IoT-Apps"]) < 1:
+            print("[LOG] Tried a configuration with too few iotapps.")
+            return False
+    except Exception as E:
+        print("[LOG] The amount of iotapps wasn't a number.")
         return False
-    if int(placeholders["# of IoT-Apps"]) < 1:
-        print("[LOG] Tried a configuration with too few iotapps.")
+    try:
+        if '# of Iot-Brokers' in placeholders:
+            if int(placeholders["# of Iot-Brokers"]) > 4:
+                print("[LOG] Tried a configuration with too many iotbrokers.")
+                return False
+        if '# of IoT-Brokers' in placeholders:
+            if int(placeholders["# of IoT-Brokers"]) < 1:
+                print("[LOG] Tried a configuration with too few iotbrokers.")
+                return False
+    except Exception as E:
+        print("[LOG] The amount of iotbrokers wasn't a number.")
         return False
-    if '# of Iot-Brokers' in placeholders:
-        if int(placeholders["# of Iot-Brokers"]) > 4:
-            print("[LOG] Tried a configuration with too many iotbrokers.")
-            return False
-    if '# of ServiceMaps' in placeholders:
-        if int(placeholders["# of ServiceMaps"]) > 4:
-            print("[LOG] Tried a configuration with too many servicemaps.")
-            return False
-    if '# of Opensearch nodes' in placeholders:
-        if int(placeholders["# of Opensearch nodes"]) > 4:
-            print("[LOG] Tried a configuration with too many Opensearch Nodes.")
-            return False
-    if '# of Opensearch nodes' in placeholders:
-        if int(placeholders["# of Opensearch nodes"]) < 1:
-            print("[LOG] Tried a configuration with too few Opensearch Nodes.")
-            return False
-    if '# of IoT-Brokers' in placeholders:
-        if int(placeholders["# of IoT-Brokers"]) < 1:
-            print("[LOG] Tried a configuration with too few iotbrokers.")
-            return False
-    if '# of ServiceMaps' in placeholders:
-        if int(placeholders["# of ServiceMaps"]) < 1:
-            print("[LOG] Tried a configuration with too few servicemaps.")
-            return False
-    if '# of Virtuoso nodes' in placeholders:
-        if int(placeholders["# of Virtuoso nodes"]) > 4:
-            print("[LOG] Tried a configuration with too many Virtuoso Nodes.")
-            return False
-    if '# of Virtuoso nodes' in placeholders:
-        if int(placeholders["# of Virtuoso nodes"]) < 1:
-            print("[LOG] Tried a configuration with too few Virtuoso Nodes.")
-            return False
+    try:
+        if '# of ServiceMaps' in placeholders:
+            if int(placeholders["# of ServiceMaps"]) > 4:
+                print("[LOG] Tried a configuration with too many servicemaps.")
+                return False
+        if '# of ServiceMaps' in placeholders:
+            if int(placeholders["# of ServiceMaps"]) < 1:
+                print("[LOG] Tried a configuration with too few servicemaps.")
+                return False
+    except Exception as E:
+        print("[LOG] The amount of servicemaps wasn't a number.")
+        return False
+            
+    try:
+        if '# of Opensearch nodes' in placeholders:
+            if int(placeholders["# of Opensearch nodes"]) > 4:
+                print("[LOG] Tried a configuration with too many Opensearch Nodes.")
+                return False
+        if '# of Opensearch nodes' in placeholders:
+            if int(placeholders["# of Opensearch nodes"]) < 1:
+                print("[LOG] Tried a configuration with too few Opensearch Nodes.")
+                return False
+    except Exception as E:
+        print("[LOG] The amount of opensearch nodes wasn't a number.")
+        return False
+    try:
+        if '# of Virtuoso nodes' in placeholders:
+            if int(placeholders["# of Virtuoso nodes"]) > 4:
+                print("[LOG] Tried a configuration with too many Virtuoso Nodes.")
+                return False
+        if '# of Virtuoso nodes' in placeholders:
+            if int(placeholders["# of Virtuoso nodes"]) < 1:
+                print("[LOG] Tried a configuration with too few Virtuoso Nodes.")
+                return False
+    except Exception as E:
+        print("[LOG] The amount of virtuosos wasn't a number.")
+        return False
 
 
     ip_pattern = re.compile(r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$')
