@@ -36,66 +36,86 @@ def make_iotapp_folder(origin, path, id_iotapp, placeholders):
                 f.write(s)
     return
 
+
+#TODO probably can improve this
 def ensure_validity(placeholders, ips):
+    current_code = 0
+    issues = []
+    fixes = {}
     try:
         if int(placeholders["# of IoT-Apps"]) > 1051:
             print("[LOG] Tried a configuration with too many iotapps.")
-            return False
+            return -1, {"reason":"Tried a configuration with too many iotapps."}
         if int(placeholders["# of IoT-Apps"]) < 1:
-            print("[LOG] Tried a configuration with too few iotapps.")
-            return False
+            print("[LOG] Tried a configuration with less than one iotapp.")
+            return -1, {"reason":"Tried a configuration with less than one iotapp."}
     except Exception as E:
         print("[LOG] The amount of iotapps wasn't a number.")
-        return False
+        return -1, {"reason":"Tried a configuration with an invalid amount of iotapps."}
+        current_code = 1
+        fixes["# of IoT-Apps"] = "1"
+        issues.append("[LOG] The amount of iotapps wasn't a number.")
     try:
         if '# of Iot-Brokers' in placeholders:
             if int(placeholders["# of Iot-Brokers"]) > 4:
                 print("[LOG] Tried a configuration with too many iotbrokers.")
-                return False
+                return -2, {"reason":"Tried a configuration with too many iotbrokers."}
         if '# of IoT-Brokers' in placeholders:
             if int(placeholders["# of IoT-Brokers"]) < 1:
-                print("[LOG] Tried a configuration with too few iotbrokers.")
-                return False
+                print("[LOG] Tried a configuration with less than one iotbroker.")
+                return -2, {"reason":"Tried a configuration with less than one iotbroker."}
     except Exception as E:
         print("[LOG] The amount of iotbrokers wasn't a number.")
-        return False
+        return -2, {"reason":"Tried a configuration with an invalid amount of iotbrokers."}
+        current_code += 2
+        fixes["# of Iot-Brokers"] = "1"
+        issues.append("[LOG] The amount of iotbrokers wasn't a number.")
     try:
         if '# of ServiceMaps' in placeholders:
             if int(placeholders["# of ServiceMaps"]) > 4:
                 print("[LOG] Tried a configuration with too many servicemaps.")
-                return False
+                return -3, {"reason":"Tried a configuration with too many servicemaps."}
         if '# of ServiceMaps' in placeholders:
             if int(placeholders["# of ServiceMaps"]) < 1:
-                print("[LOG] Tried a configuration with too few servicemaps.")
-                return False
+                print("[LOG] Tried a configuration with less than one servicemap.")
+                return -3, {"reason":"Tried a configuration with less than one servicemap."}
     except Exception as E:
         print("[LOG] The amount of servicemaps wasn't a number.")
-        return False
+        return -3, {"reason":"Tried a configuration with an invalid amount of servicemaps."}
+        current_code += 4
+        fixes["# of ServiceMaps"] = "1"
+        issues.append("[LOG] The amount of servicemaps wasn't a number.")
             
     try:
         if '# of Opensearch nodes' in placeholders:
             if int(placeholders["# of Opensearch nodes"]) > 4:
                 print("[LOG] Tried a configuration with too many Opensearch Nodes.")
-                return False
+                return -4, {"reason":"Tried a configuration with too many Opensearch Nodes."}
         if '# of Opensearch nodes' in placeholders:
             if int(placeholders["# of Opensearch nodes"]) < 1:
-                print("[LOG] Tried a configuration with too few Opensearch Nodes.")
-                return False
+                print("[LOG] Tried a configuration with less than one Opensearch Node.")
+                return -4, {"reason":"Tried a configuration with less than one Opensearch Node."}
     except Exception as E:
-        print("[LOG] The amount of opensearch nodes wasn't a number.")
-        return False
+        print("[LOG] The amount of Opensearch nodes wasn't a number.")
+        return -4, {"reason":"Tried a configuration with an invalid amount of Opensearch nodes."}
+        current_code += 8
+        fixes["# of Opensearch nodes"] = "1"
+        issues.append("[LOG] The amount of Opensearch nodes wasn't a number.")
     try:
         if '# of Virtuoso nodes' in placeholders:
             if int(placeholders["# of Virtuoso nodes"]) > 4:
                 print("[LOG] Tried a configuration with too many Virtuoso Nodes.")
-                return False
+                return -5, {"reason":"Tried a configuration with too many Virtuoso Nodes."}
         if '# of Virtuoso nodes' in placeholders:
             if int(placeholders["# of Virtuoso nodes"]) < 1:
-                print("[LOG] Tried a configuration with too few Virtuoso Nodes.")
-                return False
+                print("[LOG] Tried a configuration with with less than one Virtuoso Node.")
+                return -5, {"reason":"Tried a configuration with less than one Virtuoso Node."}
     except Exception as E:
         print("[LOG] The amount of virtuosos wasn't a number.")
-        return False
+        return -5, {"reason":"Tried a configuration with an invalid amount of Virtuosos nodes."}
+        current_code += 16
+        fixes["# of Virtuoso nodes"] = "1"
+        issues.append("[LOG] The amount of Virtuoso components wasn't a number.")
 
 
     ip_pattern = re.compile(r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$')
@@ -103,8 +123,8 @@ def ensure_validity(placeholders, ips):
         match = ip_pattern.match(ip)
         if not match:
             print("[LOG] Found a missing IP")
-            return False
-    return True
+            return -6, {"reason":"There was an address with an invalid value"}
+    return current_code, {"fixes":fixes,"reasons":issues}
 
 # the amount of iot apps and their sockets are required
 # sockets should have the length of iot_amount

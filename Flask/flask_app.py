@@ -489,8 +489,18 @@ def create_app():
             else:
                 print("[LOG] Invalid protocol detected")
                 return render_template('error.html',helpmail=os.environ["help_mail"],version=os.environ["version"], reason="Neither HTTP nor HTTPS was chosen as a protocol.", error=400), 400
-            if not snap4.ensure_validity(fine_as_is, ips):
+            
+            validity_code, validity_edits = snap4.ensure_validity(fine_as_is, ips)
+            if validity_code < 0:
                 return render_template('error.html',helpmail=os.environ["help_mail"],version=os.environ["version"], reason="An invalid value was used to generate a configuration: double check your request", error=400), 400
+            else:
+                for fixes_k, fixes_v in validity_edits["fixes"].items():
+                    fine_as_is[fixes_k] = fixes_v
+                if validity_code>0:
+                    print("[LOG] attempting to fix things....")
+                    with open("./Output/"+token+'/generation_log.txt','w') as f:
+                        for issue in validity_edits["reasons"]:
+                            f.write(issue+'\n')
             try:
                 shutil.rmtree('./Output/'+token)
             except FileNotFoundError:

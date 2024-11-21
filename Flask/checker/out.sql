@@ -13,6 +13,16 @@ LOCK TABLES `asking_containers` WRITE;
 INSERT INTO `asking_containers` VALUES (1205,'2024-05-22 10:31:55',"POST wasn\'t used in the request",'');
 UNLOCK TABLES;
 
+
+DROP TABLE IF EXISTS `container_data`;
+CREATE TABLE `container_data` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `containers` json NOT NULL,
+  `sampled_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
 DROP TABLE IF EXISTS `categories`;
 CREATE TABLE `categories` (
   `idcategories` int(11) NOT NULL AUTO_INCREMENT,
