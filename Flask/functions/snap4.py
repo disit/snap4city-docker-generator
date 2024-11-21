@@ -773,6 +773,7 @@ UPDATE Dashboard.Organizations SET kbURL=replace(kbURL,"http://dashboard/","$#ba
 UPDATE Dashboard.MainMenuSubmenus SET `privileges` = "[\'RootAdmin\',\'ToolAdmin\',\'AreaManager\',\'Manager\']" WHERE (`id` = '10206');
 DELETE FROM Dashboard.MainMenuSubmenus WHERE ID=277;
 DELETE FROM Dashboard.MainMenu WHERE ID=2004;
+UPDATE `Dashboard`.`Domains` SET `claim` = 'Snap4CityDocker' WHERE (`id` = '2');
 
 ''')
         for element in data:
@@ -828,6 +829,7 @@ UPDATE Dashboard.MainMenuSubmenus SET linkUrl=replace(linkUrl,"http://dashboard/
 UPDATE Dashboard.Domains SET domains=replace(domains,"dashboard","$#base-hostname#$");
 UPDATE Dashboard.Organizations SET kbURL=replace(kbURL,"http://dashboard/","$#base-url#$/");
 UPDATE Dashboard.MainMenuSubmenus SET `privileges` = '[\'RootAdmin\',\'ToolAdmin\',\'AreaManager\',\'Manager\']' WHERE (`id` = '10206');
+UPDATE `Dashboard`.`Domains` SET `claim` = 'Snap4CityDocker' WHERE (`id` = '2');
 
 ''')
         for element in data:
@@ -859,6 +861,7 @@ UPDATE Dashboard.MainMenuSubmenus SET linkUrl=replace(linkUrl,"http://dashboard/
 UPDATE Dashboard.Domains SET domains=replace(domains,"dashboard","$#base-hostname#$");
 UPDATE Dashboard.Organizations SET kbURL=replace(kbURL,"http://dashboard/","$#base-url#$/");
 UPDATE Dashboard.MainMenuSubmenus SET `privileges` = "[\'RootAdmin\',\'ToolAdmin\',\'AreaManager\',\'Manager\']" WHERE (`id` = '10206');
+UPDATE `Dashboard`.`Domains` SET `claim` = '$#main-menu-name#$' WHERE (`id` = '2');
 
 ''')
         for element in data:

@@ -248,4 +248,15 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+INSERT INTO `configurations v-2`.`placeholder_list` (`placeholder`) VALUES ('$#main-menu-name#$');
+
+INSERT INTO `configurations v-2`.`additional_data` (`Modello`, `Placeholder`, `Desc`, `Desc_long`, `Default`, `Type`, `Hidden`, `Extra_parameters`) VALUES ('Micro', '$#main-menu-name#$', 'Name on top of the menu', 'This string will appear on the top left of the web UI', 'Snap4CityDocker', 'string', '0', '20');
+INSERT INTO `configurations v-2`.`additional_data` (`Modello`, `Placeholder`, `Desc`, `Desc_long`, `Default`, `Type`, `Hidden`, `Extra_parameters`) VALUES ('Small', '$#main-menu-name#$', 'Name on top of the menu', 'This string will appear on the top left of the web UI', 'Snap4CityDocker', 'string', '0', '20');
+INSERT INTO `configurations v-2`.`additional_data` (`Modello`, `Placeholder`, `Desc`, `Desc_long`, `Default`, `Type`, `Hidden`, `Extra_parameters`) VALUES ('Normal', '$#main-menu-name#$', 'Name on top of the menu', 'This string will appear on the top left of the web UI', 'Snap4CityDocker', 'string', '0', '20');
+INSERT INTO `configurations v-2`.`additional_data` (`Modello`, `Placeholder`, `Desc`, `Desc_long`, `Default`, `Type`, `Hidden`, `Extra_parameters`) VALUES ('DataCitySmall', '$#main-menu-name#$', 'Name on top of the menu', 'This string will appear on the top left of the web UI', 'Snap4CityDocker', 'string', '0', '20');
+INSERT INTO `configurations v-2`.`additional_data` (`Modello`, `Placeholder`, `Desc`, `Desc_long`, `Default`, `Type`, `Hidden`, `Extra_parameters`) VALUES ('DataCityMedium', '$#main-menu-name#$', 'Name on top of the menu', 'This string will appear on the top left of the web UI', 'Snap4CityDocker', 'string', '0', '20');
+INSERT INTO `configurations v-2`.`additional_data` (`Modello`, `Placeholder`, `Desc`, `Desc_long`, `Default`, `Type`, `Hidden`, `Extra_parameters`) VALUES ('DataCityLarge', '$#main-menu-name#$', 'Name on top of the menu', 'This string will appear on the top left of the web UI', 'Snap4CityDocker', 'string', '0', '20');
+INSERT INTO `configurations v-2`.`additional_data` (`Modello`, `Placeholder`, `Desc`, `Desc_long`, `Default`, `Type`, `Hidden`, `Extra_parameters`) VALUES ('Kubernetes', '$#main-menu-name#$', 'Name on top of the menu', 'This string will appear on the top left of the web UI', 'Snap4CityDocker', 'string', '0', '20');
+
+
 -- Dump completed on 2024-10-07 13:53:07

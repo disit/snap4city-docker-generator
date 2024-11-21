@@ -6,6 +6,11 @@ kubectl -n $#k8-namespace#$ exec deployment/virtuoso-kb  --  isql-v localhost db
 kubectl -n $#k8-namespace#$ exec deployment/virtuoso-kb  --  isql-v localhost dba "$#virtuoso-kb-pwd#$" /root/servicemap/servicemap-dbpedia.vt
 
 
+kubectl -n $#k8-namespace#$ -it deployments/geoserver -- chown -R 1000:1000 /opt/geoserver/data_dir
+kubectl -n $#k8-namespace#$ rollout restart deployment geoserver
+echo waiting 10s for geoserver restart
+sleep 10
+
 cd servicemap-conf
 
 
