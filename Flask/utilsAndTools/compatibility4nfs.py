@@ -58,7 +58,7 @@ for orig in origs:
     name = orig['spec']['template']['spec']['containers'][0]['name']
     if any(x in name for x in problematicNames):
         for vol in orig['spec']['template']['spec']['volumes']:
-          vol['persistentVolumeClaim']['claimName']=claimnamereplaceme
+            vol['persistentVolumeClaim']['claimName']=claimnamereplaceme
         continue
     try:
         cur = orig['spec']['template']['spec']['volumes']
@@ -138,14 +138,13 @@ for orig in origs:
         orig['spec']['template']['spec']['containers'][0]['volumeMounts']=templist
 
         if name!='varnish' :
-          orig['spec']['template']['spec']['volumes']=orig['spec']['template']['spec']['volumes'][:1]
+            orig['spec']['template']['spec']['volumes']=orig['spec']['template']['spec']['volumes'][:1]
         else:
-          orig['spec']['template']['spec']['volumes']= [v for v in orig['spec']['template']['spec']['volumes'] if '000' in v['name'] or not 'claim' in v['name']]
-          #print(orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'])
-          orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'].pop('readOnly', '')
-        if 'initContainers' in orig['spec']['template']['spec'] :
-            print("  initContainer")
-            for initCont in orig['spec']['template']['spec']['initContainers'] :
+            orig['spec']['template']['spec']['volumes']= [v for v in orig['spec']['template']['spec']['volumes'] if '000' in v['name'] or not 'claim' in v['name']]
+            #print(orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'])
+            orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'].pop('readOnly', '')
+        if 'initContainers' in orig['spec']['template']['spec']:
+            for initCont in orig['spec']['template']['spec']['initContainers']:
               for mount in initCont['volumeMounts']:
                  mount['subPath'] = claimPaths[mount['name']]
                  mount['name'] = claimName

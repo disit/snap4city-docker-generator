@@ -32,7 +32,7 @@ esac
 read -p "run first setup? (yes/no) " choice
 
 case "$choice" in
-  y|Y|yes ) ./setup.sh;;
+  y|Y|yes ) ./setup-k8s.sh;;
   n|N|no ) echo "skipping";;
   * ) echo "invalid";;
 esac

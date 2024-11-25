@@ -1627,13 +1627,115 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
             
         yaml.dump(currentyaml, open(location+"/kubernetes/"+element, "w"))
         
-    
-                
-    # WARNS to be solved
-    # Service * won't be created if 'ports' is not specified
-    #fixing cron
+        
+        
+    ####
+    claimnamereplaceme = 's4c-pvc-shared-volume'
+    print("Loading in original kubernetes yaml...")
+    thisdir = location+'/kubernetes'
+    origs = []
+    for r, d, f in os.walk(thisdir):
+        for file in f:
+            if 'deployment' in file:
+                with open(thisdir+os.sep+file,'r') as opened:
+                    origs.append(yaml.load(opened, Loader=yaml.FullLoader))
 
-# (name: )([a-zA-Z0-9-]*)([\w|\W]*)(path: \/mnt\/data\/generated)(\s)
-#
-# \1\2\3\4\/volumes\/\2\-volume\5
-#
+    problematicNames = ['iotapp-','mongo-','orionbrokerfilter-']
+    print("Setting security context for all pods as 0,0,0")
+    print("Set the readyness probe for nifi to the setting of the credentials")
+    print("Set the readyness probe for virtuoso-kb to its startup script")
+    print("The readyness probes will be ran a few seconds after startup then each one billion seconds, or about 31 years")
+    print("Merging all volumes, respectively in each container, into a single one")
+    lastkey = None
+    for orig in origs:
+        name = orig['spec']['template']['spec']['containers'][0]['name']
+        if any(x in name for x in problematicNames):
+            for vol in orig['spec']['template']['spec']['volumes']:
+                vol['persistentVolumeClaim']['claimName']=claimnamereplaceme
+                continue
+        try:
+            cur = orig['spec']['template']['spec']['volumes']
+            for i in range(len(cur)):
+                if lastkey == cur[i]:
+                    lastkey = cur[i]
+                else:
+                    temp = cur[i]
+                    cur.remove(temp)
+                    try:
+                        if 'claim' in temp['name']:
+                            temp['persistentVolumeClaim']['claimName']=claimnamereplaceme
+                    except AttributeError as E:
+                        print('[Error] Did not fix because', E)
+
+                    cur.insert(i, temp)
+        except KeyError as E:
+            print('No volumes for the deployment',orig['spec']['template']['spec']['containers'][0]['name'])
+
+    for orig in origs:
+        if any(x in orig['spec']['template']['spec']['containers'][0]['name'] for x in problematicNames):
+            continue
+        try:
+            
+            orig['spec']['template']['spec']['volumes']=list({v['name']:v for v in orig['spec']['template']['spec']['volumes']}.values())
+        except KeyError as E:
+            print('No volumes for the deployment',orig['spec']['template']['spec']['containers'][0]['name'])
+
+    data = ''
+    print("Read the volumes from the docker-compose yaml")
+    with open(location+'/kubernetes'+os.sep+'docker-compose.yml','r') as getall:
+        data=getall.read()
+
+    # get the volumes in the docker yaml
+    volumes = re.findall(" *- [\w/:.-]+:r[ow]",data)
+    volumes.insert(-3,"- /var/lib/varnish:exec")
+    volumes = [volume.strip()[2:].split(':',1) for volume in volumes]
+
+    origs = sorted(origs, key=lambda x: x['spec']['template']['spec']['containers'][0]['name'])
+    print("Converting the volumes mounts to be consistent with nfs requirements")
+    newlist = []
+    for orig in origs:
+        templist = []
+        claimPaths = {}
+        name = orig['spec']['template']['spec']['containers'][0]['name']
+        print(name)
+        try:
+            claimName = orig['spec']['template']['spec']['volumes'][0]['name']
+            for i in range(len(orig['spec']['template']['spec']['containers'][0]['volumeMounts'])):
+                current = orig['spec']['template']['spec']['containers'][0]['volumeMounts'][i]
+                if not 'claim' in current['name']:
+                    templist.append(current)
+                    volumes.pop(0)
+                    continue
+                subPath = volumes.pop(0)[0].replace('/mnt/data/generated/kubernetes/','')
+                claimPaths[current['name']] = subPath
+                try:
+                    addeddict = {'mountPath':current['mountPath'],'name':claimName,'subPath':subPath}
+                    templist.append(addeddict)
+                except AttributeError as E:
+                    templist.append({'mountPath':current['mountPath'],'name':claimName,'subPath':subPath})
+                    print('Did not fix', E)
+                except IndexError as E:
+                    print('[Error] Something went wrong:',E)
+            orig['spec']['template']['spec']['containers'][0]['volumeMounts']=templist
+
+            if name!='varnish' :
+                orig['spec']['template']['spec']['volumes']=orig['spec']['template']['spec']['volumes'][:1]
+            else:
+                orig['spec']['template']['spec']['volumes']= [v for v in orig['spec']['template']['spec']['volumes'] if '000' in v['name'] or not 'claim' in v['name']]
+                orig['spec']['template']['spec']['volumes'][0]['persistentVolumeClaim'].pop('readOnly', '')
+            if 'initContainers' in orig['spec']['template']['spec']:
+                for initCont in orig['spec']['template']['spec']['initContainers']:
+                    for mount in initCont['volumeMounts']:
+                        mount['subPath'] = claimPaths[mount['name']]
+                        mount['name'] = claimName
+        except KeyError as E:
+            print('no volume in this deployment!')
+        newlist.append(templist)
+
+    for i, j in enumerate(origs):
+        with open(location+'/kubernetes_eks'+os.sep+str(j['spec']['template']['spec']['containers'][0]['name'])+'-deployment-new.yaml', 'w') as file:
+            yaml.dump(j, file)
+    print("New yamls generated in this folder")
+    print("Done")
+        
+    ####

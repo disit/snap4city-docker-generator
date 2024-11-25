@@ -43,8 +43,6 @@ spec:
       labels:
         io.kompose.service: opensearch-n1
     spec:
-      resources: 
-
       containers:
       - env:
         - name: DISABLE_INSTALL_DEMO_CONFIG
