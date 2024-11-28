@@ -3,7 +3,7 @@ services:
 
   heatmap2geosrv:
     container_name: heatmap2geosrv
-    image: disitlab/heatmap2geoserver:v0
+    image: disitlab/heatmap2geoserver:v1
     volumes:
       - ./heatmap-tmp:/go/src/heatmap2geoserver/data/
     environment:
