@@ -19,11 +19,11 @@ if [ $x_exit_code -ne 0 ]; then
 		exit -1
     fi
 fi
-docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap.vt
-docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/valuetypes.vt
-docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap-dbpedia.vt
+docker compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap.vt
+docker compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/valuetypes.vt
+docker compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap-dbpedia.vt
 #new addition
-docker-compose exec virtuoso-kb /bin/bash -c "sync && /usr/local/virtuoso-opensource/bin/isql-v 1111 -U dba -P $#virtuoso-kb-pwd#$ 'EXEC=checkpoint;'"
+docker compose exec virtuoso-kb /bin/bash -c "sync && /usr/local/virtuoso-opensource/bin/isql-v 1111 -U dba -P $#virtuoso-kb-pwd#$ 'EXEC=checkpoint;'"
 ##note: split this for opensearch
 ##curl -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/iotdata-organization' -d @mapping_Sensors-ETL-IOT-v3.json
 
@@ -130,7 +130,7 @@ curl --insecure -u admin:$#opensearch-admin-pwd#$ -XPOST "http://localhost:5601/
 echo
 
 
-docker-compose exec dashboard-cron bash -c "cd /var/www/html/dashboardSmartCity/opensearch; php IngestData.php"
+docker compose exec dashboard-cron bash -c "cd /var/www/html/dashboardSmartCity/opensearch; php IngestData.php"
 
 echo add geoserver workspace Snap4City - if this command fails, it might be because this machine is not able to resolve its own name\; consider using localhost in such a case
 curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>Snap4City</name></workspace>"  $#base-url#$/geoserver/rest/workspaces
@@ -139,9 +139,9 @@ echo add geoserver workspace traffic - if this command fails, it might be becaus
 curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>traffic</name></workspace>"  $#base-url#$/geoserver/rest/workspaces
 
 echo rebooting services
-docker-compose restart opensearch-dashboards wsserver iot-fiware-harvester varnish proxy
+docker compose restart opensearch-dashboards wsserver iot-fiware-harvester varnish proxy
 echo fixing openldap admin password
-docker-compose exec ldap-server bash /ldif_files/psw.sh
+docker compose exec ldap-server bash /ldif_files/psw.sh
 
 
 echo "fixing keycloak data - if this command fails, it might be because this machine is not able to resolve its own name; consider using localhost in such a case"

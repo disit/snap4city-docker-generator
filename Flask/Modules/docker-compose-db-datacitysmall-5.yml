@@ -1,4 +1,4 @@
-version: "3.2"
+
 services:
   dashboarddb-$#id#$:
     container_name: dashboarddb-$#id#$

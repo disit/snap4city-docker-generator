@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COMPOSE_FILE="$(pwd)/docker-compose.yml"
+COMPOSE_FILE="$(pwd)/docker compose.yml"
 
 echo "If the volume names are not properly identified, use 'docker volume ls' to find the radix (it will sort of look like the working folder, if not the exact same), then replace the content of the variable folder name (line 11) to the desired value"
 
@@ -11,8 +11,8 @@ backup_volume() {
     docker run --rm -v ${folder_name}_${volume_name}:/${folder_name}_${volume_name} -v $(pwd):/backup alpine tar -czvf /backup/$volume_name.tar.gz /${folder_name}_${volume_name}
 }
 
-# get the volumes from docker-compose.yml
-volumes=$(docker-compose -f $COMPOSE_FILE config | yq e '.volumes | keys | .[]' -)
+# get the volumes from docker compose.yml
+volumes=$(docker compose -f $COMPOSE_FILE config | yq e '.volumes | keys | .[]' -)
 
 # backup loop
 for volume in $volumes

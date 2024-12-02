@@ -1,4 +1,4 @@
-version: "3.2"
+
 services:
   dashboard-builder:
     container_name: dashboard-builder

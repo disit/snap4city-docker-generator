@@ -115,4 +115,4 @@ curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<w
 
 
 echo rebooting service
-docker-compose restart opensearch-dashboards personaldata iot-fiware-harvester
+docker compose restart opensearch-dashboards personaldata iot-fiware-harvester

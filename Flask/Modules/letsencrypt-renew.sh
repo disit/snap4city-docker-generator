@@ -2,8 +2,8 @@
 
 set -e #stop on error
 
-if ! [ -x "$(command -v docker-compose)" ]; then
-  echo 'Error: docker-compose is not installed.' >&2
+if ! [ -x "$(command -v docker compose)" ]; then
+  echo 'Error: docker compose is not installed.' >&2
   exit 1
 fi
 
@@ -30,8 +30,8 @@ esac
 # Enable staging mode if needed
 if [ $staging != "0" ]; then staging_arg="--staging"; fi
 
-docker-compose run --user=1000 --rm --entrypoint "certbot renew" certbot
+docker compose run --user=1000 --rm --entrypoint "certbot renew" certbot
 echo
 
 echo "### Reloading nginx ..."
-docker-compose exec -T proxy nginx -s reload
+docker compose exec -T proxy nginx -s reload
