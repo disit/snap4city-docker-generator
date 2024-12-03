@@ -139,17 +139,19 @@ def make_ngnix_micro(path, iot_amount, iotport, placeholders):
     iotapps=''
     for i in range(iot_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
     location /iotapp/iotapp-$#nodered#$/ {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
 
         proxy_pass "http://iotapp-$#nodered#$:$#iotport#$/iotapp/iotapp-$#nodered#$/";
-        }'''
+        }
+    #end iotapp-$#nodered#$ '''
         iotapps=iotapps.replace('$#nodered#$',str(i+1).zfill(3))
         iotapps=iotapps.replace('$#iotport#$',str(iotport).zfill(3))
     with open('./Modules/ngnix/nginx-micro.conf', 'r') as f:
         final_file=f.read()
-    final_file=final_file+iotapps+'''\n}'''
+    final_file=final_file+iotapps+'''#current iotapps end\n}'''
     os.makedirs(path)
     with open(path+'/nginx.conf','w') as f:
         f.write(final_file)
@@ -160,16 +162,20 @@ def make_ngnix_micro_ssl(path, iot_amount, iotport, placeholders):
     iotapps=''
     for i in range(iot_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
     location /iotapp/iotapp-$#nodered#$/ {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
 
         proxy_pass "http://iotapp-$#nodered#$:$#iotport#$/iotapp/iotapp-$#nodered#$/";
-        }'''
+        }
+    #end iotapp-$#nodered#$'''
         iotapps=iotapps.replace('$#nodered#$',str(i+1).zfill(3))
         iotapps=iotapps.replace('$#iotport#$',str(iotport).zfill(3))
     with open('./Modules/ngnix/nginx-micro.conf.ssl', 'r') as f:
         final_file=f.read()
+    
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file.replace('#apps',iotapps)
     os.makedirs(path)
     with open(path+'/nginx.conf','w') as f:
@@ -181,16 +187,20 @@ def make_ngnix_normal_ssl(path, iot_amount, iotport, placeholders):
     iotapps=''
     for i in range(iot_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
     location /iotapp/iotapp-$#nodered#$/ {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
 
         proxy_pass "http://iotapp-$#nodered#$:$#iotport#$/iotapp/iotapp-$#nodered#$/";
-        }'''
+        }
+    #end iotapp-$#nodered#$ '''
         iotapps=iotapps.replace('$#nodered#$',str(i+1).zfill(3))
         iotapps=iotapps.replace('$#iotport#$',str(iotport).zfill(3))
     with open('./Modules/ngnix/nginx-normal.conf.ssl', 'r') as f:
         final_file=f.read()
+        
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file.replace('#apps',iotapps)
     os.makedirs(path)
     with open(path+'/nginx.conf','w') as f:
@@ -202,16 +212,19 @@ def make_ngnix_normal(path, iot_amount, iotport, placeholders):
     iotapps=''
     for i in range(iot_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
     location /iotapp/iotapp-$#nodered#$/ {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
 
         proxy_pass "http://$#ip-1#$:$#iotport#$/iotapp/iotapp-$#nodered#$/";
-        }'''
+        }
+    #end iotapp-$#nodered#$ '''
         iotapps=iotapps.replace('$#nodered#$',str(i+1).zfill(3))
         iotapps=iotapps.replace('$#iotport#$',str(iotport+i).zfill(3))
     with open('./Modules/ngnix/nginx-normal.conf', 'r') as f:
         final_file=f.read()
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file+''''''+iotapps+'''\n}'''
     os.makedirs(path)
     with open(path+'/nginx.conf','w') as f:
@@ -223,16 +236,19 @@ def make_ngnix_small(path, iot_amount, iotport, placeholders):
     iotapps=''
     for i in range(iot_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
     location /iotapp/iotapp-$#nodered#$/ {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
 
         proxy_pass "http://$#ip-3#$:$#iotport#$/iotapp/iotapp-$#nodered#$/";
-        }'''
+        }
+    #end iotapp-$#nodered#$ '''
         iotapps=iotapps.replace('$#nodered#$',str(i+1).zfill(3))
         iotapps=iotapps.replace('$#iotport#$',str(iotport+i).zfill(3))
     with open('./Modules/ngnix/nginx-small.conf', 'r') as f:
         final_file=f.read()
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file+iotapps+'''
 }'''
     os.makedirs(path)
@@ -245,16 +261,19 @@ def make_ngnix_small_ssl(path, iot_amount, iotport, placeholders):
     iotapps=''
     for i in range(iot_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
     location /iotapp/iotapp-$#nodered#$/ {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
 
         proxy_pass "http://iotapp-$#nodered#$:$#iotport#$/iotapp/iotapp-$#nodered#$/";
-        }'''
+        }
+    #end iotapp-$#nodered#$ '''
         iotapps=iotapps.replace('$#nodered#$',str(i+1).zfill(3))
         iotapps=iotapps.replace('$#iotport#$',str(iotport).zfill(3))
     with open('./Modules/ngnix/nginx-small.conf.ssl', 'r') as f:
         final_file=f.read()
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file.replace('#apps',iotapps)
     os.makedirs(path)
     with open(path+'/nginx.conf','w') as f:
@@ -267,12 +286,14 @@ def make_ngnix_dcs(path, iot_amount, iotport, placeholders, servicamaps_amount):
     servicemaps=''
     for i in range(iot_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
         location /iotapp/iotapp-$#nodered#$/ {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
 
         proxy_pass "http://$#ip-5#$:$#iotport#$/iotapp/iotapp-$#nodered#$/";
-        }'''
+        }
+    #end iotapp-$#nodered#$ '''
         iotapps=iotapps.replace('$#nodered#$',str(i+1).zfill(3))
         iotapps=iotapps.replace('$#iotport#$',str(iotport+i).zfill(3))
     for i in range(int(servicamaps_amount)):  #todo mix port
@@ -317,6 +338,7 @@ server {
 }'''
     with open('./Modules/ngnix/nginx-dcs.conf', 'r') as f:
         final_file=f.read()
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file+iotapps+'\n}'+servicemaps
     os.makedirs(path)
     with open(path+'/nginx.conf','w') as f:
@@ -329,12 +351,14 @@ def make_ngnix_dcs_ssl(path, iot_amount, iotport, placeholders, servicamaps_amou
     servicemaps=''
     for i in range(iot_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
             location /iotapp/iotapp-$#nodered#$/ {
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
 
             proxy_pass "http://$#ip-5#$:$#iotport#$/iotapp/iotapp-$#nodered#$/";
-            }'''
+            }
+    #end iotapp-$#nodered#$ '''
         iotapps=iotapps.replace('$#nodered#$',str(i+1).zfill(3))
         iotapps=iotapps.replace('$#iotport#$',str(iotport+i).zfill(3))
     for i in range(int(servicamaps_amount)):  #todo mix port
@@ -379,6 +403,7 @@ server {
 }'''
     with open('./Modules/ngnix/nginx-dcs.conf.ssl', 'r') as f:
         final_file=f.read()
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file.replace('#apps',iotapps)
     final_file=final_file.replace('#servicemap', servicemaps)
     os.makedirs(path)
@@ -391,12 +416,14 @@ def make_ngnix_dcl(placeholders, path, iotapps_amount, iotapps_ips, servicemaps_
     iotapps=''
     for app_no in range(iotapps_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
             location /iotapp/iotapp-'''+str(app_no+1).zfill(3)+'''/ {
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
 
             proxy_pass "http://'''+iotapps_ips[app_no%len(iotapps_ips)]+''':'''+str(iotapp_port+app_no)+'''/iotapp/iotapp-'''+str(app_no+1).zfill(3)+'''/";
-            }'''
+            }
+    #end iotapp-$#nodered#$ '''
     servicemaps=''
     for i in range(len(servicemaps_ips)):  #todo mix port
         if i == 0:
@@ -440,6 +467,7 @@ server {
 }'''
     with open('./Modules/ngnix/nginx-dcl.conf', 'r') as f:
         final_file=f.read()
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file+iotapps+'\n}'+servicemaps
     os.makedirs(path)
     with open(path+'/nginx.conf','w') as f:
@@ -451,12 +479,14 @@ def make_ngnix_dcl_ssl(placeholders, path, iotapps_amount, iotapps_ips, servicem
     iotapps=''
     for app_no in range(iotapps_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
             location /iotapp/iotapp-'''+str(app_no+1).zfill(3)+'''/ {
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
 
             proxy_pass "http://'''+iotapps_ips[app_no%len(iotapps_ips)]+''':'''+str(iotapp_port+app_no)+'''/iotapp/iotapp-'''+str(app_no+1).zfill(3)+'''/";
-            }'''
+            }
+    #end iotapp-$#nodered#$ '''
     servicemaps=''
     for i in range(len(servicemaps_ips)):  #todo mix port
         if i == 0:
@@ -500,6 +530,7 @@ server {
 }'''
     with open('./Modules/ngnix/nginx-dcl.conf', 'r') as f:
         final_file=f.read()
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file+iotapps+'\n}'+servicemaps
     os.makedirs(path)
     with open(path+'/nginx.conf','w') as f:
@@ -511,12 +542,14 @@ def make_ngnix_dcm(placeholders, path, iotapps_amount, iotapps_ips, servicemaps_
     iotapps=''
     for app_no in range(iotapps_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
             location /iotapp/iotapp-'''+str(app_no+1).zfill(3)+'''/ {
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
 
             proxy_pass "http://'''+iotapps_ips[app_no%len(iotapps_ips)]+''':'''+str(iotapp_port+app_no)+'''/iotapp/iotapp-'''+str(app_no+1).zfill(3)+'''/";
-            }'''
+            }
+    #end iotapp-$#nodered#$ '''
     servicemaps=''
     for i in range(len(servicemaps_ips)):  #todo mix port
         if i == 0:
@@ -560,6 +593,7 @@ server {
 }'''
     with open('./Modules/ngnix/nginx-dcm.conf', 'r') as f:
         final_file=f.read()
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file+iotapps+'\n}'+servicemaps
     os.makedirs(path)
     with open(path+'/nginx.conf','w') as f:
@@ -571,12 +605,14 @@ def make_ngnix_dcm_ssl(placeholders, path, iotapps_amount, iotapps_ips, servicem
     iotapps=''
     for app_no in range(iotapps_amount):
         iotapps+='''
+    #begin iotapp-$#nodered#$ 
             location /iotapp/iotapp-'''+str(app_no+1).zfill(3)+'''/ {
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
 
             proxy_pass "http://'''+iotapps_ips[app_no%len(iotapps_ips)]+''':'''+str(iotapp_port+app_no)+'''/iotapp/iotapp-'''+str(app_no+1).zfill(3)+'''/";
-            }'''
+            }
+    #end iotapp-$#nodered#$ '''
     servicemaps=''
     for i in range(len(servicemaps_ips)):  #todo mix port
         if i == 0:
@@ -620,6 +656,7 @@ server {
 }'''
     with open('./Modules/ngnix/nginx-dcm.conf.ssl', 'r') as f:
         final_file=f.read()
+    iotapps=iotapps+"\n#current iotapps end"
     final_file=final_file.replace('#apps', iotapps)
     final_file=final_file.replace('#servicemap', servicemaps)
     os.makedirs(path)
