@@ -40,7 +40,7 @@ rm node1-key-temp.pem
 rm node1.csr
 rm client-key-temp.pem
 rm client.csr
-#docker-compose exec opensearch-n1 bash -lic "plugins/opensearch-security/tools/hash.sh"
+#docker compose exec opensearch-n1 bash -lic "plugins/opensearch-security/tools/hash.sh"
 echo "generate truststore"
 rm -f trust-store.p12
 docker run --rm -v $PWD:/conf/ disitlab/personaldata:v3.1 keytool -import -file /conf/root-ca.pem -alias snap4ca -storepass snap4ca -storetype pkcs12 -noprompt -keystore /conf/trust-store.p12

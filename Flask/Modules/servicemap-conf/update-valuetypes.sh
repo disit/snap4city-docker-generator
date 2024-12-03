@@ -7,7 +7,7 @@ STATUS="$(cmp --silent  valuetypes.vt valuetypes-last.vt ; echo $?)"  # "$?" giv
 
 if [ "$STATUS" -ne "0" ]; then
     echo CHANGED valuetypes upload to virtuoso
-    docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/valuetypes.vt
+    docker compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/valuetypes.vt
     cp valuetypes.vt valuetypes-last.vt
 else
     echo SAME valuetypes

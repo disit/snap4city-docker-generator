@@ -16,6 +16,6 @@ if [ $x_exit_code -ne 0 ]; then
 		exit -1
     fi
 fi
-docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap.vt
-docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/valuetypes.vt
-docker-compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap-dbpedia.vt
+docker compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap.vt
+docker compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/valuetypes.vt
+docker compose exec virtuoso-kb isql-v localhost dba $#virtuoso-kb-pwd#$ /root/servicemap/servicemap-dbpedia.vt

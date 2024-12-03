@@ -1,2 +1,2 @@
 echo rebooting service
-docker-compose restart wsserver
+docker compose restart wsserver
