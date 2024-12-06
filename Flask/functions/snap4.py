@@ -741,7 +741,7 @@ def merge_yaml(directory):  #note: will output errors in console, if error happe
         print(directory, 'had no compose to merge.')
     return
 
-def adjust_dashboard_menu_dump(iot_app_amount, add_checker=False): #make iotapps visible in dashboard menu
+def adjust_dashboard_menu_dump(iot_app_amount): #make iotapps visible in dashboard menu
     if iot_app_amount == 0:
         return None
     str_to_add='DELETE FROM Dashboard.MainMenuSubmenus WHERE text LIKE "IoT Application nodered%";\n'
@@ -749,9 +749,7 @@ def adjust_dashboard_menu_dump(iot_app_amount, add_checker=False): #make iotapps
     ## removed the code to add iotapps to the menu, there should be a manager for that now
     #for i in range(iot_app_amount):
     #    str_to_add+='''('''+str(1035)+''','$#base-protocol#$://$#base-hostname#$/iotapp/iotapp-'''+str(i+1).zfill(3)+'''/','iotapp-'''+str(i+1).zfill(3)+"','fa fa-file-code-o','IoT Application nodered "+str(i+1).zfill(3)+"','[\\'RootAdmin\\', \\'AreaManager\\']','any','yes','iframe','#FFFFFF','IoT Application nodered "+str(i+1).zfill(3)+'''', '''+str(i)+''', '[\\'Organization\\',\\'DISIT\\',\\'Other\\']'),\n'''
-    if add_checker:
-        str_to_add+='''('1035', '/iotapp/iotapp-001/ui/#!/0', 'sanity-components', 'fa fa-file-code-o', 'Check components', '[\\'RootAdmin\\']', 'any', 'yes', 'iframe', '#ffffff', 'Check components', '0', '*'),\n'''
-        str_to_add+='''('1156', '/phpldapadmin/', 'myLDAP', 'fa fa-users', 'User Role Management', '''+"'[\\'RootAdmin\\']'"+''', 'any', 'yes', 'iframe', '#f44242', 'User Role Management', '3', '*'),\n'''
+    str_to_add+='''('1156', '/phpldapadmin/', 'myLDAP', 'fa fa-users', 'User Role Management', '''+"'[\\'RootAdmin\\']'"+''', 'any', 'yes', 'iframe', '#f44242', 'User Role Management', '3', '*'),\n'''
     #add superservicemap
     str_to_add = str_to_add[:-2]  # remove the last comma and new line
     str_to_add+=''';\nINSERT INTO `Dashboard`.`MainMenuSubmenus` (`id`, `menu`, `linkUrl`, `linkId`, `icon`, `text`, `privileges`, `userType`, `externalApp`, `openMode`, `iconColor`, `pageTitle`, `menuOrder`) VALUES ('10800', '1059', '/MultiServiceMap/', 'map1link21', 'fa fa-map', 'MultiServiceMap', "[\'RootAdmin\',\'ToolAdmin\', \'AreaManager\', \'Manager\', \'Public\']", 'any', 'any', 'iframe', '#20ff41', 'SuperServiceMap', '2');'''
