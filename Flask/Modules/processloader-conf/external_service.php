@@ -58,4 +58,9 @@ $host_od = '$#postgre-host#$';
 $username_od = '$#postgre-user#$';
 $password_od = '$#postgre-password#$';
 $dbname_od = 'postgres';
+
+$host_dashboardbuilder = $host;
+$username_dashboardbuilder = $username;
+$password_dashboardbuilder = $password;
+$db_dashboardbuilder = 'Dashboard';
 ?>
