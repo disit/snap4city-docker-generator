@@ -559,6 +559,9 @@ def create_app():
                         snap4.copy('./Modules/iotapp+/flows.json', './Output/'+token+'/'+ips[0]+'/iotapp-001/flows.json')
                         snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/iotapp-001/flows.json', fine_as_is)
                     snap4.make_iotapp_yaml('docker-compose-iotapp.yml','./Output/'+token+'/'+ips[0]+'/', i+1, fine_as_is, 1880+i)
+
+                #todo; new addition for iotapp-generator
+                snap4.make_iotapp_folder_unconfigured('./Modules/iotapp-id','./Output/'+token+'/'+ips[0],fine_as_is)
                 snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[0]+'/keycloak-conf')
                 snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps'],),1880,fine_as_is)
                 #snap4.make_apache_proxy_conf_micro('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps'],),1880,fine_as_is)

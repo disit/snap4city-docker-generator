@@ -36,6 +36,20 @@ def make_iotapp_folder(origin, path, id_iotapp, placeholders):
                 f.write(s)
     return
 
+def make_iotapp_folder_unconfigured(origin, path, placeholders):
+    # make the folder and copy the files; do placeholders while at it
+    os.makedirs(path+'/iotapp-generator/default-iotapp-config')
+    for dname, _, files in os.walk(origin):
+        for file in files:
+            copy(os.path.join(dname,file), os.path.join(path+'/iotapp-generator/default-iotapp-config',file))
+            with open(os.path.join(path+'/iotapp-generator/default-iotapp-config',file)) as f:
+                s = f.read()
+            for key, value in placeholders.items():
+                s=s.replace(key, value)
+            with open(os.path.join(path+'/iotapp-generator/default-iotapp-config',file),'w') as f:
+                f.write(s)
+    return
+
 
 #TODO probably can improve this
 def ensure_validity(placeholders, ips):
