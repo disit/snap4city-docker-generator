@@ -124,6 +124,7 @@ kubectl -n $#k8-namespace#$ exec deployment/ldap-server -- bash /ldif_files/psw.
 
 cd ..
 
+kubectl -n $#k8-namespace#$ exec deployment/dashboard-builder -- bash -c "cd /var/www/html/dashboardSmartCity/sql; php updateDb.php"
 kubectl -n $#k8-namespace#$ exec deployment/dashboard-cron -- bash -c "cd /var/www/html/dashboardSmartCity/opensearch; php IngestData.php"
 
 echo add geoserver workspace Snap4City - if this command fails, it might be because this machine is not able to resolve its own name\; consider using localhost in such a case

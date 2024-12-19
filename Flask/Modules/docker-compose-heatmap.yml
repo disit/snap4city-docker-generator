@@ -3,9 +3,9 @@ services:
 
   heatmap2geosrv:
     container_name: heatmap2geosrv
-    image: disitlab/heatmap2geoserver:v1
+    image: disitlab/heatmap2geoserver:v1.2.1
     volumes:
-      - ./heatmap-tmp:/go/src/heatmap2geoserver/data/
+      - ./heatmap-tmp:/heatmap2geoserver/data/
     environment:
       MySQL_hostname: $#dashboard-db-host#$
       MySQL_username: $#dashboard-db-user#$

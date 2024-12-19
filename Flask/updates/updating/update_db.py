@@ -76,6 +76,16 @@ def check_column_existence(host, username, password, database, table_name1, colu
             apply_updates(4, connection)
             return
         
+            
+        cursor.execute(f"SHOW TABLES FROM `Dashboard` LIKE 'TrustedUserGroups'")
+        result = cursor.fetchone()
+
+        if result:
+            print("Up to date")
+        else:
+            apply_updates(5, connection)
+            return
+        
         connection.close()
         
         

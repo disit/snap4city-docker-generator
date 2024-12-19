@@ -4,7 +4,7 @@ GRANT ALL ON heatmap.* TO 'user'@'%';
 --
 -- Host: 192.168.1.119    Database: heatmap
 -- ------------------------------------------------------
--- Server version	10.3.36-MariaDB-1:10.3.36+maria~ubu2004
+-- Server version	10.3.39-MariaDB-1:10.3.39+maria~ubu2004
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -21,9 +21,38 @@ GRANT ALL ON heatmap.* TO 'user'@'%';
 -- Current Database: `heatmap`
 --
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `heatmap` /*!40100 DEFAULT CHARACTER SET utf8 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `heatmap` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci */;
 
 USE `heatmap`;
+
+--
+-- Table structure for table `authorizedUsers`
+--
+
+DROP TABLE IF EXISTS `authorizedUsers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `authorizedUsers` (
+  `id` int(11) NOT NULL,
+  `username` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `colormapUsers`
+--
+
+DROP TABLE IF EXISTS `colormapUsers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `colormapUsers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `colormap` varchar(255) NOT NULL,
+  `username` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `colors`
@@ -41,7 +70,7 @@ CREATE TABLE `colors` (
   `color` varchar(100) DEFAULT NULL,
   `order` int(1) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -60,7 +89,7 @@ CREATE TABLE `completed_jobs` (
   `last_updated` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `processed_jobs_token_IDX` (`token`,`from_date`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -86,7 +115,7 @@ CREATE TABLE `data` (
   UNIQUE KEY `data_UN` (`map_name`,`metric_name`,`latitude`,`longitude`,`clustered`,`date`),
   KEY `mapname_date` (`map_name`,`date`),
   KEY `mix` (`metric_name`,`latitude`,`longitude`,`date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -119,7 +148,7 @@ CREATE TABLE `jobs` (
   `last_updated` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `jobs_map_name_IDX` (`map_name`,`metric_name`,`token`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -142,7 +171,7 @@ CREATE TABLE `maps_completed` (
   UNIQUE KEY `data_UN` (`map_name`,`metric_name`,`date`),
   KEY `maps_completed_completed_IDX` (`completed`,`indexed`) USING BTREE,
   KEY `maps_completed_last_updated_IDX` (`last_updated`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -178,7 +207,7 @@ CREATE TABLE `metadata` (
   `file_type` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `metadata_UN` (`map_name`,`metric_name`,`clustered`,`date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -195,7 +224,7 @@ CREATE TABLE `stats` (
   `min_date` timestamp NULL DEFAULT NULL,
   `max_date` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`map_name`,`metric_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -207,12 +236,12 @@ CREATE TABLE `stats` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-09-21 17:05:00
+-- Dump completed on 2024-12-16 16:52:41
 -- MySQL dump 10.16  Distrib 10.1.48-MariaDB, for debian-linux-gnu (x86_64)
 --
 -- Host: 192.168.1.119    Database: heatmap
 -- ------------------------------------------------------
--- Server version	10.3.36-MariaDB-1:10.3.36+maria~ubu2004
+-- Server version	10.3.39-MariaDB-1:10.3.39+maria~ubu2004
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -242,4 +271,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2022-09-21 17:05:00
+-- Dump completed on 2024-12-16 16:52:41

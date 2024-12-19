@@ -36,6 +36,20 @@ def make_iotapp_folder(origin, path, id_iotapp, placeholders):
                 f.write(s)
     return
 
+def make_iotapp_folder_unconfigured(origin, path, placeholders):
+    # make the folder and copy the files; do placeholders while at it
+    os.makedirs(path+'/iotapp-generator/default-iotapp-config')
+    for dname, _, files in os.walk(origin):
+        for file in files:
+            copy(os.path.join(dname,file), os.path.join(path+'/iotapp-generator/default-iotapp-config',file))
+            with open(os.path.join(path+'/iotapp-generator/default-iotapp-config',file)) as f:
+                s = f.read()
+            for key, value in placeholders.items():
+                s=s.replace(key, value)
+            with open(os.path.join(path+'/iotapp-generator/default-iotapp-config',file),'w') as f:
+                f.write(s)
+    return
+
 
 #TODO probably can improve this
 def ensure_validity(placeholders, ips):
@@ -1584,7 +1598,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     yaml.dump(ldapyaml, open(location+"/kubernetes/ldap-server-deployment.yaml", "w"))
     
     builderyaml = yaml.load(open(location+"/kubernetes/dashboard-builder-deployment.yaml"), Loader=yaml.FullLoader)
-    builderyaml["spec"]["template"]["spec"]["initContainers"] = [{"securityContext":{"runAsUser":33},"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"], "image": "disitlab/dashboard-builder:v8.4", "name": "copy-dashboard-builder", "volumeMounts": [{"mountPath": "/snap4volumes/dashboard-img", "name":"dashboard-builder-claim006"}]}]
+    builderyaml["spec"]["template"]["spec"]["initContainers"] = [{"securityContext":{"runAsUser":33},"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"], "image": "disitlab/dashboard-builder:v9.1", "name": "copy-dashboard-builder", "volumeMounts": [{"mountPath": "/snap4volumes/dashboard-img", "name":"dashboard-builder-claim006"}]}]
     builderyaml["spec"]["template"]["spec"]["containers"][0]["args"]=[]
     builderyaml["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][2]["mountPath"] = "/protecteduploads"
     yaml.dump(builderyaml, open(location+"/kubernetes/dashboard-builder-deployment.yaml", "w"))

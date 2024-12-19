@@ -20,10 +20,16 @@ services:
       options:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
+  memcached:
+    image: memcached:1.6.33-alpine
+    #command: -vv
+    restart: unless-stopped
+    ports:
+      - 11211:11211
   dashboard-builder:
     container_name: dashboard-builder
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v8.4
+    image: disitlab/dashboard-builder:v9.1
     #build: ./build/dashboard-builder
     ports:
       - "70:80"
@@ -113,7 +119,7 @@ services:
   dashboard-cron:
     container_name: dashboard-cron
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v8.4
+    image: disitlab/dashboard-builder:v9.1
     volumes:
        - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
        - ./dashboard-cron-conf/crontab:/crontab
