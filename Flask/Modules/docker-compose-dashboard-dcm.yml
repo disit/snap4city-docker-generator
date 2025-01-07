@@ -21,6 +21,7 @@ services:
     sysctls:
       - net.ipv4.ip_unprivileged_port_start=0
   memcached:
+    container_name: memcached
     image: memcached:1.6.33-alpine
     #command: -vv
     restart: unless-stopped

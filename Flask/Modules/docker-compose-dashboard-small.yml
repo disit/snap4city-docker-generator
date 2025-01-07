@@ -21,6 +21,7 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   memcached:
+    container_name: memcached
     image: memcached:1.6.33-alpine
     #command: -vv
     restart: unless-stopped

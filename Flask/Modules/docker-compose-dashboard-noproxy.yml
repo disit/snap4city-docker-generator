@@ -1,6 +1,7 @@
 
 services:
   memcached:
+    container_name: memcached
     image: memcached:1.6.33-alpine
     #command: -vv
     restart: unless-stopped
