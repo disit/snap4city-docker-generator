@@ -810,7 +810,7 @@ def make_sql_micro(file_location, broker_ip, iotapps, broker_data, add_checker=T
         data=[]
         data.append('DELETE FROM profiledb.`ownership`;\n') # clean ownership
         data.append(adjust_profiledb_dump(iotapps))
-        data.append(adjust_dashboard_menu_dump(iotapps, add_checker))
+        data.append(adjust_dashboard_menu_dump(iotapps))
         brokers = iotbroker_add(broker_ip,broker_data)
         data.append(brokers[0])
         data.append(brokers[1])

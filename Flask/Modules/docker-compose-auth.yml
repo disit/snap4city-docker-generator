@@ -45,8 +45,6 @@ services:
     image: postgres:15.7-alpine
     restart: unless-stopped
     container_name: postgres-db
-    ports:
-      - 5433:5432
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "keycloak"]
     environment:
