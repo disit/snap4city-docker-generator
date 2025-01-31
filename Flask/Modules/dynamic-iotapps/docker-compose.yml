@@ -30,8 +30,6 @@ services:
       - PYTHONUNBUFFERED=true
     depends_on:
       - docker-socket-proxy
-    ports:
-      - "80:80"
     command: >
       sh -c 'waitress-serve --port 80 --call flask_app:create_app'
     networks:
