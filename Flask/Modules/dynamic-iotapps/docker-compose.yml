@@ -1,0 +1,46 @@
+services:
+  iotapp-003:
+    image: nginx
+    networks:
+      - default
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: docker-socket-proxy
+    environment:
+      - CONTAINERS=1
+      - EVENTS=1
+      - POST=1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    ports:
+      - "2375:2375"
+    networks:
+      - protected
+
+  client:
+    image: fabriziomereu/container-api-exposer:tested
+    container_name: client
+    environment:
+      - BASE_HOSTNAME=$#base-hostname#$
+      - BASE_URL=$#base-url#$
+      - IP_ADDR=$#ip-0#$
+      - DASHBOARD_WEBSOCKET_PROTOCOL=$#dashboard-websocket-protocol#$
+      - IOTAPP_IMAGE_BASIC=disitlab/snap4city-nodered-v2.2.2-basic:v8
+      - IOTAPP_IMAGE_ADV=disitlab/snap4city-nodered-v2.2.2-adv:v11
+      - PYTHONUNBUFFERED=true
+    depends_on:
+      - docker-socket-proxy
+    ports:
+      - "80:80"
+    command: >
+      sh -c 'waitress-serve --port 80 --call flask_app:create_app'
+    networks:
+      - default
+      - protected
+    volumes:
+      - ./data:/flows:rw
+networks:
+  default:
+    driver: bridge
+  protected:
+    driver: bridge
