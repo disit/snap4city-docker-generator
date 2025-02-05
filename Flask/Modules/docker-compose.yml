@@ -187,7 +187,7 @@ services:
 
 #KBSSM ################################################################
   servicemap:
-    image: disitlab/servicemap:v5.8.5
+    image: disitlab/servicemap:v5.10
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
       - ./servicemap-conf:/root/servicemap

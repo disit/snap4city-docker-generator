@@ -91,18 +91,22 @@ echo add dashboard
 curl --insecure -u admin:$#opensearch-admin-pwd#$ -XPOST "http://localhost/kibana/api/saved_objects/_import?overwrite=true" -H "osd-xsrf: true" -H "securitytenant: global" --form file=@osd-dashboard.ndjson
 echo
 
-echo add geoserver workspace Snap4City
+echo add geoserver workspace Snap4City - if this command fails, it might be because this machine is not able to resolve its own name\; consider using localhost in such a case
 curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>Snap4City</name></workspace>"  http://localhost/geoserver/rest/workspaces
 
 
-echo add geoserver workspace traffic
+echo add geoserver workspace traffic - if this command fails, it might be because this machine is not able to resolve its own name\; consider using localhost in such a case
 curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>traffic</name></workspace>"  http://localhost/geoserver/rest/workspaces
+
+
+echo add geoserver road traffic style - if this command fails, it might be because this machine is not able to resolve its own name\; consider using localhost in such a case
+curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: application/vnd.ogc.sld+xml" -d @servicemap-trafficflowmanager/road_traffic_style.sld  http://localhost/geoserver/rest/styles?name=road_traffic_style
 
 # for understanding what's going on here, go here
 # https://nifi.apache.org/docs/nifi-docs/rest-api/index.html
 # components must be disabeld or stopped before edit can happen
 # it takes time, so the sleep is required
-# the following curl only work the first time you ever run this (won't do anything additional times as the operations fail)
+# the following curl only works the first time you ever run this (won't do anything additional times as the operations fail)
 # do NOT touch the nifi configuration or else the revisions will no longer be what
 # the curls expect
 # if you need to reset the configuration to the original state, you need to replace
