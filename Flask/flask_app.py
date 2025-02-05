@@ -562,7 +562,7 @@ def create_app():
 
                 # this holds the iotapp generator and the integration patch
                 snap4.copy('./Modules/dynamic-iotapps','./Output/'+token+'/'+ips[0]+'/iotapps-generator')
-                snap4.placeholders_in_folder('./Output/'+token+'/'+ips[0]+'/iotapps-generator')
+                snap4.placeholders_in_folder(fine_as_is,'./Output/'+token+'/'+ips[0]+'/iotapps-generator')
                 
                 snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[0]+'/keycloak-conf')
                 snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps'],),1880,fine_as_is)
