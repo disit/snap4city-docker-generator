@@ -26,7 +26,7 @@ services:
       - IP_ADDR=$#ip-0#$
       - DASHBOARD_WEBSOCKET_PROTOCOL=$#dashboard-websocket-protocol#$
       - IOTAPP_IMAGE_BASIC=disitlab/snap4city-nodered-v2.2.2-basic:v8
-      - IOTAPP_IMAGE_ADV=disitlab/snap4city-nodered-v2.2.2-adv:v11
+      - IOTAPP_IMAGE_ADV=disitlab/snap4city-nodered-v2.2.2-adv:v12
       - PYTHONUNBUFFERED=true
     depends_on:
       - docker-socket-proxy
