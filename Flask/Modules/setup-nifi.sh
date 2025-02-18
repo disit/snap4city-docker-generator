@@ -44,9 +44,9 @@ done < "$file"
 echo "Truststore password = " ${nifi_security_truststorePasswd}
 echo "Keystore password =   " ${nifi_security_keystorePasswd}
 
-sed -i "s|ctsBtRBKHRAx69EqUghvvgEvjnaLjFEB|$#nifi-password#$|" "docker compose.yml"
-sed -i "s|keystorepassword_replace_me|${nifi_security_keystorePasswd}|" "docker compose.yml"
-sed -i "s|truststorepassword_replace_me|${nifi_security_truststorePasswd}|" "docker compose.yml"
+sed -i "s|ctsBtRBKHRAx69EqUghvvgEvjnaLjFEB|$#nifi-password#$|" "docker-compose.yml"
+sed -i "s|keystorepassword_replace_me|${nifi_security_keystorePasswd}|" "docker-compose.yml"
+sed -i "s|truststorepassword_replace_me|${nifi_security_truststorePasswd}|" "docker-compose.yml"
 
 echo "updated nifi in compose file"
 echo "fixing chmod perms for generated nifi files"
