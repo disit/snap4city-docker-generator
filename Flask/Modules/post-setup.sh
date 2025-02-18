@@ -149,8 +149,19 @@ docker compose exec ldap-server bash /ldif_files/psw.sh
 
 echo "fixing keycloak data - if this command fails, it might be because this machine is not able to resolve its own name; consider using localhost in such a case"
 cd ..
-python3 keycloak-conf/keycloak-rest.py $#base-url#$/auth admin $#keycloak-admin-pwd#$
-python3 keycloak-conf/keycloak-step-2.py
-echo running again to fix first execution
-python3 keycloak-conf/keycloak-step-2.py
+
+
+FILE="./keycloak-conf/keycloak_skipped.txt"
+
+if [ -f "$FILE" ]; then
+    python3 keycloak-conf/keycloak-rest.py $#base-url#$/auth admin $#keycloak-admin-pwd#$
+    python3 keycloak-conf/keycloak-step-2.py
+    echo running again to fix first execution
+    python3 keycloak-conf/keycloak-step-2.py
+    echo "Keycloak fixed, won't repeat until ./keycloak-conf/keycloak_skipped.txt is deleted"
+    echo "Keycloak fixed, won't repeat until ./keycloak-conf/keycloak_skipped.txt is deleted" > "$FILE"
+else
+    echo "Not fixing keycloak as ./keycloak-conf/keycloak_skipped.txt exists, meaning it was fixed already once. Delete the file if you need to setup keycloak again"
+fi
+
 

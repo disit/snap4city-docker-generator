@@ -137,7 +137,18 @@ echo add geoserver road traffic style - if this command fails, it might be becau
 curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: application/vnd.ogc.sld+xml" -d @servicemap-trafficflowmanager/road_traffic_style.sld  http://localhost/geoserver/rest/styles?name=road_traffic_style
 
 echo "fixing keycloak (for this to work, the system must be able to recognize its own hostname)"
-python3 keycloak-conf/keycloak-rest.py $#base-url#$/auth admin $#keycloak-admin-pwd#$
-python3 keycloak-conf/keycloak-step-2.py
-echo running again to fix first execution
-python3 keycloak-conf/keycloak-step-2.py
+
+
+FILE="./keycloak-conf/keycloak_skipped.txt"
+
+if [ -f "$FILE" ]; then
+    python3 keycloak-conf/keycloak-rest.py $#base-url#$/auth admin $#keycloak-admin-pwd#$
+    python3 keycloak-conf/keycloak-step-2.py
+    echo running again to fix first execution
+    python3 keycloak-conf/keycloak-step-2.py
+    echo "Keycloak fixed, won't repeat until ./keycloak-conf/keycloak_skipped.txt is deleted"
+    echo "Keycloak fixed, won't repeat until ./keycloak-conf/keycloak_skipped.txt is deleted" > "$FILE"
+else
+    echo "Not fixing keycloak as ./keycloak-conf/keycloak_skipped.txt exists, meaning it was fixed already once. Delete the file if you need to setup keycloak again"
+fi
+
