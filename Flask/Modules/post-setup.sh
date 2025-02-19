@@ -153,7 +153,7 @@ cd ..
 
 FILE="./keycloak-conf/keycloak_skipped.txt"
 
-if [ -f "$FILE" ]; then
+if [ ! -e "$FILE" ]; then
     python3 keycloak-conf/keycloak-rest.py $#base-url#$/auth admin $#keycloak-admin-pwd#$
     python3 keycloak-conf/keycloak-step-2.py
     echo running again to fix first execution
