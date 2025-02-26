@@ -33,6 +33,13 @@ echo create opensearch kpi index
 kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/snap4-kpi' -d @/root/servicemap/mapping_Sensors-ETL-IOT-ES7-v4.json
 echo
 
+echo create opensearch iot index
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/snap4-iot-organization' -d @mapping_Sensors-ETL-IOT-ES7-v4.json
+echo
+
+echo create opensearch ot-device-state index
+kubectl -n $#k8-namespace#$ exec deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://localhost:9200/ot-device-state' -d @mapping_DeviceState-ES7-v1.json
+echo
 
 echo setup role areamanager
 kubectl -n $#k8-namespace#$ exec -i deployment/servicemap  --  curl -sS --insecure -u admin:$#opensearch-admin-pwd#$ -H 'Content-Type: application/json' -X PUT 'https://opensearch-n1:9200/_plugins/_security/api/roles/kibanauser_areamanager' -d @- << EOF
