@@ -1576,8 +1576,12 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
                 # change the strategy for some deployments, the string "orion" below matches both the filter and the broker
                 if any(sub in file_seen for sub in ["servicemap", "orion", "datamanager", "synoptics", "dashboard-builder", "keycloak", "memcahed", "myldap"]):
                     strategyyaml = yaml.load(open(os.path.join(dname,file_seen)), Loader=yaml.FullLoader)
-                    strategyyaml["spec"]["strategy"]["type"] = "RollingUpdate"
-                    yaml.dump(strategyyaml, open(os.path.join(dname,file_seen), "w"))
+                    try:
+                        strategyyaml["spec"]["strategy"]["type"] = "RollingUpdate"
+                        yaml.dump(strategyyaml, open(os.path.join(dname,file_seen), "w"))
+                    except KeyError: # sometimes deployments don't start with a strategy
+                        strategyyaml["spec"]["strategy"] = {"type":"RollingUpdate"}
+                        yaml.dump(strategyyaml, open(os.path.join(dname,file_seen), "w"))
     
     #makes the new pvc
     for new_pvc in proper_volume_names:

@@ -20,6 +20,8 @@ services:
       - ./servicemap-$#id#$-iot-conf:/root/iot-api-config:rw
       - ./servicemap-$#id#$-conf/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml
       - ./servicemap-$#id#$-superservicemap-conf/settings.xml:/usr/local/tomcat/settings.xml
+      - ./$#servicemap-id#$-whatif-router/gh-data:/usr/local/tomcat/gh-data
+      - ./$#servicemap-id#$-trafficflowmanager:/home/debian/TrafficFlowManager
 #    environment:
     ports:
       - $#8090#$:8080
