@@ -1568,6 +1568,16 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
                         proper_volume_names.append(proper_base+"-claim"+f"{i:03}")
                 with open(os.path.join(dname,file_seen), "w") as file_saved:
                     file_saved.write(current_content)
+                # since we are here, we might as well add the liveness probe for iotapps
+                if file_seen.startswith("iotapp"):
+                    iotappyaml = yaml.load(open(os.path.join(dname,file_seen)), Loader=yaml.FullLoader)
+                    iotappyaml["spec"]["template"]["spec"]["containers"][0]["livenessProbe"]={"httpGet":{"path":"/iotapp/iotapp-"+''.join(filter(str.isdigit, file_seen))+"/ui", "port":1880,}, "initialDelaySeconds": 60, "periodSeconds": 20, "failureThreshold": 3}
+                    yaml.dump(iotappyaml, open(os.path.join(dname,file_seen), "w"))
+                # change the strategy for some deployments, the string "orion" below matches both the filter and the broker
+                if any(sub in file_seen for sub in ["servicemap", "orion", "datamanager", "synoptics", "dashboard-builder", "keycloak", "memcahed", "myldap"]):
+                    strategyyaml = yaml.load(open(os.path.join(dname,file_seen)), Loader=yaml.FullLoader)
+                    strategyyaml["spec"]["strategy"]["type"] = "RollingUpdate"
+                    yaml.dump(strategyyaml, open(os.path.join(dname,file_seen), "w"))
     
     #makes the new pvc
     for new_pvc in proper_volume_names:
@@ -1591,6 +1601,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
                         temporary=temporary.replace('$#volume-path#$',volume_path.replace("/kubernetes",""))
                 with open(location+'/kubernetes/'+vname+'-persistentvolume.yaml', 'w') as f:
                     f.write(temporary)
+            
                 
     ldapyaml = yaml.load(open(location+"/kubernetes/ldap-server-deployment.yaml"), Loader=yaml.FullLoader)
     ldapyaml["spec"]["template"]["spec"]["initContainers"] = [{"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/ldap-conf)\" ] && { echo \"empty. do copy\"; cp -R /etc/ldap/slapd.d/* /snap4volumes/ldap-conf; cp -R /var/lib/ldap/* /snap4volumes/ldap-db; true; } || { echo \"not empty. no copy\"; true;}"], "image": "disitlab/preconf-openldap:v3", "name": "copy-open-ldap", "volumeMounts": [{"mountPath": "/snap4volumes/ldap-conf", "name":"ldap-server-claim000"},{"mountPath": "/snap4volumes/ldap-db", "name":"ldap-server-claim002"}]}]
