@@ -542,12 +542,12 @@ def create_app():
 
             if modello in ("Micro","Kubernetes"):
                 if modello == "Kubernetes":
-                    if os.environ['send_aws_k8s'] == "True":
-                        snap4.add_utils('./Output/'+token+'/'+ips[0]+'/kubernetes_eks')
-                        snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/scripts/virtuoso/run.sh',fine_as_is)
-                        snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/compatibility4nfs.py',fine_as_is)
-                        snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/nifi-multi-k8/nifi.yaml',fine_as_is)
-                        snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/opensearch-multi-k8/opensearch-multi.yaml',fine_as_is)
+                    #if os.environ['send_aws_k8s'] == "True":
+                    snap4.add_utils('./Output/'+token+'/'+ips[0]+'/kubernetes_eks')
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/scripts/virtuoso/run.sh',fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/compatibility4nfs.py',fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/nifi-multi-k8/nifi.yaml',fine_as_is)
+                    snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/kubernetes_eks/opensearch-multi-k8/opensearch-multi.yaml',fine_as_is)
             
                 if len(ips)>1:
                     print("[LOG] The amount of IPs provided did not match the given amount of IPs for the Micro/Kubernetes model.")
