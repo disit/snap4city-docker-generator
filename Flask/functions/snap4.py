@@ -1797,7 +1797,7 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
         newlist.append(templist)
 
     for i, j in enumerate(origs):
-        with open(location+'/kubernetes_eks'+os.sep+str(j['spec']['template']['spec']['containers'][0]['name'])+'-deployment-new.yaml', 'w') as file:
+        with open(location+os.sep+'kubernetes_eks'+os.sep+str(j['spec']['template']['spec']['containers'][0]['name'])+'-deployment-new.yaml', 'w') as file:
             yaml.dump(j, file)
     print("New yamls generated in this folder")
     print("Done")
