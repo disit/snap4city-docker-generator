@@ -32,8 +32,6 @@ if "allow_update" not in os.environ:
     os.environ['allow_update']="False"
 if "add_utils" not in os.environ:
     os.environ['add_utils']="False"
-if 'send_aws_k8s' not in os.environ:
-    os.environ['send_aws_k8s'] ="False"
 
 def print_date_time_sql():
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
