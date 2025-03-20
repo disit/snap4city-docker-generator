@@ -20,7 +20,7 @@ For Kafka you will need to install a package -> `apt-get install kafkacat`; you 
 
 To generate the pdf you'll need to install the ReportLab package: `pip install reportlab`
 
-To send a telegram message, you need to install the Telegram package: `pip install telegram`
+To send a telegram message, you need to install the Telegram package: `pip install python-telegram-bot`
 
 To schedule the background healthchecks, you need to install the Apscheduler package: `pip install apscheduler`
 
