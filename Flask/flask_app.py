@@ -89,7 +89,7 @@ def create_app():
                         continue
                     try:
                         cursor = conn.cursor()
-                        cursor.execute(a, multi=True)
+                        cursor.execute(a)
                         conn.commit()
                     except mysql.connector.Error as err:
                         print("[LOG] Database Setup Error at",datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),"reason:",err)

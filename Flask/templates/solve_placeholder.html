@@ -264,6 +264,16 @@
   }
 
   async function makeToken_function() { // make a token, save to database (if needed), allow export, notify user
+    document.querySelectorAll("input[id^='$#lng-ib']").forEach(input => {
+      let num = parseFloat(input.value); // Get input value as a number
+        if (!isNaN(num)) {
+            let integerPart = Math.floor(num); // Extract integer part
+            let decimalPart = num - integerPart; // Extract decimal part
+
+            let modInteger = integerPart % 360; // Apply modulo operation
+            input.value = (modInteger + decimalPart).toFixed(14); // Keep 14 decimal places
+        }
+  });
     document.getElementById("time_of_configuration").value = (new Date()).toISOString();
     var myform = $('#form');
     var disabled = myform.find(':input:disabled').removeAttr('disabled');
