@@ -6,7 +6,7 @@ services:
       tags:
         #- fabriziomereu/snap4city_installation_generator:rel.2.1.1
         - fabriziomereu/snap4city_installation_generator:unstable
-    image: fabriziomereu/snap4city_installation_generator:dev.2.3.0
+    image: fabriziomereu/snap4city_installation_generator:dev.2.3.1
     links:
       - db
     ports:
@@ -19,7 +19,6 @@ services:
       - version
       - allow_compress
       - add_utils
-      - send_aws_k8s
       - allow_update
       - MYSQL_ROOT_PASSWORD
       - time_wait_update_db
