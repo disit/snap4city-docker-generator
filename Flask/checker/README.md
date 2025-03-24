@@ -26,7 +26,7 @@ To schedule the background healthchecks, you need to install the Apscheduler pac
 
 To connect to the MySQL database, you need to install the mysql-connector-python package: `pip install mysql-connector-python`
 
-To create the archive for certification, you'll need to install the rar package: `apt-get install rar`; you might need admin privileges to install it
+To create the archive for certification, you'll need to install the rar package: `apt-get install rar`; you might need admin privileges to install it; if can't find it in apt, follow [this guide](https://www.tecmint.com/how-to-open-extract-and-create-rar-files-in-linux/)
 
 If this doesn't run be sure to update Python (3.9 minimum), Flask and for python (use apt-get and pip)
 
