@@ -20,13 +20,13 @@ For Kafka you will need to install a package -> `apt-get install kafkacat`; you 
 
 To generate the pdf you'll need to install the ReportLab package: `pip install reportlab`
 
-To send a telegram message, you need to install the Telegram package: `pip install telegram`
+To send a telegram message, you need to install the Telegram package: `pip install python-telegram-bot`
 
 To schedule the background healthchecks, you need to install the Apscheduler package: `pip install apscheduler`
 
 To connect to the MySQL database, you need to install the mysql-connector-python package: `pip install mysql-connector-python`
 
-To create the archive for certification, you'll need to install the rar package: `apt-get install rar`; you might need admin privileges to install it
+To create the archive for certification, you'll need to install the rar package: `apt-get install rar`; you might need admin privileges to install it; if can't find it in apt, follow [this guide](https://www.tecmint.com/how-to-open-extract-and-create-rar-files-in-linux/)
 
 If this doesn't run be sure to update Python (3.9 minimum), Flask and for python (use apt-get and pip)
 

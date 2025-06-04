@@ -3,7 +3,7 @@ services:
 
   heatmap2geosrv:
     container_name: heatmap2geosrv
-    image: disitlab/heatmap2geoserver:v1.2.1
+    image: disitlab/heatmap2geoserver:v1.2.2
     volumes:
       - ./heatmap-tmp:/heatmap2geoserver/data/
     environment:

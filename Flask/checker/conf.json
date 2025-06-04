@@ -17,5 +17,5 @@
 	"platform-url": "$#base-url#$",
 	"platform-explanation": "Some information",
 	"load-threshold": 10,
-	"memory-threshold": 0.8
+	"memory_threshold": 0.8
 }
