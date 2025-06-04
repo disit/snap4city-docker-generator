@@ -3,7 +3,7 @@ services:
   $#servicemap-id#$:
     container_name: $#servicemap-id#$
     restart: unless-stopped
-    image: disitlab/servicemap:v5.10
+    image: disitlab/servicemap:v5.11
 
     logging:
       driver: "json-file"
@@ -54,7 +54,7 @@ services:
     ports:
      - "8983:8983"
     volumes:
-      - solr-data:/var/solr
+      - solr-data:/opt/solr/server/solr/mycores
     command:
       - solr-precreate
       - km4c-index

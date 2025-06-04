@@ -58,7 +58,7 @@ $#extra_hosts#$
     image: varnish:stable
     hostname: cache
     environment:
-      - VARNISH_SIZE=100MB
+      - VARNISH_SIZE=200MB
       - VARNISHNCSA=true
       - VARNISH_HTTP_PORTS=6081
     ports:

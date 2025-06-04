@@ -10,7 +10,7 @@ services:
   dashboard-builder:
     container_name: dashboard-builder
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v9.2
+    image: image: disitlab/dashboard-builder:v9.3.15
     ports:
       - "70:80"
     volumes:
@@ -98,7 +98,7 @@ services:
   dashboard-cron:
     container_name: dashboard-cron
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v9.2
+    image: image: disitlab/dashboard-builder:v9.3.15
     user: root
     logging:
       driver: "json-file"
@@ -204,7 +204,7 @@ services:
   synoptics:
     container_name: synoptics
     restart: unless-stopped
-    image: disitlab/synoptics:v2.4
+    image: disitlab/synoptics:v2.5.3
     volumes:
       - ./synoptics-conf/config.js:/usr/src/synoptics/new-config.js
       - ./synoptics-conf/v2-config.js:/usr/src/synoptics/v2/new-config.js
@@ -254,8 +254,7 @@ services:
         - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092
         - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
         - JMX_PORT=9000
-        - KAFKA_JMX_OPTS=-Djava.rmi.server.hostname=192.168.1.119 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.rmi.port=9000 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
-
+        
     volumes:
       - kafka:/bitnami/kafka
     depends_on:
@@ -313,7 +312,8 @@ services:
     volumes:
       - od-postgis-data:/var/lib/postgresql/data
       - ./od-postgis/od-matrix-db-schema.sql:/docker-entrypoint-initdb.d/20-od-matrix-db-schema.sql
-      - ./od-postgis/italy_rx.sql:/docker-entrypoint-initdb.d/30-italy_rx.sql
+      - ./od-postgis/italy_rx.sql:/docker-entrypoint-initdb.d/30-italy_rx.sqlMore actions
+      - ./od-postgis/gadm36.sql:/docker-entrypoint-initdb.d/40-gadm36.sql
       - ./od-postgis:/od-postgis
     restart: unless-stopped
   varnish:
@@ -321,7 +321,7 @@ services:
     image: varnish:stable
     hostname: cache
     environment:
-      - VARNISH_SIZE=100MB
+      - VARNISH_SIZE=200MB
       - VARNISHNCSA=true
       - VARNISH_HTTP_PORTS=6081
     ports:
