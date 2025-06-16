@@ -36,6 +36,7 @@ import traceback
 import re
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
+import html
 
 
 f = open("conf.json")
@@ -59,6 +60,9 @@ db_conn_info = {
 
 
 def send_telegram(chat_id, message):
+    if not config["sendsend_notifications"]:
+        print("Would have sent notification but was told not to")
+        return
     if isinstance(message, list):
         message[2]=filter_out_muted_containers_for_telegram(message[2])
     asyncio.run(bot.send_message(chat_id=chat_id, text=str(message)))
@@ -155,6 +159,9 @@ def get_top():
     return parsed_data
 
 def send_email(sender_email, sender_password, receiver_emails, subject, message):
+    if not config["sendsend_notifications"]:
+        print("Would have sent notification but was told not to")
+        return
     composite_message = config['platform-explanation'] + "\n" + message
     smtp_server = config['smtp-server']
     smtp_port = config['smtp-port']
@@ -165,7 +172,7 @@ def send_email(sender_email, sender_password, receiver_emails, subject, message)
     msg['From'] = sender_email
     msg['To'] = ','.join(receiver_emails)
     msg['Subject'] = subject
-    msg.attach(MIMEText(str(composite_message), 'plain'))
+    msg.attach(MIMEText(str(composite_message), 'html'))
     server.send_message(msg)
     server.quit()
     return
@@ -329,15 +336,28 @@ def auto_alert_status():
     names_of_problematic_containers = [n["Names"] for n in problematic_containers]
     containers_which_are_not_expected = list(set(components_original)-set([a["Names"] for a in containers_merged]))
     containers_which_are_not_expected = [a for a in containers_which_are_not_expected if not a.endswith("*")]
+    top = get_top()
+    load_averages = re.findall(r"(\d+\.\d+)", top["system_info"]["load_average"])[-3:]
+    load_issues=""
+    for average, timing in zip(load_averages, [1, 5, 15]):
+        if float(average) > config["load-threshold"]:
+            load_issues += "Load threshold above "+str(config["load-threshold"]) + " with " + str(average) + "during the last " + str(timing) + " minute(s).\n"
+    memory_issues = ""
+    if float(top["memory_usage"]["used"])/float(top["memory_usage"]["total"]) > config["memory_threshold"]:
+        memory_issues = "Memory usage above " + str(config["memory_threshold"]) + " with " + str(top["memory_usage"]["used"]) + " " + top["memory_measuring_unit"] + " out of " + top["memory_usage"]["total"] + " " + top["memory_measuring_unit"] + " currently in use\n"
     if len(names_of_problematic_containers) > 0 or len(is_alive_with_ports) > 0 or len(containers_which_are_not_expected):
         try:
-            issues = ["","",""] # maybe make this a real object, later
+            issues = ["","","","",""] # maybe make this a real object, later
             if len(names_of_problematic_containers) > 0:
                 issues[0]=problematic_containers
             if len(is_alive_with_ports) > 0:
-                issues[1]=is_alive_with_ports #this has to be refined
+                issues[1]=is_alive_with_ports
             if len(containers_which_are_not_expected) > 0:
                 issues[2]=containers_which_are_not_expected
+            if len(load_issues)>0:
+                issues[3]=load_issues
+            if len(memory_issues)>0:
+                issues[4]=memory_issues
             send_advanced_alerts(issues)
         except Exception:
             print(traceback.format_exc())
@@ -362,7 +382,7 @@ def queued_running(command):
     answer = None
     print("Locking executor due to running", command)
     with mutex:
-        answer = subprocess.run('command', shell=True, capture_output=True, text=True, encoding="utf_8")
+        answer = subprocess.run(command, shell=True, capture_output=True, text=True, encoding="utf_8")
     print ("Unlocked executor")
     return answer
     
@@ -373,6 +393,55 @@ def send_alerts(message):
         send_telegram(config["telegram-channel"], message)
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
+        
+def update_container_state_db():        
+    results = None
+    # grab all but containers on this host
+    with mysql.connector.connect(**db_conn_info) as conn:
+        cursor = conn.cursor(buffered=True)
+        query = '''SELECT distinct position FROM checker.component_to_category;'''
+        cursor.execute(query)
+        conn.commit()
+        results = cursor.fetchall()
+        total_answer=[]
+        for r in results:
+            obtained = requests.post(r[0]+"/read_containers").text
+            try:
+                total_answer = total_answer + json.loads(obtained)
+            except:
+                try:
+                    obtained = requests.post(r[0]+"/sentinel/read_containers", headers=request.headers).text
+                    total_answer = total_answer + json.loads(obtained)
+                except:
+                    pass
+        
+    # now grab containers from this host
+    containers_ps = [a for a in (subprocess.run('docker ps --format json -a', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
+    containers_stats = [b for b in (subprocess.run('docker stats --format json -a --no-stream', shell=True, capture_output=True, text=True, encoding="utf_8").stdout).split('\n')][:-1]
+    containers_merged = []
+    for container_stats in containers_stats:
+        for container_ps in containers_ps:
+            for key1, value1 in json.loads(container_stats).items():
+                for key2, value2 in json.loads(container_ps).items():
+                    if key1 == "Name" and key2 == "Names":
+                        if value1 == value2:
+                            containers_merged.append({**json.loads(container_ps), **json.loads(container_stats)})
+    try:
+        with mysql.connector.connect(**db_conn_info) as conn:
+            cursor = conn.cursor(buffered=True)
+            query = '''SELECT * FROM checker.component_to_category;'''
+            cursor.execute(query)
+            conn.commit()
+            results = cursor.fetchall()
+    except Exception:
+        send_alerts("Can't reach db, didn't update cluster status:"+ traceback.format_exc())
+        return
+    containers_merged = containers_merged + total_answer
+    with mysql.connector.connect(**db_conn_info) as conn:
+        cursor = conn.cursor(buffered=True)
+        query = '''INSERT INTO `checker`.`container_data` (`containers`) VALUES (%s);'''
+        cursor.execute(query,(json.dumps(containers_merged),))
+        conn.commit()
 
 
 def send_advanced_alerts(message):
@@ -387,8 +456,12 @@ def send_advanced_alerts(message):
         if len(message[2])>0:
             em3 = format_error_to_send("wasn't found running in docker ",", ".join(message[2]))
             text_for_email+= "These containers weren't found in docker: "+ ", ".join(message[2])+"\n"
+        if len(message[3])>0:
+            text_for_email+= message[3]
+        if len(message[4])>0:
+            text_for_email+= message[4]
         try:
-            send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", em1+"\n"+em2+"\n"+em3)
+            send_email(config["sender-email"], config["sender-email-password"], config["email-recipients"], config["platform-url"]+" is in trouble!", em1+"\n"+em2+"\n"+em3+"\n"+message[3]+"\n"+message[4])
         except:
             print("[ERROR] while sending email:",text_for_email)
         text_for_telegram, t1, t2, t3 = "", "", "", ""
@@ -401,11 +474,15 @@ def send_advanced_alerts(message):
         if len(filter_out_muted_containers_for_telegram(message[2]))>0:
             t3=format_error_to_send("wasn't found running in docker ",filter_out_muted_containers_for_telegram(message[2]))
             text_for_telegram+= "These containers weren't found in docker: "+ str(filter_out_muted_containers_for_telegram(message[2]))+"\n"
+        if len(message[3])>0:
+            text_for_telegram+= message[3]
+        if len(message[4])>0:
+            text_for_telegram+= message[4]
         if len(text_for_telegram)>0:
             try:
-                send_telegram(config['telegram-channel'], t1+"\n"+t2+"\n"+t3)
+                send_telegram(config['telegram-channel'], t1+"\n"+t2+"\n"+t3+"\n"+message[3]+"\n"+message[4])
             except:
-                print("[ERROR] while sending telegram:",t1+"\n"+t2+"\n"+t3,"\nDue to",traceback.format_exc())
+                print("[ERROR] while sending telegram:",t1+"\n"+t2+"\n"+t3+"\n"+message[3]+"\n"+message[4],"\nDue to",traceback.format_exc())
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
  
@@ -413,6 +490,7 @@ def send_advanced_alerts(message):
     
 scheduler = BackgroundScheduler()
 scheduler.add_job(auto_alert_status, trigger='interval', minutes=5)
+scheduler.add_job(update_container_state_db, trigger='interval', minutes=5)
 scheduler.add_job(isalive, 'cron', hour=8, minute=0)
 scheduler.add_job(isalive, 'cron', hour=20, minute=0)
 scheduler.start()
@@ -449,7 +527,7 @@ def create_app():
             except Exception:
                 print("Something went wrong because of",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
-        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
 
     @app.route("/organize_containers", methods=["GET"])
     def organize_containers():
@@ -463,7 +541,7 @@ def create_app():
                     except Exception:
                         pass
                     if user!="admin":
-                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage."), 401
+                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage"), 401
                     cursor = conn.cursor(buffered=True)
                     # to run malicious code, malicious code must be present in the db or the machine in the first place
                     query = '''SELECT * FROM checker.component_to_category;'''
@@ -478,7 +556,7 @@ def create_app():
             except Exception:
                 print("Something went wrong because of",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
-        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
         
     @app.route("/add_container", methods=["POST"])
     def add_container():
@@ -492,7 +570,7 @@ def create_app():
                     except Exception:
                         pass
                     if user!="admin":
-                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage."), 401
+                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage"), 401
                     cursor = conn.cursor(buffered=True)
                     # to run malicious code, malicious code must be present in the db or the machine in the first place
                     query = '''INSERT INTO `checker`.`component_to_category` (`component`, `category`, `references`, `position`) VALUES (%s, %s, %s, %s);'''
@@ -502,7 +580,7 @@ def create_app():
             except Exception:
                 print("Something went wrong during the addition of a new container because of",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
-        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
         
     @app.route("/delete_container", methods=["POST"])
     def delete_container():
@@ -526,7 +604,7 @@ def create_app():
             except Exception:
                 print("Something went wrong during the deletion of a container because of",traceback.format_exc())
                 return render_template("error_showing.html", r = traceback.format_exc()), 500
-        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+        return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
 
     @app.route("/get_data_from_source", methods=["GET"])
     def get_additional_data():
@@ -568,11 +646,27 @@ def create_app():
     @app.route("/read_containers", methods=['POST'])
     def check():
         return get_container_data()
+    
+    @app.route("/read_containers_db", methods=['GET'])
+    def check_container_db():
+        if not config['is-master']:
+            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
+        with mysql.connector.connect(**db_conn_info) as conn:
+            try:
+                cursor = conn.cursor(buffered=True)
+                query = '''SELECT containers, sampled_at FROM checker.container_data order by sampled_at desc limit 1;'''
+                cursor.execute(query)
+                conn.commit()
+                result = cursor.fetchone()
+                tobereturned_answer = {"result":json.loads(result[0]), "error":[]}
+            except Exception as E:
+                tobereturned_answer = {"result": {}, "error":["Couldn't load container data because of "+str(E)]}
+            return tobereturned_answer
             
     @app.route("/advanced_read_containers", methods=['POST'])
     def check_adv():
         if not config['is-master']:
-            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
         try:
             results = None
             with mysql.connector.connect(**db_conn_info) as conn:
@@ -682,7 +776,7 @@ def create_app():
                         query_1 = 'insert into tests_results (datetime, result, container, command) values (now(), %s, %s, %s);'
                         cursor.execute(query_1,(string_used, test_name,r[0],))
                         conn.commit()
-                        log_to_db('test_ran', "Executing the complex test " + test_name + " resulted in: " +string_used, request, test_name="advanced test - "+r[1])
+                        log_to_db('test_ran', "Executing the complex test " + test_name + " resulted in: " +string_used, request, which_test="advanced test - "+str(r[1]))
                     return jsonify(total_result)
             except Exception:
                 print("Something went wrong during tests running because of",traceback.format_exc())
@@ -703,29 +797,32 @@ def create_app():
     def get_all_top():
         with mysql.connector.connect(**db_conn_info) as conn:
             cursor = conn.cursor(buffered=True)
-            query = '''SELECT distinct position FROM checker.component_to_category;'''
+            query = '''SELECT distinct position, ip_table.ip FROM checker.component_to_category left join ip_table on component_to_category.position = ip.table.hostname;'''
             cursor.execute(query)
             conn.commit()
             results = cursor.fetchall()
             total_answer=[]
             errors = []
             for r in results:
+                hostposition = ""
+                if hostposition != None:
+                    hostposition = " - " + r[1]
                 obtained = requests.post(r[0]+"/get_local_top", headers=request.headers).text
                 try:
                     currentjson=json.loads(obtained)
-                    currentjson["source"]=r[0]
+                    currentjson["source"]=r[0] + hostposition
                     total_answer.append(currentjson)
                 except:
                     try:
                         obtained = requests.post(r[0]+"/sentinel/get_local_top", headers=request.headers).text
                         currentjson=json.loads(obtained)
-                        currentjson["source"]=r[0]
-                        total_answer.append(json.loads(obtained))
+                        currentjson["source"]=r[0] + hostposition
+                        total_answer.append(currentjson)
                     except Exception as E:
                         errors.append("Reading top from "+r[0]+" failed: the backed received this exception: "+str(E))
-            #tobereturned_answer = {"result":total_answer, "error":errors}
+            tobereturned_answer = {"result":total_answer, "error":errors}
             #return tobereturned_answer
-        return render_template("top-viewer.html", data=total_answer), 200
+        return render_template("top-viewer.html", data=tobereturned_answer), 200
         
 
     @app.route("/get_local_top", methods=["GET"])
@@ -759,7 +856,7 @@ def create_app():
     @app.route("/deauthenticate", methods=['POST','GET'])
     def deauthenticate():
         if not config['is-master']:
-            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
         return "You have been deauthenticated", 401
         
     @app.route("/reboot_container", methods=['POST','GET'])
@@ -781,7 +878,7 @@ def create_app():
     @app.route("/reboot_container_advanced/<container_id>", methods=['POST','GET'])
     def reboot_container_advanced(container_id):
         if not config['is-master']:
-            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
         if request.method == "POST":
             try:
                 with mysql.connector.connect(**db_conn_info) as conn:
@@ -829,7 +926,7 @@ def create_app():
     @app.route("/mute_component_by_hours", methods=['POST'])
     def mute_component_by_hours():
         if not config['is-master']:
-            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
         if request.method == "POST":
             try:
                 with mysql.connector.connect(**db_conn_info) as conn:
@@ -933,15 +1030,25 @@ def create_app():
         except Exception:
             print("Probably fucked up the authentication:",traceback.format_exc())
             return render_template("error_showing.html", r = traceback.format_exc()), 401
-        r = '<br>'.join(subprocess.run('docker logs '+container_id+" --tail "+str(config["default-log-length"]), shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
-        #print('docker logs '+container_id+" --tail "+str(config["default-log-length"]))
-        #container_name = subprocess.run('docker ps -a -f id='+container_id+' --format "{{.Names}}"', shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n')[0]
+        
+        process = subprocess.Popen(
+            'docker logs '+container_id+" --tail "+str(config["default-log-length"]),
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,  # Merge stderr into stdout to preserve order
+            text=True
+        )
+        out=[]
+        for line in iter(process.stdout.readline, ''):
+            out.append(line[:-1])
+        process.stdout.close()
+        r = '<br>'.join(out)
         return render_template('log_show.html', container_id = container_id, r = r, container_name=container_id)
         
     @app.route("/advanced-container/<container_id>")
     def get_container_logs_advanced(container_id):
         if not config['is-master']:
-            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
         try:
             with mysql.connector.connect(**db_conn_info) as conn:
                 something = str(base64.b64decode(request.headers["Authorization"][len("Basic "):]))[:-1]
@@ -953,7 +1060,7 @@ def create_app():
                 conn.commit()
                 results = cursor.fetchall()
                 if len(results) == 0:
-                    return render_template("error_showing.html", r = "It appears that the container "+container_id+" doesn't exist in the cluster."), 500
+                    return render_template("error_showing.html", r = "It appears that the container "+container_id+" doesn't exist in the cluster"), 500
                 try:
                     r = requests.get(results[0][0]+"/sentinel/container/"+container_id, headers=request.headers, data={"id": container_id, "psw": psw})            
                     return r.text
@@ -993,7 +1100,7 @@ def create_app():
     @app.route('/generate_clustered_pdf', methods=['GET'])
     def generate_clustered_pdf():
         if not config['is-master']:
-            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
         user = ""
         try:
             user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
@@ -1001,7 +1108,7 @@ def create_app():
         except Exception:
             return render_template("error_showing.html", r = "Issues during the establishing of the user: "+ traceback.format_exc()), 500
         if user != "admin":
-            return render_template("error_showing.html", r = "User is not authorized to perform the operation."), 401
+            return render_template("error_showing.html", r = "User is not authorized to perform the operation"), 401
         try:
             results = None
             with mysql.connector.connect(**db_conn_info) as conn:
@@ -1043,7 +1150,19 @@ def create_app():
     def generate_pdf():
         data_stored = []
         for container_data in get_container_data(True):
-            r = '<br>'.join(subprocess.run('docker logs '+container_data['ID'] + ' --tail '+str(config["default-log-length"]), shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
+            process = subprocess.Popen(
+                'docker logs '+container_data['ID']+" --tail "+str(config["default-log-length"]),
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,  # Merge stderr into stdout to preserve order
+                text=True
+            )
+            out=[]
+            for line in iter(process.stdout.readline, ''):
+                out.append(line[:-1])
+            process.stdout.close()
+            r = '<br>'.join(out)
+            #r = '<br>'.join(subprocess.run('docker logs '+container_data['ID'] + ' --tail '+str(config["default-log-length"]), shell=True, capture_output=True, text=True, encoding="utf_8").stdout.split('\n'))
             data_stored.append({"header": container_data['Name'], "string": r})
         
         # Create a PDF document
@@ -1106,14 +1225,17 @@ def create_app():
             content.append(Paragraph(f'<b><a name="c-{header}"></a>{header}</b>', styles["Heading1"]))
             # Add normal string if it exists
             for substring in strings:
-                content.append(Paragraph(substring, styles["Normal"]))
+                try:
+                    content.append(Paragraph(substring, styles["Normal"]))
+                except ValueError:
+                    content.append(Paragraph(html(substring), styles["Normal"]))
             content.append(PageBreak())
         for extra in extra_logs:
             content.append(extra)
         content.append(PageBreak())
         for test in extra_tests:
             content.append(Paragraph(f'<b><a name="t-{test[3]}"></a>{test[3]}</b>', styles["Heading1"]))
-            content.append(Paragraph(test[2].replace("<br>","<br></br>"), styles["Normal"]))
+            content.append(Paragraph(test[2].replace("\n","<br>").replace("<br>","<br></br>"), styles["Normal"]))
             content.append(PageBreak())
         # Add content to the PDF document
         doc.build(content)
@@ -1136,7 +1258,7 @@ def create_app():
         except Exception:
             return render_template("error_showing.html", r = "Issues during the establishing of the user: "+ traceback.format_exc()), 500
         if user != "admin":
-            return render_template("error_showing.html", r = "User is not authorized to perform the operation."), 401
+            return render_template("error_showing.html", r = "User is not authorized to perform the operation"), 401
         script_folder = os.path.dirname(os.path.abspath(__file__))
         parent_folder = os.path.dirname(script_folder)
         target_folder = find_target_folder(parent_folder)
@@ -1175,7 +1297,7 @@ def create_app():
     @app.route('/clustered_certification', methods=['GET'])
     def clustered_certification():
         if not config['is-master']:
-            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster."), 403
+            return render_template("error_showing.html", r = "This Snap4Sentinel instance is not the master of its cluster"), 403
         user = ""
         try:
             user = base64.b64decode(request.headers["Authorization"][len('Basic '):]).decode('utf-8')
