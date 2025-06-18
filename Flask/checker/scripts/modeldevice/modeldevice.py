@@ -124,7 +124,8 @@ def accessToken(conf):
         'client_secret': conf.get('token').get('clientSecret'),
         'grant_type': 'password',
         'username': conf.get('token').get('username'),
-        'password': conf.get('token').get('password')
+        'password': conf.get('token').get('password'),
+        'scope': 'openid'
     }
 
     header = {
