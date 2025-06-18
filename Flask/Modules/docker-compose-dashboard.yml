@@ -364,7 +364,7 @@ services:
     volumes:
       - od-postgis-data:/var/lib/postgresql/data
       - ./od-postgis/od-matrix-db-schema.sql:/docker-entrypoint-initdb.d/20-od-matrix-db-schema.sql
-      - ./od-postgis/italy_rx.sql:/docker-entrypoint-initdb.d/30-italy_rx.sqlMore actions
+      - ./od-postgis/italy_rx.sql:/docker-entrypoint-initdb.d/30-italy_rx.sql
       - ./od-postgis/gadm36.sql:/docker-entrypoint-initdb.d/40-gadm36.sql
       - ./od-postgis:/od-postgis
     restart: unless-stopped
