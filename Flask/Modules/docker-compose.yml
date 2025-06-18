@@ -139,6 +139,7 @@ services:
         - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092
         - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
         - JMX_PORT=9000
+        - KAFKA_JMX_OPTS= -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.rmi.port=9000 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
         
     restart: unless-stopped
     volumes:
