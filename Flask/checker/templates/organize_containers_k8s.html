@@ -10,7 +10,6 @@
 		<th>Container</th>
 		<th>Category</th>
 		<th>Contacts</th>
-		<th>Position</th>
 		<th>Delete</th>
 		<th>Edit</th>
 	  </tr>
@@ -21,7 +20,6 @@
 	  <td>{{item[0]}}</td>
 	  <td>{{item[1]}}</td>
 	  <td>{{item[2]}}</td>
-	  <td>{{item[3]}}</td>
 	  <td><button type="button" class="btn btn-primary open-modal-m" data-toggle="modal" data-target="#deleteComponent" data-component="{{item[0]}}" id="deleteComponent{{item[0]}}" onClick="$('#addComponentModal').modal('hide')">Delete</button></td>
 	  <td><button type="button" class="btn btn-primary open-modal-m" data-toggle="modal" data-target="#editComponent" data-component="{{item[0]}}" id="editComponent{{item[0]}}" onClick="$('#addComponentModal').modal('hide')">Edit</button></td>
 	</tr>
@@ -57,10 +55,6 @@
 					<div class="form-group">
 						<label for="ContactsAdd">Contacts</label>
 						<input type="text" class="form-control" id="ContactsAdd" required>
-					</div>
-					<div class="form-group">
-						<label for="PositionAdd">Position</label>
-						<input type="text" class="form-control" id="PositionAdd" required>
 					</div>
 				</form>
 			</div>
@@ -100,10 +94,6 @@
 					<div class="form-group">
 						<label for="ContactsEdit">Contacts</label>
 						<input type="text" class="form-control" id="ContactsEdit" required>
-					</div>
-					<div class="form-group">
-						<label for="PositionEdit">Position</label>
-						<input type="text" class="form-control" id="PositionEdit" required>
 					</div>
 				</form>
 			</div>
@@ -182,24 +172,23 @@
 			alert('Please enter a password');
 		}
 	});
-	$('#addContainerButton').on('click', function() {
-		var password = $('#passwordInputAdd').val();
-		var id = $('#containeridmodalAdd').val();
-		var category = $('#category-selection').val();
-		var contacts = $('#ContactsAdd').val();
-		var position = $('#PositionAdd').val();
+	$('#saveComponentChangesButton').on('click', function() {
+		var password = $('#passwordInputEdit').val();
+		var id = $('#containeridmodalEdit').val();
+		var category = $('#category-selection-edit').val();
+		var contacts = $('#ContactsEdit').val();
 		if (password) {
 			try {
 				$.ajax({
-					url: './add_container',
-					data: {id: id, psw: password, category: category, contacts: contacts, position: position},
+					url: './edit_container',
+					data: {id: id, psw: password, category: category, contacts: contacts},
 					type: 'POST',
 					success: function(response) {
-						alert(id + " was added!");
+						alert(id + " was edited!");
 						location.reload();
 					},
 					error: function(error) {
-						alert(id + " was not added because of:" + error);
+						alert(id + " was not edited because of:" + error.responseText);
 					},
 					timeout: {{timeout}}
 				});
@@ -212,35 +201,34 @@
 			alert('Please enter a password');
 		}
 	});
-	$('#saveComponentChangesButton').on('click', function() {
-	var password = $('#passwordInputEdit').val();
-	var id = $('#containeridmodalEdit').val();
-	var category = $('#category-selection-edit').val();
-	var contacts = $('#ContactsEdit').val();
-	var position = $('#PositionEdit').val();
-	if (password) {
-		try {
-			$.ajax({
-				url: './edit_container',
-				data: {id: id, psw: password, category: category, contacts: contacts},
-				type: 'POST',
-				success: function(response) {
-					alert(id + " was edited!");
-					location.reload();
-				},
-				error: function(error) {
-					alert(id + " was not edited because of:" + error.responseText);
-				},
-				timeout: {{timeout}}
-			});
+	$('#addContainerButton').on('click', function() {
+		var password = $('#passwordInputAdd').val();
+		var id = $('#containeridmodalAdd').val();
+		var category = $('#category-selection').val();
+		var contacts = $('#ContactsAdd').val();
+		if (password) {
+			try {
+				$.ajax({
+					url: './add_container',
+					data: {id: id, psw: password, category: category, contacts: contacts},
+					type: 'POST',
+					success: function(response) {
+						alert(id + " was added!");
+						location.reload();
+					},
+					error: function(error) {
+						alert(id + " was not added because of:" + error.responseText);
+					},
+					timeout: {{timeout}}
+				});
+			}
+			catch (exception_var) {
+				console.log(exception_var);
+			}
 		}
-		catch (exception_var) {
-			console.log(exception_var);
+		else {
+			alert('Please enter a password');
 		}
-	}
-	else {
-		alert('Please enter a password');
-	}
 	});
 </script>
 {% endblock %}

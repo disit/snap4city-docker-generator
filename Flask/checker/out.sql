@@ -3,12 +3,12 @@ USE `checker`;
 
 DROP TABLE IF EXISTS `asking_containers`;
 CREATE TABLE `asking_containers` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTO_INCREMENT,
   `date` text DEFAULT NULL,
   `log` text DEFAULT NULL,
   `perpetrator` varchar(45) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 LOCK TABLES `asking_containers` WRITE;
 INSERT INTO `asking_containers` VALUES (1205,'2024-05-22 10:31:55',"POST wasn\'t used in the request",'');
 UNLOCK TABLES;
@@ -20,7 +20,7 @@ CREATE TABLE `container_data` (
   `containers` json NOT NULL,
   `sampled_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
 
 DROP TABLE IF EXISTS `categories`;
@@ -28,7 +28,7 @@ CREATE TABLE `categories` (
   `idcategories` int(11) NOT NULL AUTO_INCREMENT,
   `category` varchar(45) NOT NULL,
   PRIMARY KEY (`idcategories`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 LOCK TABLES `categories` WRITE;
 INSERT INTO `categories` VALUES (1,'Dashboard'),
 (2,'Authorization and Authentication'),
@@ -49,7 +49,7 @@ CREATE TABLE `category_test` (
   KEY `category_foreign_key_idx` (`category`),
   CONSTRAINT `category_foreign_key` FOREIGN KEY (`category`) REFERENCES `categories` (`idcategories`),
   CONSTRAINT `test_foreign_key` FOREIGN KEY (`test`) REFERENCES `complex_tests` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 LOCK TABLES `category_test` WRITE;
 INSERT INTO `category_test` VALUES (5,2),
 (8,2);
@@ -65,7 +65,7 @@ CREATE TABLE `complex_tests` (
   `explanation` tinytext DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_of_test_UNIQUE` (`name_of_test`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 LOCK TABLES `complex_tests` WRITE;
 INSERT INTO `complex_tests` VALUES (4,'Check iotapps','bash scripts/check_iotapps.sh',NULL,'#20ff14','Check all iotapps, no matter how many they are'),
 (5,'Add Device','bash scripts/add_device.sh',NULL,'#ff7f00','Calls the test for adding a new device, then adds some test data'),
@@ -80,7 +80,7 @@ CREATE TABLE `component_to_category` (
   `references` varchar(200) NOT NULL DEFAULT 'Contact information not set',
   `position` varchar(45) NOT NULL DEFAULT '$#base-url#$',
   PRIMARY KEY (`component`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 LOCK TABLES `component_to_category` WRITE;
 INSERT INTO `component_to_category` VALUES ('certbot','Authorization and Authentication','Contact information not set','$#base-url#$'),
 ('dashboard-backend','Dashboard','Contact information not set','$#base-url#$'),
@@ -126,7 +126,7 @@ CREATE TABLE `extra_resources` (
   `resource_description` varchar(45) NOT NULL,
   PRIMARY KEY (`id_category`,`resource_address`),
   CONSTRAINT `category_fk` FOREIGN KEY (`id_category`) REFERENCES `categories` (`idcategories`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 LOCK TABLES `extra_resources` WRITE;
 UNLOCK TABLES;
 DROP TABLE IF EXISTS `getting_tests`;
@@ -136,7 +136,7 @@ CREATE TABLE `getting_tests` (
   `log` text DEFAULT NULL,
   `perpetrator` varchar(45) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 DROP TABLE IF EXISTS `rebooting_containers`;
 CREATE TABLE `rebooting_containers` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -144,13 +144,13 @@ CREATE TABLE `rebooting_containers` (
   `log` text DEFAULT NULL,
   `perpetrator` varchar(45) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 DROP TABLE IF EXISTS `summary_status`;
 CREATE TABLE `summary_status` (
   `category` varchar(50) NOT NULL,
   `status` varchar(200) NOT NULL,
   PRIMARY KEY (`category`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 LOCK TABLES `summary_status` WRITE;
 INSERT INTO `summary_status` VALUES ('Authorization and Authentication',''),
 ('Broker','<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>'),
@@ -171,7 +171,7 @@ CREATE TABLE `test_ran` (
   `datetime` varchar(45) DEFAULT NULL,
   `perpetrator` varchar(45) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 DROP TABLE IF EXISTS `tests_results`;
 CREATE TABLE `tests_results` (
   `id_test` int(11) NOT NULL AUTO_INCREMENT,
@@ -180,7 +180,7 @@ CREATE TABLE `tests_results` (
   `container` text DEFAULT NULL,
   `command` text DEFAULT NULL,
   PRIMARY KEY (`id_test`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 DROP TABLE IF EXISTS `tests_table`;
 CREATE TABLE `tests_table` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -188,7 +188,7 @@ CREATE TABLE `tests_table` (
   `command` varchar(500) DEFAULT NULL,
   `command_explained` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4;
 
 
 DROP TABLE IF EXISTS `ip_table`;
@@ -196,7 +196,7 @@ CREATE TABLE `ip_table` (
   `ip` varchar(45) NOT NULL,
   `hostname` varchar(45) NOT NULL,
   PRIMARY KEY (`ip`,`hostname`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 INSERT INTO ip_table VALUES ("$#ip-0#$", "$#base-url#$");
 
 LOCK TABLES `tests_table` WRITE;
@@ -214,7 +214,7 @@ INSERT INTO `tests_table` VALUES (2,'opensearch-dashboards','curl -I -s $#base-u
 (14,'iot-fiware-api','curl -I -s $#base-url#$/iot-directory/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 302 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s $#base-url#$/iot-directory/'),
 (15,'iot-fiware-harvester','echo Not meant to be tested','echo Not meant to be tested'),
 (19,'kafka','if nc -z localhost 9000; then echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\'; else echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\'; fi; date "+%F at %H:%M:%S"','nc -v -z localhost 9000'),
-(20,'keycloak','curl -I -s $#base-url#$/auth/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 302 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s $#base-url#$/auth/'),
+(20,'keycloak','curl -I -s $#base-url#$/auth/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 200 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s $#base-url#$/auth/'),
 (21,'ldap-server','if nc -z localhost 389; then echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\'; else echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\'; fi; date "+%F at %H:%M:%S"','nc -v -z localhost 389'),
 (23,'myldap','curl -I -s $#base-url#$/phpldapadmin/cmd.php | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 302 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s $#base-url#$/phpldapadmin/cmd.php'),
 (24,'nifi','curl -I -s --insecure https://localhost:9090 | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 200 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\'); date "+%F at %H:%M:%S"','curl -I -s --insecure https://localhost:9090'),
@@ -226,13 +226,22 @@ INSERT INTO `tests_table` VALUES (2,'opensearch-dashboards','curl -I -s $#base-u
 (34,'servicemap','curl -I -s $#base-url#$/ServiceMap/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 200 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s $#base-url#$/ServiceMap/'),
 (35,'solr-kb','curl -I -s http://localhost:8983/solr/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 200 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s http://localhost:8983/solr/'),
 (36,'synoptics','curl -I -s $#base-url#$/synoptics/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 200 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s $#base-url#$/synoptics/'),
-(37,'varnish','curl -I -s http://localhost:6081/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 301 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s http://localhost:6081/'),
+(37,'varnish','curl -I -s http://localhost:6081/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 403 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s http://localhost:6081/'),
 (38,'virtuoso-kb','curl -I -s http://localhost:8890/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 200 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s http://localhost:8890/'),
-(39,'wsserver','curl -I -s $#base-url#$/wsserver/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 400 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s $#base-url#$/wsserver/'),
+(39,'wsserver','curl -I -s $#base-url#$/wsserver/ | awk \'NR==1{print $2}\' | ( read code && [ \"$code\" -eq 400 ] && echo \'Success <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>\' || echo \'Failure <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>\' ); date "+%F at %H:%M:%S"','curl -I -s $#base-url#$/wsserver/');
 UNLOCK TABLES;
 
+CREATE TABLE `telegram_alert_pauses` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `component` varchar(200) NOT NULL,
+  `until` datetime NOT NULL,
+  `issued` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` FUNCTION `GetHighContrastColor`(hexColor CHAR(7)) RETURNS char(7) CHARSET utf8mb4 COLLATE utf8mb4_general_ci
+CREATE DEFINER=`root`@`localhost` FUNCTION `GetHighContrastColor`(hexColor CHAR(7)) RETURNS char(7) CHARSET utf8mb4 
     DETERMINISTIC
 BEGIN
   DECLARE colorR INT;
@@ -255,3 +264,6 @@ BEGIN
   RETURN contrastColor;
 END ;;
 DELIMITER ;
+
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`%` SQL SECURITY DEFINER VIEW `all_logs` AS (select `test_ran`.`datetime` AS `datetime`,`test_ran`.`log` AS `log`,`test_ran`.`perpetrator` AS `perpetrator` from `test_ran`) union (select `rebooting_containers`.`datetime` AS `datetime`,`rebooting_containers`.`log` AS `log`,`rebooting_containers`.`perpetrator` AS `perpetrator` from `rebooting_containers`) union (select `telegram_alert_pauses`.`issued` AS `datetime`,concat('Paused ',`telegram_alert_pauses`.`component`,' until ',`telegram_alert_pauses`.`until`) AS `log`,'admin' AS `log` from `telegram_alert_pauses`) order by `datetime` desc;

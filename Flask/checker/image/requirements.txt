@@ -1,0 +1,7 @@
+waitress
+apscheduler
+flask
+requests
+mysql-connector-python
+reportlab
+jwt
