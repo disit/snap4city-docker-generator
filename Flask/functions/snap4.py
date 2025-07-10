@@ -18,6 +18,7 @@ import os, errno, shutil, copy
 from copy import deepcopy
 import re
 import gzip
+import traceback
 
 import yaml
 
@@ -1794,6 +1795,8 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
                         mount['name'] = claimName
         except KeyError as E:
             print('no volume in this deployment!')
+        except IndexError as E:
+            print(traceback.format_exc())
         newlist.append(templist)
 
     for i, j in enumerate(origs):
