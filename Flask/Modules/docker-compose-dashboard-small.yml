@@ -30,7 +30,7 @@ services:
   dashboard-builder:
     container_name: dashboard-builder
     restart: unless-stopped
-    image: image: disitlab/dashboard-builder:v9.3.15
+    image: disitlab/dashboard-builder:v9.4.0
     #build: ./build/dashboard-builder
     ports:
       - "70:80"
@@ -120,7 +120,7 @@ services:
   dashboard-cron:
     container_name: dashboard-cron
     restart: unless-stopped
-    image: image: disitlab/dashboard-builder:v9.3.15
+    image: disitlab/dashboard-builder:v9.4.0
     volumes:
        - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
        - ./dashboard-cron-conf/crontab:/crontab
@@ -253,6 +253,7 @@ services:
         - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092
         - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
         - JMX_PORT=9000
+        - KAFKA_JMX_OPTS= -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.rmi.port=9000 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
         
     volumes:
       - kafka:/bitnami/kafka
@@ -260,7 +261,9 @@ services:
       - zookeeper
   od-insert-api:
     container_name: od-insert-api
-    image: disitlab/od-matrix-api:v1
+    environment:
+      BASE_URL: '$#base-url#$'
+    image: disitlab/od-matrix-api:v2.2
     ports:
       - 3100:3100
     command: python -u ./od-insert.py
@@ -274,7 +277,9 @@ services:
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   od-get-api:
     container_name: od-get-api
-    image: disitlab/od-matrix-api:v1
+    environment:
+      BASE_URL: '$#base-url#$'
+    image: disitlab/od-matrix-api:v2.2
     ports:
       - 3200:3200
     command: python -u ./od-get.py
@@ -288,7 +293,9 @@ services:
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   od-build-api:
     container_name: od-build-api
-    image: disitlab/od-matrix-api:v1
+    environment:
+      BASE_URL: '$#base-url#$'
+    image: disitlab/od-matrix-api:v2.2
     ports:
       - 3000:3000
     command: python -u ./od-build.py
@@ -311,7 +318,7 @@ services:
     volumes:
       - od-postgis-data:/var/lib/postgresql/data
       - ./od-postgis/od-matrix-db-schema.sql:/docker-entrypoint-initdb.d/20-od-matrix-db-schema.sql
-      - ./od-postgis/italy_rx.sql:/docker-entrypoint-initdb.d/30-italy_rx.sqlMore actions
+      - ./od-postgis/italy_rx.sql:/docker-entrypoint-initdb.d/30-italy_rx.sql
       - ./od-postgis/gadm36.sql:/docker-entrypoint-initdb.d/40-gadm36.sql
       - ./od-postgis:/od-postgis
     restart: unless-stopped

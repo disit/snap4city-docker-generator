@@ -6,7 +6,7 @@ services:
       tags:
         #- fabriziomereu/snap4city_installation_generator:rel.2.1.1
         - fabriziomereu/snap4city_installation_generator:unstable
-    image: fabriziomereu/snap4city_installation_generator:dev.2.3.4
+    image: fabriziomereu/snap4city_installation_generator:dev.2.4.5
     links:
       - db
     ports:
@@ -36,8 +36,6 @@ services:
     cap_add:
       - SYS_NICE  # CAP_SYS_NICE
     environment:
-      - MYSQL_USER
-      - MYSQL_PASSWORD
       - MYSQL_ROOT_PASSWORD
       - MYSQL_ROOT_HOST
     volumes:

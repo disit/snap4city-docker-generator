@@ -1,5 +1,5 @@
 {% extends "main.html" %}
-{% block title %}SnapSentinel{% endblock %}
+{% block title %}SnapSentinel (Kubernetes){% endblock %}
 {% block head %}
 {{ super() }}
 {% endblock %}
@@ -16,7 +16,7 @@
 	];
 	var less_columns = true;
 	
-	var dict_of_hidden_columns = {columnDefs:[{target: 0, visible: false},{target: 2, visible: false},{target: 4, visible: false},{target: 5, visible: false},{target: 6, visible: false},{target: 7, visible: false},{target: 8, visible: false},{target: 10, visible: false},{target: 11, visible: false},{target: 13, visible: false},{target: 14, visible: false},{target: 15, visible: false},{target: 16, visible: false},{target: 17, visible: false},{target: 19, visible: false}]};
+	var dict_of_hidden_columns = {columnDefs:[{target: 0, visible: false},{target: 1, visible: false},{target: 2, visible: false},{target: 3, visible: false},{target: 4, visible: false},{target: 5, visible: false},{target: 7, visible: false},{target: 8, visible: false},{target: 10, visible: false},{target: 13, visible: false},{target: 14, visible: false}]};
 	var container_rows = {};
 	var iframes = {};
 	var closed_categories = new Set();
@@ -141,6 +141,7 @@
 					for (a in response) {
 						try {
 							if (a != "nothing") {
+								test_results_divs[a]=response[a];
 								document.getElementById(a+"-result").innerHTML=response[a];
 								}
 						}
@@ -172,6 +173,7 @@
 		getcontainersdb();
 		testsResults();
 		showTestResults();
+		getcrons();
 		$("table[id^='table-']").DataTable();
 		document.getElementById("last-update").innerHTML = "Last update: " + new Date().toLocaleString();
 		cg = colorGenerator();
@@ -269,6 +271,30 @@
 			add_alert(exception_var);
 		}
 	};
+
+	function getcrons(){
+		let a = []; 
+		$.ajax({
+			url: "./cronjobs", 
+			type: "GET", 
+			success: function(data, textStatus, jqXHR) {
+				data.forEach(el => {
+					try {
+						let cronjobmsg = "";
+						if (el[2]) {
+							cronjobmsg = "At " + el[0] + " cronjob named " + el[3] + " resulted in: " + el[1] + "with some errors: " + el[2];
+						}
+						else {
+							cronjobmsg = "At " + el[0] + " cronjob named " + el[3] + " resulted in: " + el[1] + "with no errors.";
+						}
+					}
+					catch (exception_var) {
+						console.log("Issue while printing cronjob log of " + el[3] + " in: " + el[5]+": " + el[1] + " - " + el[2])
+					}
+					});
+				}
+		});
+	}
 	
 	function sendRequest(url_to_be_used, store_location) {
 		try {
@@ -506,7 +532,7 @@
 			});
 		}
 		catch (exception_var) {
-			console.error(exception_var+", please kill me");
+			console.error(exception_var);
 		}
 	};
 	
@@ -535,6 +561,7 @@
 		var iframe = document.createElement('iframe');
 		iframe.setAttribute("style", "width: 100%; height: 450px;");
 		var description = document.createElement('div');
+		description.style="font-size: 1.5rem; margin-bottom: 0.5rem; text-align: center; display: inline-block; background-color: white; padding: 0 0.5rem; border-radius: 4px; position: relative; z-index: 1;";
 		description.innerHTML = description_data;
 		destination_element.appendChild(description);
 		destination_element.appendChild(iframe);
@@ -617,16 +644,16 @@
 			var index_of_below_array = 0;
 			elements.forEach(cellData => {
 				const td = document.createElement("td");
-				if (index_of_below_array === 3) {
-					var content_of_id_cell = '<a target="_blank" href="./advanced-container/'+elements[12]+'">'+cellData+'</a>';
+				if (index_of_below_array === 6) {
+					var content_of_id_cell = '<a target="_blank" href="./container/'+elements[6]+'">'+cellData+'</a>';
 					td.innerHTML = content_of_id_cell;
 				}
-				else if (index_of_below_array === 20) {
-					var content_of_id_cell;
-					if ((cellData === "running" != (elements[6] === "certbot/certbot")) && !elements[21].includes('unhealthy'))
+				else if (index_of_below_array === 12) {
+					var content_of_id_cell; 
+					if ((cellData === "running" != (elements[6] === "certbot/certbot")) && !elements[12].includes('unhealthy'))
 						content_of_id_cell = cellData + '<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>';
 						else content_of_id_cell = cellData + '<svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="red"/></svg>';
-					td.innerHTML = '<div id="'+elements[12]+'-reboot-result">'+content_of_id_cell+'</div>';
+					td.innerHTML = '<div id="'+elements[6]+'-reboot-result">'+content_of_id_cell+'</div>';
 				}
 				else {
 					td.textContent = cellData;
@@ -636,14 +663,14 @@
 			});
 			
 			var rebootbutton = document.createElement("td");
-			rebootbutton.innerHTML=`<button type="button" class="btn btn-primary open-modal" data-toggle="modal" data-target="#passwordModal" data-containerid="`+elements[12]+`" data-containercategory="`+name_of_table_value+`">Reboot</button>`;
+			rebootbutton.innerHTML=`<button type="button" class="btn btn-primary open-modal" data-toggle="modal" data-target="#passwordModal" data-containerid="`+elements[6]+`" data-containercategory="`+name_of_table_value+`">Reboot</button>`;
 			row.appendChild(rebootbutton);
 			var testsbutton = document.createElement("td");
-			testsbutton.innerHTML=`<input type="button" name="`+elements[12]+`" value="Check the port..." class="btn btn-info" onclick="runTests('`+elements[12]+`', this, '`+name_of_table_value+`')"/>`;
+			testsbutton.innerHTML=`<input type="button" name="`+elements[6]+`" value="Check the port..." class="btn btn-info" onclick="runTests('`+elements[6]+`', this, '`+name_of_table_value+`')"/>`;
 			row.appendChild(testsbutton);
 			tbody.appendChild(row);
 			var testresults = document.createElement("td");
-			testresults.setAttribute('id',elements[12]+'-result');
+			testresults.setAttribute('id',elements[6]+'-result');
 
 			var some_value;
 			for (const key in lookupTable) {
@@ -664,7 +691,6 @@
 
 			row.appendChild(testresults);
 			row.appendChild(in_case_of_problems);
-			row.appendChild(location_of_component);
 				
 			var do_not_update_this_td = document.createElement("td");
 			var do_not_update_this = document.createElement("input");
@@ -676,7 +702,7 @@
 			do_not_update_this_td.innerHTML+='<button type="button" class="btn btn-primary open-modal-m" data-toggle="modal" data-containercategory="'+name_of_table_value+'" data-target="#muteComponent" data-containerid="'+elements[12]+'" id="mutebutton-'+elements[12]+'">Mute</button>';
 			row.appendChild(do_not_update_this_td);
 			tbody.appendChild(row);
-			testresults.innerHTML=test_results_divs[row.childNodes[12].innerHTML];
+			testresults.innerHTML=test_results_divs[row.childNodes[7].innerHTML];
 			if (testresults.innerHTML == "undefined") {
 				testresults.innerHTML = "No tests found";
 			}
@@ -696,7 +722,7 @@
 	};
 	
 	function makeTable(containerdata) {
-		const headerData = ["I/O" ,"CPU%", "Command", "ContainerID (click for container-logs)", "Created at", "ID", "Image", "Labels", "Local Volumes", "Mem%", "Mem Used / Mem Max", "Mounts", "Container Name", "Names", "Network I/O", "Networks", "PIDs", "Ports", "Running for / Exited since", "Size", "State", "Status", "Restart", "Is alive port test", "Last test results", "Contacts", "Location", "Operations"];
+		const headerData = ["Container ID", "Created at", "ID", "Image", "Labels", "Mounts", "Name", "Names", "Namespace", "Node", "Ports", "Running For", "State", "Status", "Volumes", "Restart", "Is alive port test", "Last test results", "Contacts", "Operations"];
 		
 		const tableContainer = document.getElementById("table-container");
 		tableContainer.setAttribute("style", "display: flex; flex-wrap: wrap;")
@@ -739,7 +765,7 @@
 			var i = val_2;
 			const box = document.createElement("div");
 			box.setAttribute("class", "p-5 text-center");
-			box.setAttribute("style", "border-radius: 3rem; background-color: "+cg.next().value);
+			box.setAttribute("style", "border-radius: 1.2rem; background-color: "+cg.next().value);
 			box.setAttribute("id",i);
 			if (!closed_categories.has(i)) box.style.display = "none"; else box.style.display = "block";
 				const centerer = document.createElement("div");
@@ -751,6 +777,9 @@
 					name_of_table.setAttribute("class", "btn btn-light btn-lg button-cat");
 				name_of_table.setAttribute("onclick", "collapse_category('"+i+"', this)");
 				name_of_table.setAttribute("id", i+"-status");
+				name_of_table.setAttribute("title", "");
+				name_of_table.setAttribute("data-html","true")
+				name_of_table.setAttribute("data-toggle","tooltip");
 				name_of_table.innerHTML = i;
 				var menupage = document.getElementById("category_menu");
 				menupage.appendChild(name_of_table);
@@ -767,6 +796,7 @@
 				if (add_complex_test_table_depending_on_category(i)) {
 					const complex_tests = document.createElement("div");
 					complex_tests.setAttribute("style", "background-color: white; text-wrap: pretty; line-break: anywhere;");
+					complex_tests.setAttribute()
 					complex_tests.innerHTML=add_complex_test_table_depending_on_category(i);
 					box.appendChild(complex_tests);
 				}
@@ -781,6 +811,17 @@
 			else console.log("Skipped unmanaged containers");
 			
 			});
+		const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+
+		// Loop through and dispose any existing instance
+		tooltipTriggerList.forEach(el => {
+		const existingInstance = bootstrap.Tooltip.getInstance(el);
+		if (existingInstance) {
+			existingInstance.dispose();
+		}
+		// Create a new instance
+		new bootstrap.Tooltip(el);
+		});
 		data_tables=$("table[id^='table-']").DataTable(dict_of_hidden_columns);
 		get_summary_new();
 		get_complex_tests();
@@ -860,7 +901,7 @@
 			if (password) {
 				try {
 					$.ajax({
-						url: './reboot_container_advanced/'+id,
+						url: './reboot_container',
 						data: {id: id, psw: password},
 						type: 'POST',
 						success: function(response) {
@@ -894,15 +935,15 @@
 			if (index===0) return;
 			var dataTable = $(table).DataTable();
 			var hasFailure = false;
-			var columnData = dataTable.column(24).data().toArray();
+			var columnData = dataTable.column(17).data().toArray();
 			for (var i = 0; i < columnData.length; i++)
 				{
 				if (typeof columnData[i] === 'string' && columnData[i].includes("Failure")) {
+					document.getElementById(table.parentElement.parentElement.parentElement.parentElement.id+"-status").setAttribute("title", document.getElementById(table.parentElement.parentElement.parentElement.parentElement.id+"-status").getAttribute("title") + "Issue with " + dataTable.column(7).data().toArray()[i] + "<br>");
 					hasFailure = true;
 					break;
 				}
 			}
-			var string_being_used=$(table).attr('id').slice(6)+"-status";
 			if (hasFailure) {
 				document.getElementById(table.parentElement.parentElement.parentElement.parentElement.id+"-status").innerHTML+=' <svg width="12" height="12"><rect width="12" height="12" fill="red" /></svg>';
 			} else {
@@ -919,7 +960,7 @@
 			if (index===0) return;
 			var dataTable = $(table).DataTable();
 			var isNotRunning = true;
-			var columnData = dataTable.column(20).data().toArray();
+			var columnData = dataTable.column(12).data().toArray();
 			for (var i = 0; i < columnData.length; i++)
 				{
 				if (typeof columnData[i] === 'string' && !columnData[i].includes("running")) {
@@ -927,7 +968,6 @@
 					break;
 				}
 			}
-			var string_being_used=$(table).attr('id').slice(6)+"-status";
 			if (isNotRunning) {
 				document.getElementById(table.parentElement.parentElement.parentElement.parentElement.id+"-status").innerHTML+=' <svg width="12" height="12" style="vertical-align: middle;"><circle cx="6" cy="6" r="6" fill="green"/></svg>';
 			} 
@@ -970,7 +1010,7 @@
 		less_columns = !less_columns;
 		if (less_columns) {
 			button.innerHTML = "Show additional columns";
-			dict_of_hidden_columns={columnDefs:[{target: 0, visible: false},{target: 2, visible: false},{target: 4, visible: false},{target: 5, visible: false},{target: 6, visible: false},{target: 7, visible: false},{target: 8, visible: false},{target: 10, visible: false},{target: 11, visible: false},{target: 13, visible: false},{target: 14, visible: false},{target: 15, visible: false},{target: 16, visible: false},{target: 17, visible: false},{target: 19, visible: false}]};
+			dict_of_hidden_columns={columnDefs:[{target: 0, visible: false},{target: 1, visible: false},{target: 2, visible: false},{target: 3, visible: false},{target: 4, visible: false},{target: 5, visible: false},{target: 7, visible: false},{target: 8, visible: false},{target: 10, visible: false},{target: 13, visible: false},{target: 14, visible: false}]};
 		}
 		else {
 			dict_of_hidden_columns={retrieve: true};
@@ -1018,7 +1058,7 @@
 		</ul>
 		<ul class="navbar-nav mr-auto">
 			<li class="nav-item active">
-				<a class="navbar-brand">Snap4Sentinel: Platform Process Monitoring and Control</a>
+				<a class="navbar-brand">Snap4Sentinel (Kubernetes): Platform Process Monitoring and Control</a>
 			</li>
 		</ul>
 		<ul class="dropdown" style="margin-top: auto; margin-bottom: auto;">
@@ -1030,7 +1070,7 @@
 					</form>
 				</li>
 				<li class="nav-item active">
-					<form action="generate_clustered_pdf" method="GET">
+					<form action="generate_pdf" method="GET">
 						<input type="submit" class="btn btn-info" value="Generate full logs" />
 					</form>
 				</li>

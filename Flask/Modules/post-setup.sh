@@ -140,7 +140,7 @@ echo add geoserver workspace traffic - if this command fails, it might be becaus
 curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: text/xml" -d "<workspace><name>traffic</name></workspace>"  $#base-url#$/geoserver/rest/workspaces
 
 echo add geoserver road traffic style - if this command fails, it might be because this machine is not able to resolve its own name\; consider using localhost in such a case
-curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: application/vnd.ogc.sld+xml" -d @servicemap-trafficflowmanager/road_traffic_style.sld  http://localhost/geoserver/rest/styles?name=road_traffic_style
+curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: application/vnd.ogc.sld+xml" -d @../servicemap-trafficflowmanager/road_traffic_style.sld  $#base-url#$/geoserver/rest/styles?name=road_traffic_style
 
 echo rebooting services
 docker compose restart opensearch-dashboards wsserver iot-fiware-harvester varnish proxy
