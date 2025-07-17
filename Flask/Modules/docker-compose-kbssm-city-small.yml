@@ -41,7 +41,7 @@ services:
       SPARQL_UPDATE: "true"
       DEFAULT_GRAPH: "http://www.example.com/my-graph"
       DBA_PASSWORD: "$#virtuoso-kb-pwd#$"
-      VIRT_Parameters_NumberOfBuffers: 170000 #8GB
+      VIRT_Parameters_NumberOfBuffers: 170000 #2GB
       VIRT_Parameters_MaxDirtyBuffers: 130000
       VIRT_Parameters_ServerThreads: 100
  
