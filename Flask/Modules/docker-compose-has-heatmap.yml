@@ -367,6 +367,10 @@ services:
     environment:
       SPARQL_UPDATE: "true"
       DEFAULT_GRAPH: "http://www.example.com/my-graph"
+      VIRT_Parameters_NumberOfBuffers: 170000 #8GB
+      VIRT_Parameters_MaxDirtyBuffers: 130000
+      VIRT_Parameters_ServerThreads: 100
+ 
     volumes:
       - ./servicemap-conf:/root/servicemap
       - virtuoso:/data
