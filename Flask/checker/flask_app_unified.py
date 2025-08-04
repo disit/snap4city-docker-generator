@@ -118,21 +118,31 @@ db_conn_info = {
 }
 
 def format_error_to_send(instance_of_problem, containers, because = None, explain_reason=None):
-    using_these = ', '.join('"{0}"'.format(w).strip() for w in containers.split(", "))
+    if not os.getenv("running_as_kubernetes"):
+        using_these = ', '.join('"{0}"'.format(w).strip() for w in containers.split(", "))
+    else:
+        using_these = '|'.join('^{0}'.format(w).strip() for w in containers.split(", "))
     if because:
         becauses=because.split(",")
     with mysql.connector.connect(**db_conn_info) as conn:
         cursor = conn.cursor(buffered=True)
-        query2 = 'SELECT category, component, position FROM checker.component_to_category where component in ({}) order by category;'.format(using_these)
+        if not os.getenv("running_as_kubernetes"):
+            query2 = 'SELECT category, component, position FROM checker.component_to_category where component in ({}) order by category;'.format(using_these)
+        else:
+            query2 = '''SELECT category, component, position FROM checker.component_to_category WHERE component REGEXP '{}' ORDER BY category;'''.format(using_these)
         cursor.execute(query2)
         now_it_is = cursor.fetchall()
     newstr=""
     for a in now_it_is:
-        curstr="In category " + a[0] + ", located in " + a[2] + " the kubernetes container named " + a[1] + " " + instance_of_problem
-        if because:
-            newstr += curstr + explain_reason + becauses.pop(0)+"\n"
+        if not os.getenv("running_as_kubernetes"):
+            curstr="In category " + a[0] + ", located in " + a[2] + " the kubernetes container named " + a[1] + " " + instance_of_problem
         else:
-            newstr += curstr+"\n"
+            curstr="In category " + a[0] + ", in namespace " + a[2] + " the kubernetes container named " + a[1] + " " + instance_of_problem
+        
+        if because:
+            newstr += curstr + explain_reason + becauses.pop(0)+"<br>"
+        else:
+            newstr += curstr+"<br>"
     return newstr
 
 def send_telegram(chat_id, message):
@@ -142,7 +152,7 @@ def send_telegram(chat_id, message):
     return
 
 def send_email(sender_email, sender_password, receiver_emails, subject, message):
-    composite_message = os.getenv("platform-explanation") + "\n" + message
+    composite_message = os.getenv("platform-explanation") + "<br>" + message
     smtp_server = os.getenv("smtp-server")
     smtp_port = int(os.getenv("smtp-port"))
     server = smtplib.SMTP(smtp_server, smtp_port)
@@ -155,6 +165,7 @@ def send_email(sender_email, sender_password, receiver_emails, subject, message)
     msg.attach(MIMEText(str(composite_message), 'html'))
     server.send_message(msg)
     server.quit()
+    print("Email was sent to:",string_of_list_to_list(os.getenv("email-recipients")))
     return
     
 
@@ -318,7 +329,10 @@ def auto_alert_status():
                     conversion["Labels"] = ", ".join([f"{label}: {value}" for label, value in item["metadata"]["labels"].items()])
                 except KeyError:
                     conversion["Labels"] = "No labels"
-                conversion["Mounts"] = ", ".join([f"{a['mountPath']}: {a['name']}" for a in item["spec"]["containers"][0]["volumeMounts"]])
+                try:
+                    conversion["Mounts"] = ", ".join([f"{a['mountPath']}: {a['name']}" for a in item["spec"]["containers"][0]["volumeMounts"]])
+                except KeyError:
+                    conversion["Mounts"] = "No volumes"
                 conversion["Names"] = item["metadata"]["name"]
                 try:
                     conversion["Ports"] = ", ".join([f"{a['containerPort']}" for a in item["spec"]["containers"][0]["ports"]])
@@ -329,24 +343,27 @@ def auto_alert_status():
                 try:
                     dt1 = datetime.strptime(item["status"]["containerStatuses"][0]["state"]["running"]["startedAt"], fmt)
                     dt2 = datetime.now()
-                    conversion["RunningFor"] = f"{(dt2-dt1).days} day(s), {(dt2-dt1).seconds // 3600} hour(s), {((dt2-dt1).seconds % 3600) // 60} minutes(s) and {(dt2-dt1).seconds % 60} second(s)"
+                    conversion["RunningFor"] = f"{(dt2-dt1).days} day(s), {(dt2-dt1).seconds // 3600} hour(s), {((dt2-dt1).seconds % 3600) // 60} minute(s) and {(dt2-dt1).seconds % 60} second(s)"
                 except Exception as E:
                     conversion["RunningFor"] = "Not running"
-                conversion["State"] = list(item["status"]["containerStatuses"][0]["state"].keys())[0]
+                conversion["State"] = list(item["status"]["containerStatuses"][0]["state"].keys())[0] + " - restarts: " + str(item["status"]["containerStatuses"][0]["restartCount"])
                 conversion["Status"] = item["status"]["conditions"][0]["type"] # actually a list, has the last few different statuses
                 conversion["Container"] = item["status"]["containerStatuses"][0]["containerID"][item["status"]["containerStatuses"][0]["containerID"].find("://")+3:]
                 conversion["Name"] = item["metadata"]["name"]
 
                 # new things
                 conversion["Node"] = item["spec"]["nodeName"]
-                temp_vols=copy.deepcopy(item["spec"]["volumes"])
-                temp_str = ""
-                for vol_num in range(len(item["spec"]["volumes"])):
-                    temp_str += f"{item['spec']['volumes'][vol_num]['name']}: "
-                    del temp_vols[vol_num]["name"]
-                    temp_str += str(list(temp_vols[vol_num].keys())[0]) + ", "
-                    
-                conversion["Volumes"] = temp_str
+                try:
+                    temp_vols=copy.deepcopy(item["spec"]["volumes"])
+                    temp_str = ""
+                    for vol_num in range(len(item["spec"]["volumes"])):
+                        temp_str += f"{item['spec']['volumes'][vol_num]['name']}: "
+                        del temp_vols[vol_num]["name"]
+                        temp_str += str(list(temp_vols[vol_num].keys())[0]) + ", "
+                        
+                    conversion["Volumes"] = temp_str
+                except KeyError:
+                    conversion["Volumes"] = "No volumes"
                 conversion["Namespace"] = item["metadata"]["namespace"]
                 
                 
@@ -362,17 +379,35 @@ def auto_alert_status():
     except Exception:
         send_alerts("Can't reach db, auto alert 1:"+ traceback.format_exc())
         return
-    is_alive_with_ports = auto_run_tests()
+    is_alive_with_ports = auto_run_tests() # check namespace here if k8s
     components = [a[0].replace("*","") for a in results]
-    components_original = [a[0] for a in results]
-    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in components) and (c["State"] != "running")]
+    #components_original = [[a[0],a[2]] for a in results]
+    components_original = [(a[0][:max(0,a[0].find("*")-1)],a[3]) for a in results]
+    containers_which_should_be_running_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in components) and not ("running" in c["State"])]
+    print(containers_which_should_be_running_and_are_not)
+    
     containers_which_should_be_exited_and_are_not = [c for c in containers_merged if any(c["Names"].startswith(value) for value in ["certbot"]) and c["State"] != "exited"]
-    containers_which_are_running_but_are_not_healthy = [c for c in containers_merged if any(c["Names"].startswith(value) for value in components) and "unhealthy" in c["Status"]]
+    print(containers_which_should_be_exited_and_are_not)
+    if not os.getenv("running_as_kubernetes"): #todo troubleshoot here
+        containers_which_are_running_but_are_not_healthy = [c for c in containers_merged if any(c["Names"].startswith(value) for value in components) and "unhealthy" in c["Status"]]
+    else:
+        containers_which_are_running_but_are_not_healthy=[]
+        for c_m in containers_merged:
+            if any(c_m["Names"].startswith(value) for value in components):
+                if "restarts" in c_m["State"]:
+                    try:
+                        if int(c_m["State"].strip().split("restarts:")[-1]) > 4:
+                            since = sum([int(b[0])*b[1] for b in zip(re.findall("(\d+)", c_m["RunningFor"]),[86400,3600,60,1])])
+                            if since>600 or since==0:
+                                containers_which_are_running_but_are_not_healthy.append(c_m)
+                    except Exception:
+                        containers_which_are_running_but_are_not_healthy.append(c_m)
+    print(containers_which_are_running_but_are_not_healthy)
     problematic_containers = containers_which_should_be_exited_and_are_not + containers_which_should_be_running_and_are_not + containers_which_are_running_but_are_not_healthy
     #containers_which_are_fine = list(set([n["Names"] for n in containers_merged]) - set([n["Names"] for n in problematic_containers]))
     names_of_problematic_containers = [n["Names"] for n in problematic_containers]
-    containers_which_are_not_expected = list(set(components_original)-set([a["Names"] for a in containers_merged]))
-    containers_which_are_not_expected = [a for a in containers_which_are_not_expected if not a.endswith("*")]
+    containers_which_are_not_expected = list(set(tuple(item) for item in components_original)-set((('-'.join(b["Names"].split('-')[:-2]),b["Namespace"]) for b in containers_merged)))
+    containers_which_are_not_expected = [a for a in containers_which_are_not_expected if not a[0].endswith("*")]
     if not os.getenv("running_as_kubernetes"):
         top = get_top()
         load_averages = re.findall(r"(\d+\.\d+)", top["system_info"]["load_average"])[-3:]
@@ -384,7 +419,7 @@ def auto_alert_status():
         if float(top["memory_usage"]["used"])/float(top["memory_usage"]["total"]) > int(os.getenv("memory-threshold")):
             memory_issues = "Memory usage above " + str(int(os.getenv("memory-threshold"))) + " with " + str(top["memory_usage"]["used"]) + " " + top["memory_measuring_unit"] + " out of " + top["memory_usage"]["total"] + " " + top["memory_measuring_unit"] + " currently in use\n"
     else:
-        load_issues=""
+        load_issues = ""
         memory_issues = ""
     cron_results = []
     try:
@@ -407,7 +442,7 @@ SELECT datetime,result,errors,name,command,categories.category FROM RankedEntrie
             if len(is_alive_with_ports) > 0:
                 issues[1]=is_alive_with_ports
             if len(containers_which_are_not_expected) > 0:
-                issues[2]=containers_which_are_not_expected
+                issues[2]=[a[0] for a in containers_which_are_not_expected]
             if len(load_issues)>0:
                 issues[3]=load_issues
             if len(memory_issues)>0:
@@ -625,21 +660,24 @@ def update_container_state_db():
                 try:
                     dt1 = datetime.strptime(item["status"]["containerStatuses"][0]["state"]["running"]["startedAt"], fmt)
                     dt2 = datetime.now()
-                    conversion["RunningFor"] = f"{(dt2-dt1).days} day(s), {(dt2-dt1).seconds // 3600} hour(s), {((dt2-dt1).seconds % 3600) // 60} minutes(s) and {(dt2-dt1).seconds % 60} second(s)"
+                    conversion["RunningFor"] = f"{(dt2-dt1).days} day(s), {(dt2-dt1).seconds // 3600} hour(s), {((dt2-dt1).seconds % 3600) // 60} minute(s) and {(dt2-dt1).seconds % 60} second(s)"
                 except Exception as E:
                     conversion["RunningFor"] = "Not running"
-                conversion["State"] = list(item["status"]["containerStatuses"][0]["state"].keys())[0]
+                conversion["State"] = list(item["status"]["containerStatuses"][0]["state"].keys())[0] + " - restarts: " + str(item["status"]["containerStatuses"][0]["restartCount"])
                 conversion["Status"] = item["status"]["conditions"][0]["type"] # actually a list, has the last few different statuses
                 conversion["Container"] = item["status"]["containerStatuses"][0]["containerID"][item["status"]["containerStatuses"][0]["containerID"].find("://")+3:]
                 conversion["Node"] = item["spec"]["nodeName"]
-                temp_vols=copy.deepcopy(item["spec"]["volumes"])
-                temp_str = ""
-                for vol_num in range(len(item["spec"]["volumes"])):
-                    temp_str += f"{item['spec']['volumes'][vol_num]['name']}: "
-                    del temp_vols[vol_num]["name"]
-                    temp_str += str(list(temp_vols[vol_num].keys())[0]) + ", "
-                    
-                conversion["Volumes"] = temp_str
+                try:
+                    temp_vols=copy.deepcopy(item["spec"]["volumes"])
+                    temp_str = ""
+                    for vol_num in range(len(item["spec"]["volumes"])):
+                        temp_str += f"{item['spec']['volumes'][vol_num]['name']}: "
+                        del temp_vols[vol_num]["name"]
+                        temp_str += str(list(temp_vols[vol_num].keys())[0]) + ", "
+                    conversion["Volumes"] = temp_str
+                except KeyError:
+                    conversion["Volumes"] = "No volumes"
+                
                 conversion["Namespace"] = item["metadata"]["namespace"]
                 
                 conversions.append(conversion)
@@ -691,23 +729,25 @@ def send_advanced_alerts(message):
             container_source="kubernetes"
         text_for_email = ""
         if len(message[0])>0:
-            text_for_email = format_error_to_send("is not in the correct status ",", ".join([a["Name"] for a in message[0]]),", ".join([a["Status"] for a in message[0]]),"as its status currently is: ")+"\n"
+            text_for_email = format_error_to_send("is not in the correct status ",containers=", ".join(['-'.join(a["Name"].split('-')[:-2]) for a in message[0]]),because=", ".join([a["State"] for a in message[0]]),explain_reason="as its status currently is: ")+"<br><br>"
         if len(message[1])>0:
-            text_for_email+= format_error_to_send("is not answering correctly to its 'is alive' test ",", ".join([a["container"] for a in message[1]]),", ".join([a["command"] for a in message[1]]),"given the failure of: ")+"\n"
+            text_for_email+= format_error_to_send("is not answering correctly to its 'is alive' test ",", ".join([a["container"] for a in message[1]]),", ".join([a["command"] for a in message[1]]),"given the failure of: ")+"<br><br>"
         if len(message[2])>0:
-            text_for_email+= format_error_to_send(f"wasn't found running in {container_source} ",", ".join(message[2]))+"\n"
+            text_for_email+= format_error_to_send(f"wasn't found running in {container_source} ",", ".join(message[2]))+"<br><br>"
         if len(message[3])>0:
-            text_for_email+= message[3]
+            text_for_email+= message[3] + '<br><br>'
         if len(message[4])>0:
-            text_for_email+= message[4]
+            text_for_email+= message[4] + '<br><br>'
         if len(message[5])>0:
             prepare_text = "<br>These cronjobs failed:"
             for failed_cron in message[5]:
                 prepare_text += f"<br>Cronjob named {failed_cron[3]} assigned to category {failed_cron[5]} gave {'no result and' if len(failed_cron[1])<1 else 'result of: ' + failed_cron[1] + ' but'} error: {failed_cron[2]} at {failed_cron[0].strftime('%Y-%m-%d %H:%M:%S')}"
-            text_for_email += prepare_text
+            text_for_email += prepare_text + "<br><br>"
         try:
             if len(text_for_email) > 5:
                 send_email(os.getenv("sender-email"), os.getenv("sender-email-password"), string_of_list_to_list(os.getenv("email-recipients")), os.getenv("platform-url")+" is in trouble!", text_for_email)
+            else:
+                print("No mail was sent because no problem was detected")
         except:
             print("[ERROR] while sending with reason:\n",traceback.format_exc(),"\nMessage would have been: ", text_for_email)
         text_for_telegram = ""
@@ -731,10 +771,10 @@ def send_advanced_alerts(message):
     except Exception:
         print("Error sending alerts:",traceback.format_exc())
         
-    
+update_container_state_db() #on start, populate immediately
 scheduler = BackgroundScheduler()
 scheduler.add_job(auto_alert_status, trigger='interval', minutes=5)
-scheduler.add_job(update_container_state_db, trigger='interval', minutes=5)
+scheduler.add_job(update_container_state_db, trigger='interval', minutes=int(os.getenv("database_update_frequency")))
 scheduler.add_job(isalive, 'cron', hour=8, minute=0)
 scheduler.add_job(isalive, 'cron', hour=20, minute=0)
 scheduler.add_job(runcronjobs, trigger='interval', minutes=5)
@@ -826,8 +866,8 @@ def create_app():
                         return render_template("error_showing.html", r = "You do not have the privileges to access this webpage."), 401
                     cursor = conn.cursor(buffered=True)
                     # to run malicious code, malicious code must be present in the db or the machine in the first place
-                    query = '''INSERT INTO `checker`.`component_to_category` (`component`, `category`, `references`) VALUES (%s, %s, %s);'''
-                    cursor.execute(query, (request.form.to_dict()['id'],request.form.to_dict()['category'],request.form.to_dict()['contacts'],))
+                    query = '''INSERT INTO `checker`.`component_to_category` (`component`, `category`, `references`, `position`) VALUES (%s, %s, %s, %s);'''
+                    cursor.execute(query, (request.form.to_dict()['id'],request.form.to_dict()['category'],request.form.to_dict()['contacts'],request.form.to_dict()['namespace']))
                     conn.commit()
                     return "ok", 201
             except Exception:
@@ -845,11 +885,11 @@ def create_app():
                     cursor = conn.cursor(buffered=True)
                     # to run malicious code, malicious code must be present in the db or the machine in the first place
                     if not os.getenv("running_as_kubernetes"):
-                        query = '''UPDATE `checker`.`component_to_category` SET `references` = %s, `category` = %s where (`component` = %s)'''
+                        query = '''UPDATE `checker`.`component_to_category` SET `references` = %s, `category` = %s, `position` = %s where (`component` = %s)'''
                         cursor.execute(query, (request.form.to_dict()['contacts'],request.form.to_dict()['category'],request.form.to_dict()['position'],request.form.to_dict()['id'],))
                     else:
-                        query = '''UPDATE `checker`.`component_to_category` SET `references` = %s, `category` = %s, `position` = %s where (`component` = %s)'''
-                        cursor.execute(query, (request.form.to_dict()['contacts'],request.form.to_dict()['category'],request.form.to_dict()['id'],)) 
+                        query = '''UPDATE `checker`.`component_to_category` SET `references` = %s, `category` = %s, `position` = `%s` where (`component` = %s)'''
+                        cursor.execute(query, (request.form.to_dict()['contacts'],request.form.to_dict()['category'],request.form.to_dict()['namespace'],request.form.to_dict()['id'],)) 
                     conn.commit()
                     if cursor.rowcount > 0:
                         return "ok", 201
@@ -1231,6 +1271,96 @@ def create_app():
     
     ## end add complex test
     
+    ## start add category
+    
+    @app.route("/organize_categories", methods=["GET"])
+    def organize_categories():
+        if 'username' in session:
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    if session['username']!="admin":
+                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage."), 401
+                    if os.getenv('UNSAFE_MODE') != "true":
+                        return render_template("error_showing.html", r = "Unsafe mode is not set, hence you cannot perform this action (edit conf.json or env variables)"), 401
+                    cursor = conn.cursor(buffered=True)
+                    query2 = '''SELECT * from categories;'''
+                    cursor.execute(query2)
+                    conn.commit()
+                    results_2 = cursor.fetchall()
+                    return render_template("organize_categories.html",categories=results_2,timeout=int(os.getenv("requests-timeout")))
+                    
+            except Exception:
+                print("Something went wrong because of",traceback.format_exc())
+                return render_template("error_showing.html", r = traceback.format_exc()), 500
+        return redirect(url_for('login'))
+        
+    @app.route("/add_category", methods=["POST"])
+    def add_category():
+        if 'username' in session:
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    if session['username']!="admin":
+                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage."), 401
+                    if os.getenv('UNSAFE_MODE') != "true":
+                        return render_template("error_showing.html", r = "Unsafe mode is not set, hence you cannot perform this action (edit conf.json or env variables)"), 401
+                    cursor = conn.cursor(buffered=True)
+                    query = '''INSERT INTO `checker`.`categories` (`category`) VALUES (%s);'''
+                    cursor.execute(query, (request.form.to_dict()['category'],))
+                    conn.commit()
+                    return "ok", 201
+            except Exception:
+                print("Something went wrong during the addition of a new category because of",traceback.format_exc())
+                return render_template("error_showing.html", r = traceback.format_exc()), 500
+        return redirect(url_for('login'))
+    
+    @app.route("/edit_category", methods=["POST"])
+    def edit_category(): 
+        if 'username' in session:
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    if session['username']!="admin":
+                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage."), 401
+                    if os.getenv('UNSAFE_MODE') != "true":
+                        return render_template("error_showing.html", r = "Unsafe mode is not set, hence you cannot perform this action (edit conf.json or env variables)"), 401
+                    cursor = conn.cursor(buffered=True)
+                    query = '''UPDATE `checker`.`categories` SET `category` = %s (`idcategories` = %s);'''
+                    cursor.execute(query, (request.form.to_dict()['category'],request.form.to_dict()['id'],)) 
+                    conn.commit()
+                    if cursor.rowcount > 0:
+                        return "ok", 201
+                    else:
+                        return "Somehow request did not result in database changes", 400
+            except Exception:
+                print("Something went wrong during the editing of a new category because of",traceback.format_exc())
+                return render_template("error_showing.html", r = traceback.format_exc()), 500
+        return redirect(url_for('login'))
+        
+    @app.route("/delete_category", methods=["POST"])
+    def delete_category():
+        if 'username' in session:
+            try:
+                with mysql.connector.connect(**db_conn_info) as conn:
+                    if session['username']!="admin":
+                        return render_template("error_showing.html", r = "You do not have the privileges to access this webpage."), 401
+                    if os.getenv('UNSAFE_MODE') != "true":
+                        return render_template("error_showing.html", r = "Unsafe mode is not set, hence you cannot perform this action (edit conf.json or env variables)"), 401
+                    cursor = conn.cursor(buffered=True)
+                    if not check_password_hash(users[username], request.form.to_dict()['psw']):
+                        return "An incorrect password was provided", 400
+                    query = '''DELETE FROM `checker`.`categories` WHERE (`idcategories` = %s);'''
+                    cursor.execute(query, (request.form.to_dict()['id'],))
+                    conn.commit()
+                    return "ok", 201
+            except Exception:
+                print("Something went wrong during the editing of a new category because of",traceback.format_exc())
+                return render_template("error_showing.html", r = traceback.format_exc()), 500
+        
+        return redirect(url_for('login'))
+    
+    ## end add cronjob
+    
+   
+    
     
     
     @app.route("/login", methods=['GET', 'POST'])
@@ -1477,8 +1607,8 @@ def create_app():
                 try:
                     result = queued_running(f"kubectl rollout restart deployment {'-'.join(request.form.to_dict()['id'].split('-')[:-2])} -n $(kubectl get deployments --all-namespaces | awk '$2==\"{'-'.join(request.form.to_dict()['id'].split('-')[:-2])}\" {{print $1}}')")
                     #result = queued_running('kubectl rollout restart deployments/'+"-".join(request.form.to_dict()['id'].split("-")[:-2])).stdout
-                    log_to_db('rebooting_containers', 'kubernetes restart '+request.form.to_dict()['id']+' resulted in: '+result, request)
-                    return result
+                    log_to_db('rebooting_containers', 'kubernetes restart '+request.form.to_dict()['id']+' resulted in: '+result.stdout, request)
+                    return result.stdout
                 except Exception:
                     return f"Issue while rebooting pod: {traceback.format_exc()}", 500
         return redirect(url_for('login'))
@@ -1633,16 +1763,21 @@ SELECT datetime,result,errors,name,command,categories.category FROM RankedEntrie
                 return render_template('log_show.html', container_id = podname, r = r, container_name=podname)
             else:
                 prefetch = subprocess.Popen(
-               f"kubectl get pods --all-namespaces --no-headers | awk '$2==\"{podname}\"{{print $1; exit}}'",
+               f"kubectl get pods --all-namespaces --no-headers | awk '$2 ~ /{podname}/ {{ print $1; exit }}'",
                     shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,  # Merge stderr into stdout to preserve order
                     text=True
                 )
-                if str(prefetch.stdout).strip() not in string_of_list_to_list(os.getenv("namespaces")):
+                namespace = ""
+                try:
+                    namespace = prefetch.stdout.readlines()[0].strip()
+                except IndexError:
+                    pass
+                if namespace not in string_of_list_to_list(os.getenv("namespaces")):
                     return render_template("error_showing.html", r = f"{podname} wasn't found among the containers"), 500
                 process = subprocess.Popen(
-               f"kubectl logs -n $(kubectl get pods --all-namespaces --no-headers | awk '$2==\"{podname}\"{{print $1; exit}}') {podname} --tail {os.getenv('default-log-length')}",
+               f"""kubectl logs -n $(kubectl get pods --all-namespaces --no-headers | awk '$2 ~ /{podname}/ {{ print $1; exit }}') {podname} --tail {os.getenv('default-log-length')}""",
                     shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,  # Merge stderr into stdout to preserve order
@@ -1651,7 +1786,7 @@ SELECT datetime,result,errors,name,command,categories.category FROM RankedEntrie
                 out=[]
                 if os.getenv('log_previous_container_if_kubernetes'):
                     process_previous = subprocess.Popen(
-               f"kubectl logs -n $(kubectl get pods --all-namespaces --no-headers | awk '$2==\"{podname}\"{{print $1; exit}}') {podname} --tail {os.getenv('default-log-length')} --previous",
+               f"""kubectl logs -n $(kubectl get pods --all-namespaces --no-headers | awk '$2 ~ /{podname}/ {{ print $1; exit }}') {podname} --tail {os.getenv('default-log-length')} --previous""",
                     shell=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,  # Merge stderr into stdout to preserve order
@@ -1763,7 +1898,10 @@ SELECT datetime,result,errors,name,command,categories.category FROM RankedEntrie
                     conversion["Labels"] = ", ".join([f"{label}: {value}" for label, value in item["metadata"]["labels"].items()])
                 except KeyError:
                     conversion["Labels"] = "No labels"
-                conversion["Mounts"] = ", ".join([f"{a['mountPath']}: {a['name']}" for a in item["spec"]["containers"][0]["volumeMounts"]])
+                try:
+                    conversion["Mounts"] = ", ".join([f"{a['mountPath']}: {a['name']}" for a in item["spec"]["containers"][0]["volumeMounts"]])
+                except KeyError:
+                    conversion["Mounts"] = "No volumes"
                 conversion["Names"] = item["metadata"]["name"]
                 try:
                     conversion["Ports"] = ", ".join([f"{a['containerPort']}" for a in item["spec"]["containers"][0]["ports"]])
@@ -1774,24 +1912,27 @@ SELECT datetime,result,errors,name,command,categories.category FROM RankedEntrie
                 try:
                     dt1 = datetime.strptime(item["status"]["containerStatuses"][0]["state"]["running"]["startedAt"], fmt)
                     dt2 = datetime.now()
-                    conversion["RunningFor"] = f"{(dt2-dt1).days} day(s), {(dt2-dt1).seconds // 3600} hour(s), {((dt2-dt1).seconds % 3600) // 60} minutes(s) and {(dt2-dt1).seconds % 60} second(s)"
+                    conversion["RunningFor"] = f"{(dt2-dt1).days} day(s), {(dt2-dt1).seconds // 3600} hour(s), {((dt2-dt1).seconds % 3600) // 60} minute(s) and {(dt2-dt1).seconds % 60} second(s)"
                 except Exception as E:
                     conversion["RunningFor"] = "Not running"
-                conversion["State"] = list(item["status"]["containerStatuses"][0]["state"].keys())[0]
+                conversion["State"] = list(item["status"]["containerStatuses"][0]["state"].keys())[0] + " - restarts: " + str(item["status"]["containerStatuses"][0]["restartCount"])
                 conversion["Status"] = item["status"]["conditions"][0]["type"] # actually a list, has the last few different statuses
                 conversion["Container"] = item["status"]["containerStatuses"][0]["containerID"][item["status"]["containerStatuses"][0]["containerID"].find("://")+3:]
                 conversion["Name"] = item["metadata"]["name"]
 
                 # new things
                 conversion["Node"] = item["spec"]["nodeName"]
-                temp_vols=copy.deepcopy(item["spec"]["volumes"])
-                temp_str = ""
-                for vol_num in range(len(item["spec"]["volumes"])):
-                    temp_str += f"{item['spec']['volumes'][vol_num]['name']}: "
-                    del temp_vols[vol_num]["name"]
-                    temp_str += str(list(temp_vols[vol_num].keys())[0]) + ", "
-                    
-                conversion["Volumes"] = temp_str
+                try:
+                    temp_vols=copy.deepcopy(item["spec"]["volumes"])
+                    temp_str = ""
+                    for vol_num in range(len(item["spec"]["volumes"])):
+                        temp_str += f"{item['spec']['volumes'][vol_num]['name']}: "
+                        del temp_vols[vol_num]["name"]
+                        temp_str += str(list(temp_vols[vol_num].keys())[0]) + ", "
+                        
+                    conversion["Volumes"] = temp_str
+                except KeyError:
+                    conversion["Volumes"] = "No volumes"
                 conversion["Namespace"] = item["metadata"]["namespace"]
                 
                 conversions.append(conversion)
