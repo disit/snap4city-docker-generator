@@ -67,9 +67,9 @@ def perform_request( url , method=None , access_token=None , headers={} , data=N
         )
     else:
         req = urllib.request.Request(
-            url , headers=headers , data=encoded_data , method=method
+            url=url , headers=headers , data=encoded_data , method=method
         )
-
+    print("debug: "+ url + "\npayload: " + str(encoded_data))
     with urllib.request.urlopen(req) as response:
         response_str = response.read().decode('utf-8')
         # print( "Response str: '" + response_str + "'" )
