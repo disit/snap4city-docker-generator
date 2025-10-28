@@ -125,7 +125,7 @@ services:
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
   kafka:
-    image: bitnami/kafka:3.3.2
+    image: bitnamilegacy/kafka:3.3.2
     ports:
       - "9000:9000"
       - "9092:9092"
@@ -143,7 +143,7 @@ services:
         
     restart: unless-stopped
     volumes:
-      - kafka:/bitnami/kafka
+      - kafka:/bitnamilegacy/kafka
     depends_on:
       - zookeeper
 

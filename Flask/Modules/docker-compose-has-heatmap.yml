@@ -247,7 +247,7 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   kafka:
-    image: bitnami/kafka:3.3.2
+    image: bitnamilegacy/kafka:3.3.2
     
     ports:
       - "9000:9000"
@@ -264,7 +264,7 @@ services:
         - JMX_PORT=9000
         - KAFKA_JMX_OPTS= -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.rmi.port=9000 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
     volumes:
-      - kafka:/bitnami/kafka
+      - kafka:/bitnamilegacy/kafka
     depends_on:
       - zookeeper
     restart: unless-stopped
