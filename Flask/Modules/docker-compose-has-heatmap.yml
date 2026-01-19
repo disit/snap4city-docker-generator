@@ -99,7 +99,7 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   personaldata:
-    image: disitlab/personaldata:v5.1.1
+    image: disitlab/personaldata:v5.2
     #build: ./build/personaldata.1
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
@@ -198,7 +198,7 @@ services:
         max-file: "${S4C_LOG_MAX_FILE:-10}"
 
   iotapp-nr1:
-    image: disitlab/snap4city-nodered-v2.2.2-adv:v14
+    image: disitlab/snap4city-nodered-v2.2.2-adv:v15
     volumes:
       - ./iotapp-nr1:/data
     ports:
@@ -215,7 +215,7 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   iotapp-nr2:
-    image: disitlab/snap4city-nodered-v2.2.2-adv:v14
+    image: disitlab/snap4city-nodered-v2.2.2-adv:v15
     volumes:
       - ./iotapp-nr2:/data
     ports:
@@ -334,7 +334,7 @@ services:
 
 #KBSSM ################################################################
   servicemap:
-    image: disitlab/servicemap:v5.11
+    image: disitlab/servicemap:v5.12.3
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
       - ./servicemap-conf:/root/servicemap
@@ -495,7 +495,7 @@ services:
 ########## OD ########################################################
 
   od-insert-api:
-    image: disitlab/od-matrix-api:v2.2
+    image: disitlab/od-matrix-api:v3
     environment:
       BASE_URL: '$#base-url#$'
     ports:
@@ -510,7 +510,7 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   od-get-api:
-    image: disitlab/od-matrix-api:v2.2
+    image: disitlab/od-matrix-api:v3
     environment:
       BASE_URL: '$#base-url#$'
     ports:
@@ -525,7 +525,7 @@ services:
         max-size: "${S4C_LOG_MAX_SIZE:-100m}"
         max-file: "${S4C_LOG_MAX_FILE:-10}"
   od-build-api:
-    image: disitlab/od-matrix-api:v2.2
+    image: disitlab/od-matrix-api:v3
     environment:
       BASE_URL: '$#base-url#$'
     ports:

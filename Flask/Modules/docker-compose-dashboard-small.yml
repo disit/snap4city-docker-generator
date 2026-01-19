@@ -120,7 +120,7 @@ services:
   dashboard-cron:
     container_name: dashboard-cron
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v9.5.2
+    image: disitlab/dashboard-builder:v9.5.4
     volumes:
        - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
        - ./dashboard-cron-conf/crontab:/crontab
@@ -134,7 +134,7 @@ services:
   personaldata:
     container_name: personaldata
     restart: unless-stopped
-    image: disitlab/personaldata:v5.1.1
+    image: disitlab/personaldata:v5.2
     #build: ./build/personaldata.1
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
@@ -263,7 +263,7 @@ services:
     container_name: od-insert-api
     environment:
       BASE_URL: '$#base-url#$'
-    image: disitlab/od-matrix-api:v2.2
+    image: disitlab/od-matrix-api:v3
     ports:
       - 3100:3100
     command: python -u ./od-insert.py
@@ -279,7 +279,7 @@ services:
     container_name: od-get-api
     environment:
       BASE_URL: '$#base-url#$'
-    image: disitlab/od-matrix-api:v2.2
+    image: disitlab/od-matrix-api:v3
     ports:
       - 3200:3200
     command: python -u ./od-get.py
@@ -295,7 +295,7 @@ services:
     container_name: od-build-api
     environment:
       BASE_URL: '$#base-url#$'
-    image: disitlab/od-matrix-api:v2.2
+    image: disitlab/od-matrix-api:v3
     ports:
       - 3000:3000
     command: python -u ./od-build.py
