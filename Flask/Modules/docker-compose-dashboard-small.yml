@@ -233,7 +233,7 @@ services:
   kafka:
     container_name: kafka
     restart: unless-stopped
-    image: bitnami/kafka:3.3.2
+    image: bitnamilegacy/kafka:3.3.2
 
     logging:
       driver: "json-file"
@@ -256,7 +256,7 @@ services:
         - KAFKA_JMX_OPTS= -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.rmi.port=9000 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
         
     volumes:
-      - kafka:/bitnami/kafka
+      - kafka:/bitnamilegacy/kafka
     depends_on:
       - zookeeper
   od-insert-api:
