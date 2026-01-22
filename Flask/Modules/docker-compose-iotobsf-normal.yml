@@ -4,7 +4,7 @@ services:
   orionbrokerfilter-$#orion-id#$:
     container_name: orionbrokerfilter-$#orion-id#$
     restart: unless-stopped
-    image: disitlab/orionbrokerfilter:v7
+    image: disitlab/orionbrokerfilter:v8
     #build: ./build/orionbrokerfilter.3
 
     logging:

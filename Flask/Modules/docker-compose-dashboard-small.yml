@@ -120,7 +120,7 @@ services:
   dashboard-cron:
     container_name: dashboard-cron
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v9.5.4
+    image: disitlab/dashboard-builder:v9.6
     volumes:
        - ./dashboard-builder-conf:/var/www/html/dashboardSmartCity/conf
        - ./dashboard-cron-conf/crontab:/crontab
