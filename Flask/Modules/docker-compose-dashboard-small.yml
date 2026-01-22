@@ -30,7 +30,7 @@ services:
   dashboard-builder:
     container_name: dashboard-builder
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v9.4.4
+    image: disitlab/dashboard-builder:v9.6
     #build: ./build/dashboard-builder
     ports:
       - "70:80"
