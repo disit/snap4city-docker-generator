@@ -295,6 +295,7 @@ services:
       "spring.orionbroker_endpoint": "http://orion:1026"
       "spring.elapsingcache.minutes": "3"
       "spring.prefixelementID": "Organization:iotobsf"
+      "spring.auth.subscription.anyid.users": "userrootadmin,usertooladmin"
       "spring.prefix_serviceuri": "http://www.disit.org/km4city/resource/iot"
       "spring.organization": "Organization"
       "spring.context_broker_name": "iotobsf"
