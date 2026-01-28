@@ -4,7 +4,7 @@ services:
   orionbrokerfilter-$#orion-id#$:
     container_name: orionbrokerfilter-$#orion-id#$
     restart: unless-stopped
-    image: disitlab/orionbrokerfilter:v5.3
+    image: disitlab/orionbrokerfilter:v8
     #build: ./build/orionbrokerfilter.3
 
     logging:
@@ -31,6 +31,7 @@ services:
       "spring.orionbroker_endpoint": "http://orion-$#orion-id#$:1026"
       "spring.elapsingcache.minutes": "3"
       "spring.prefixelementID": "Organization:orion-$#org_id#$"
+      "spring.auth.subscription.anyid.users": "userrootadmin,usertooladmin"
       "spring.prefix_serviceuri": "http://www.disit.org/km4city/resource/iot"
       "spring.organization": "Organization"
       "spring.context_broker_name": "orion-$#org_id#$"

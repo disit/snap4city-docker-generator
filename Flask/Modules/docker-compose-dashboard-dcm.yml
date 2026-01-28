@@ -30,7 +30,7 @@ services:
   dashboard-builder:
     container_name: dashboard-builder
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v9.4.4
+    image: disitlab/dashboard-builder:v9.6
     #build: ./build/dashboard-builder
     ports:
       - "70:80"
@@ -121,7 +121,7 @@ services:
   dashboard-cron:
     container_name: dashboard-cron
     restart: unless-stopped
-    image: disitlab/dashboard-builder:v9.5.2
+    image: disitlab/dashboard-builder:v9.6
     #build: ./build/dashboard-builder
 
     user: root
@@ -152,7 +152,7 @@ services:
   personaldata:
     container_name: personaldata
     restart: unless-stopped
-    image: disitlab/personaldata:v5.1.1
+    image: disitlab/personaldata:v5.2
     #build: ./build/personaldata.1
 
     logging:

@@ -44,7 +44,7 @@ services:
        - ./dashboard-cron-conf/crontab:/crontab
     command: /bin/sh -c "crontab /crontab; cron -f"
   personaldata:
-    image: disitlab/personaldata:v5.1.1
+    image: disitlab/personaldata:v5.2
     #build: ./build/personaldata.1
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
@@ -168,6 +168,7 @@ services:
       "spring.orionbroker_endpoint": "http://orion:1026"
       "spring.elapsingcache.minutes": "3"
       "spring.prefixelementID": "Organization:iotobsf"
+      "spring.auth.subscription.anyid.users": "userrootadmin,usertooladmin"
       "connection.timeout": "10000"
       "JAVA_OPTS": "-DlogFileFolder=/usr/local/tomcat/logs -Dmytruststorepass=password -Dmykeystorepass=password"
     restart: always
@@ -187,7 +188,7 @@ services:
 
 #KBSSM ################################################################
   servicemap:
-    image: disitlab/servicemap:v5.11
+    image: disitlab/servicemap:v5.12.2
 #    image: tomcat:9.0.26-jdk8-openjdk-slim
     volumes:
       - ./servicemap-conf:/root/servicemap
