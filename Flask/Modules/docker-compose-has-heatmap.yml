@@ -61,8 +61,8 @@ services:
       OWN_LDAPSERVER: "$#ldap-server#$"
       OWN_LDAPBASEDN: "$#ldap-base-dn#$"
       HEATMAP_DB_HOST: "$#dashboard-db-host#$"
-      HEATMAP_DB_USER: "$#dashboard-db-user#$"
-      HEATMAP_DB_PASSWORD: "$#dashboard-db-pwd#$"
+      HEATMAP_DB_USER: "$#heatmap-db-user#$"
+      HEATMAP_DB_PASSWORD: "$#heatmap-db-pwd#$"
     depends_on:
       - dashboarddb
       - keycloak
