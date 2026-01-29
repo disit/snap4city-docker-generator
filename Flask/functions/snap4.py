@@ -1327,6 +1327,10 @@ def placeholders_in_folder(placeholders, path_of_folder, ignore_reading_errors=F
                 else:
                     raise E
 
+def add_accounts(destination_path):
+    with open(destination_path, 'a') as f:
+        with open("./Modules/database/users.sql", 'r') as userssql:
+            f.write(userssql.read())
 
 
 def add_utils(destination_path):

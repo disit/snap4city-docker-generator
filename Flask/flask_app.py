@@ -567,6 +567,7 @@ def create_app():
                 snap4.make_sql_micro('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', 'orion-001', int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
                 #snap4.remove_heatmap_mentions('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.fix_coordinates_micro(1, './Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
+                snap4.add_accounts('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
                 snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
                 snap4.make_multiple_brokers(1,'./Output/'+token+'/'+ips[0],'docker-compose-iotobsf.yml',fine_as_is)
@@ -656,6 +657,8 @@ esac
                 snap4.make_sql_dcl('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql','./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', ["127.0.0.1"]*brokers, iotapps, snap4.make_iotb_data(fine_as_is))
                 #snap4.remove_heatmap_mentions('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.fix_coordinates_micro(servicemaps, './Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
+                
+                snap4.add_accounts('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
                 #probably needs fixing
                 snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
@@ -758,6 +761,7 @@ esac
                 snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
                 snap4.make_multiple_brokers(fine_as_is['# of Iot-Brokers'],'./Output/'+token+'/'+ips[1],'docker-compose-iotobsf-normal.yml',fine_as_is)
                 snap4.make_sql_normal('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', 'orion-001', int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
+                snap4.add_accounts('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
                 snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.xml.gz',int(fine_as_is['# of Iot-Brokers']),fine_as_is)
                 descriptor=post['$#Time#$']+'-'+post['# of IoT-Apps']+'-'+fine_as_is['# of Iot-Brokers']+'-'
@@ -824,6 +828,7 @@ esac
                 snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
                 snap4.make_multiple_brokers(iotbrokers,'./Output/'+token+'/'+ips[3],'docker-compose-iotobsf-small.yml',fine_as_is)
                 snap4.make_sql_small('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', './Output/'+token+'/'+ips[0]+'/database/preconfig.sql', ips[3], int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
+                snap4.add_accounts('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
                 snap4.make_nifi_conf('./Output/'+token+'/'+ips[2]+'/nifi/conf/flow.xml.gz',int(iotbrokers),fine_as_is)
                 if int(iotbrokers) == 1:
@@ -898,6 +903,7 @@ esac
                     snap4.merge_sh('./Output/'+token+'/'+ips[4]+'/post-setup.sh',['./Output/'+token+'/'+ips[4]+'/dcs-'+str(n+1).zfill(3)+'.sh'])
                     snap4.fix_service_map_config('./Output/'+token+'/'+ips[4]+'/servicemap-'+str(n+1).zfill(3)+'-conf/servicemap.properties','virtuoso-kb-'+str(n+1).zfill(3))
                 snap4.adjust_dashboard_menu_dump_servicemaps(fine_as_is['# of ServiceMaps'],'./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
+                snap4.add_accounts('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
                 for file in select:
                     if file[5] == 3:  # file needs placeholders adjustments
@@ -953,6 +959,7 @@ esac
 
 
                 snap4.make_sql_dcm('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql','./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', list_broker, int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
+                snap4.add_accounts('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.make_multiple_nifi(ips[1], ips[4], list_opensearch[0], list_nifi, token, ips[1])
                 for broker in enumerate(list_broker):
                     snap4.make_multiple_brokers(broker[0],'./Output/'+token+'/'+broker[1],'docker-compose-iotobsf.yml',fine_as_is)
@@ -1051,6 +1058,8 @@ esac
                 snap4.make_ngnix_dcl(fine_as_is, './Output/'+token+'/'+ips[0]+'/nginx-proxy-conf', int(post['# of IoT-Apps']), list_iotapp, list_virtuoso, ips[1], list_opensearch[0], ips[4], 1880)
 
                 snap4.make_sql_dcl('./Output/'+token+'/'+ips[4]+'/database/preconfig.sql','./Output/'+token+'/'+ips[4]+'/database/preconfig.sql', list_broker, int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
+                
+                snap4.add_accounts('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.make_multiple_nifi(ips[1], ips[4], list_opensearch[0], list_nifi, token, ips[1])
                 for broker in list_broker:
                     snap4.make_multiple_brokers(1,'./Output/'+token+'/'+broker,'docker-compose-iotobsf.yml',fine_as_is)
