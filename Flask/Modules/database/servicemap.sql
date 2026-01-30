@@ -1,5 +1,4 @@
 CREATE SCHEMA `ServiceMap` DEFAULT CHARACTER SET utf8;
-GRANT ALL ON ServiceMap.* TO 'user'@'%';
 -- MySQL dump 10.16  Distrib 10.1.48-MariaDB, for debian-linux-gnu (x86_64)
 --
 -- Host: 192.168.1.119    Database: ServiceMap
