@@ -1,5 +1,4 @@
 CREATE SCHEMA `processloader_db` DEFAULT CHARACTER SET utf8;
-GRANT ALL ON processloader_db.* TO 'user'@'%';
 -- MySQL dump 10.16  Distrib 10.1.48-MariaDB, for debian-linux-gnu (x86_64)
 --
 -- Host: 192.168.1.119    Database: processloader_db
