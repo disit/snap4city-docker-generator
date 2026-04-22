@@ -2,7 +2,7 @@
 services:
   $#node_name#$:
     container_name: $#node_name#$
-    image: opensearchproject/opensearch:1.2.3
+    image: opensearchproject/opensearch:2.19.3
     environment:
       - cluster.name=snap4city-opensearch-cluster
       - node.name=$#node_name#$

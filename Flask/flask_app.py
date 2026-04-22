@@ -571,7 +571,7 @@ def create_app():
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
                 snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
                 snap4.make_multiple_brokers(1,'./Output/'+token+'/'+ips[0],'docker-compose-iotobsf.yml',fine_as_is)
-                snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.xml.gz',1,fine_as_is)
+                snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.json.gz',1,fine_as_is)
                 snap4.make_ldif('./Output/'+token+'/'+ips[0]+'/ldap', 'default.ldif', ['1000'], ['orion-1'])
                 descriptor=post['$#Time#$']+'-'+post['# of IoT-Apps']+'-'
 
@@ -663,9 +663,9 @@ esac
                 #probably needs fixing
                 snap4.fix_service_map_config('./Output/'+token+'/'+ips[0]+'/servicemap-conf/servicemap.properties','virtuoso-kb')
                 snap4.make_multiple_brokers(brokers,'./Output/'+token+'/'+ips[0],'docker-compose-iotobsf.yml',fine_as_is)
-                snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.xml.gz',brokers,fine_as_is)
+                snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.json.gz',brokers,fine_as_is)
                 for nifi in range(nifis):
-                    snap4.make_nifi_conf('./Output/'+token+'/nifi-'+str(nifi)+'/nifi/conf/flow.xml.gz',brokers,fine_as_is)
+                    snap4.make_nifi_conf('./Output/'+token+'/nifi-'+str(nifi)+'/nifi/conf/flow.json.gz',brokers,fine_as_is)
                 for i in range(virtuosos):
                     snap4.make_n_servicemaps(servicemaps,'./Output/'+token+'/virtuoso'+str(i), fine_as_is)
                 for i in range(virtuosos*2):
@@ -763,7 +763,7 @@ esac
                 snap4.make_sql_normal('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', 'orion-001', int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
                 snap4.add_accounts('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
-                snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.xml.gz',int(fine_as_is['# of Iot-Brokers']),fine_as_is)
+                snap4.make_nifi_conf('./Output/'+token+'/'+ips[0]+'/nifi/conf/flow.json.gz',int(fine_as_is['# of Iot-Brokers']),fine_as_is)
                 descriptor=post['$#Time#$']+'-'+post['# of IoT-Apps']+'-'+fine_as_is['# of Iot-Brokers']+'-'
                 if int(fine_as_is['# of Iot-Brokers']) == 1:
                     snap4.make_ldif('./Output/'+token+'/'+ips[0]+'/ldap', 'default.ldif', ['1000'], ['orion-1'])
@@ -830,7 +830,7 @@ esac
                 snap4.make_sql_small('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', './Output/'+token+'/'+ips[0]+'/database/preconfig.sql', ips[3], int(post['# of IoT-Apps']),snap4.make_iotb_data(fine_as_is))
                 snap4.add_accounts('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql')
                 snap4.placeholders_in_file('./Output/'+token+'/'+ips[0]+'/database/preconfig.sql', fine_as_is)
-                snap4.make_nifi_conf('./Output/'+token+'/'+ips[2]+'/nifi/conf/flow.xml.gz',int(iotbrokers),fine_as_is)
+                snap4.make_nifi_conf('./Output/'+token+'/'+ips[2]+'/nifi/conf/flow.json.gz',int(iotbrokers),fine_as_is)
                 if int(iotbrokers) == 1:
                     snap4.make_ldif('./Output/'+token+'/'+ips[1]+'/ldap', 'default.ldif', ['1000'], ['orion-1'])
                 elif int(iotbrokers) == 2:
@@ -886,7 +886,7 @@ esac
                     snap4.make_ldif('./Output/'+token+'/'+ips[1]+'/ldap', 'default.ldif', ['1000','1001'], ['orion-1','orion-2'],2)
                 snap4.add_keycloak_final_configuration(fine_as_is, './Output/'+token+"/"+ips[1]+'/keycloak-conf')
                 descriptor=post['$#Time#$']+'-'+post['# of IoT-Apps']+'-'+iotbrokers+'-'+fine_as_is['# of ServiceMaps']+'-'
-                snap4.make_nifi_conf('./Output/'+token+'/'+ips[2]+'/nifi/conf/flow.xml.gz',int(iotbrokers),fine_as_is)
+                snap4.make_nifi_conf('./Output/'+token+'/'+ips[2]+'/nifi/conf/flow.json.gz',int(iotbrokers),fine_as_is)
                 snap4.make_multiple_brokers(iotbrokers,'./Output/'+token+'/'+ips[3],'docker-compose-iotobsf-datacitysmall.yml',fine_as_is)
                 snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
                 #make_apache_proxy_conf_dcs('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
@@ -967,7 +967,7 @@ esac
 
                 snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
                 for nifi in list_nifi:
-                    snap4.make_nifi_conf('./Output/'+token+'/'+nifi+'/nifi/conf/flow.xml.gz',len(list_broker),fine_as_is)
+                    snap4.make_nifi_conf('./Output/'+token+'/'+nifi+'/nifi/conf/flow.json.gz',len(list_broker),fine_as_is)
                 snap4.copy('./Modules/setup-nifi-multi.sh', './Output/'+token+'/'+list_nifi[0]+'/setup.sh')
                 with open('./Output/'+token+'/'+list_nifi[0]+'/setup.sh','r') as fo:
                     read=fo.read()
@@ -1067,7 +1067,7 @@ esac
 
                 snap4.make_empty_apache('./Output/'+token+'/'+ips[0]+'/apache-proxy.conf',modello,int(post['# of IoT-Apps']),1880,fine_as_is)
                 for nifi in list_nifi:
-                    snap4.make_nifi_conf('./Output/'+token+'/'+nifi+'/nifi/conf/flow.xml.gz',len(list_broker),fine_as_is)
+                    snap4.make_nifi_conf('./Output/'+token+'/'+nifi+'/nifi/conf/flow.json.gz',len(list_broker),fine_as_is)
                 for i in range(len(list_virtuoso)):
                     snap4.make_n_servicemaps(2,'./Output/'+token+'/'+list_virtuoso[i], fine_as_is)
                 for i in range(len(list_virtuoso)*2):

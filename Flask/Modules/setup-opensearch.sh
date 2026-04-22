@@ -1,7 +1,7 @@
 echo fixing opensearch internal users
 
-hashadmin=$(docker run opensearchproject/opensearch:1.2.3 plugins/opensearch-security/tools/hash.sh -p $#opensearch-admin-pwd#$)
-hashuser=$(docker run opensearchproject/opensearch:1.2.3 plugins/opensearch-security/tools/hash.sh -p $#kibanauser-password#$)
+hashadmin=$(docker run opensearchproject/opensearch:2.19.3 plugins/opensearch-security/tools/hash.sh -p $#opensearch-admin-pwd#$)
+hashuser=$(docker run opensearchproject/opensearch:2.19.3 plugins/opensearch-security/tools/hash.sh -p $#kibanauser-password#$)
 
 echo the new hash for the admin password is $hashadmin
 echo the new hash for the user password is $hashuser

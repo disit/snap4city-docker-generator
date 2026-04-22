@@ -5,25 +5,19 @@ services:
     #extra_hosts:
     #  - "$#base-hostname#$:$#ip-0#$"
     environment:
+      - SINGLE_USER_CREDENTIALS_PASSWORD=$#nifi-password#$
       - NIFI_WEB_HTTPS_PORT=9090
       - SINGLE_USER_CREDENTIALS_USERNAME=$#nifi-user#$
-      - SINGLE_USER_CREDENTIALS_PASSWORD=$#nifi-password#$
-      - NIFI_SENSITIVE_PROPS_KEY=$#nifi-enc-key#$
       - NIFI_WEB_PROXY_HOST=localhost, $#base-hostname#$, $#base-hostname#$:9090
       - NIFI_WEB_HTTPS_HOST=0.0.0.0
       - NIFI_CLUSTER_ADDRESS=0.0.0.0
       - NIFI_REMOTE_INPUT_HOST=0.0.0.0
-      - AUTH=tls
       - KEYSTORE_PATH=/opt/nifi/nifi-current/conf/keystore.jks
       - KEYSTORE_TYPE=JKS
-      - KEYSTORE_PASSWORD=$#keystore-password#$
       - TRUSTSTORE_PATH=/opt/nifi/nifi-current/conf/truststore.jks
       - TRUSTSTORE_TYPE=JKS
-      - TRUSTSTORE_PASSWORD=$#truststore-password#$
-      - NIFI_SECURITY_USER_AUTHORIZER=single-user-authorizer
-      - NIFI_SECURITY_USER_LOGIN_IDENTITY_PROVIDER=single-user-provider
       - NIFI_JVM_HEAP_MAX=2g
-    image: disitlab/snap4nifi:v0-1.16.2
+    image: disitlab/snap4nifi:v0-2.2.0
     logging:
       driver: json-file
       options:
@@ -43,7 +37,7 @@ services:
       - varnish
   opensearch-n1:
     container_name: opensearch-n1
-    image: opensearchproject/opensearch:1.2.3
+    image: opensearchproject/opensearch:2.19.3
     environment:
       - discovery.type=single-node
       - DISABLE_INSTALL_DEMO_CONFIG=true
@@ -74,7 +68,7 @@ services:
 
   opensearch-dashboards:
     container_name: opensearch-dashboards
-    image: opensearchproject/opensearch-dashboards:1.2.0
+    image: opensearchproject/opensearch-dashboards:2.19.3
     ports:
       - 5601:5601
     environment:

@@ -166,7 +166,7 @@ services:
   personaldata:
     container_name: personaldata
     restart: unless-stopped
-    image: disitlab/personaldata:v5.2
+    image: disitlab/personaldata:v6.1
     #build: ./build/personaldata.1
 
     logging:

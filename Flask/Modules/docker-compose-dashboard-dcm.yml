@@ -137,7 +137,7 @@ services:
 
   iot-discovery:
     container_name: iot-discovery
-    image: disitlab/iot-directory-discover-api:v1
+    image: disitlab/iot-directory-discover-api:v2
     ports:
       - 3003:3001
     volumes:
@@ -152,7 +152,7 @@ services:
   personaldata:
     container_name: personaldata
     restart: unless-stopped
-    image: disitlab/personaldata:v5.2
+    image: disitlab/personaldata:v6.1
     #build: ./build/personaldata.1
 
     logging:

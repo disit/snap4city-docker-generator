@@ -1,0 +1,28 @@
+
+
+CREATE TABLE IF NOT EXISTS `Dashboard`.`sessions` (`id` varchar(32) NOT NULL, `access` int(10) unsigned DEFAULT NULL, `data` text, PRIMARY KEY (id));
+
+CREATE TABLE IF NOT EXISTS `Dashboard`.`TrustedUserGroups` (`id` INT NOT NULL,`username` VARCHAR(45) NULL, PRIMARY KEY (`id`));
+
+CREATE TABLE IF NOT EXISTS `Dashboard`.`AccessDefinitions` (ID INT NOT NULL AUTO_INCREMENT, authname VARCHAR(500) NOT NULL UNIQUE, org TEXT NULL, menuID INT NULL, dashboardID VARCHAR(500) NULL, collectionID VARCHAR(500) NULL, maxbyday INT NULL, maxbymonth INT NULL, maxtotalaccesses INT NULL, PRIMARY KEY (ID));
+
+CREATE TABLE IF NOT EXISTS `Dashboard`.`ACL` (ID INT NOT NULL AUTO_INCREMENT, defID INT NOT NULL, user VARCHAR(500) NOT NULL, PRIMARY KEY (ID), FOREIGN KEY (defID) REFERENCES `Dashboard`.`AccessDefinitions`(ID) ON DELETE CASCADE ON UPDATE CASCADE);
+
+CREATE TABLE IF NOT EXISTS `Dashboard`.`ACLProfiles` (ID INT NOT NULL AUTO_INCREMENT, profilename VARCHAR(500) NOT NULL UNIQUE, authIDs TEXT NULL, PRIMARY KEY (ID));
+
+CREATE TABLE IF NOT EXISTS `Dashboard`.`ACLProfilesAssignment` (profileID INT NOT NULL, user VARCHAR(500) NOT NULL, PRIMARY KEY (profileID, user), FOREIGN KEY (profileID) REFERENCES `Dashboard`.`ACLProfiles`(ID) ON DELETE CASCADE ON UPDATE CASCADE);
+
+CREATE TABLE IF NOT EXISTS `Dashboard`.`ACNames` (name VARCHAR(500) NOT NULL, PRIMARY KEY (name));
+
+CREATE TABLE IF NOT EXISTS `DashboardLinkMenu` (`id` int(11) NOT NULL AUTO_INCREMENT, `linkUrl` varchar(300) NOT NULL, `icon` varchar(200) DEFAULT '', `text` varchar(200) DEFAULT '', `openMode` varchar(45) DEFAULT 'newTab', `iconColor` varchar(45) DEFAULT '#FFFFFF', `menuOrder` int(2) DEFAULT 0, `dashboardId` int(11) NOT NULL, PRIMARY KEY (`id`), KEY `DashboardLinkMenu_idfk` (`dashboardId`)) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+INSERT IGNORE INTO `Dashboard`.`ACNames` (name) SELECT profilename FROM `Dashboard`.`ACLProfiles` UNION SELECT authname FROM `Dashboard`.`AccessDefinitions`;
+
+ALTER TABLE `Dashboard`.`ACLProfiles` ADD CONSTRAINT `fk_ACLProfiles_ACNames` FOREIGN KEY (`profilename`) REFERENCES `Dashboard`.`ACNames`(`name`);
+
+ALTER TABLE `Dashboard`.`AccessDefinitions` ADD CONSTRAINT `fk_AccessDefs_ACNames` FOREIGN KEY (`authname`) REFERENCES `Dashboard`.`ACNames`(`name`);
+
+CREATE TABLE IF NOT EXISTS `Dashboard`.`DashboardLinkMenuSubmenus` (`id` int(11) NOT NULL AUTO_INCREMENT, `linkUrl` varchar(300) NOT NULL, `icon` varchar(200) DEFAULT NULL, `text` varchar(200) DEFAULT NULL, `openMode` varchar(45) DEFAULT 'newTab', `iconColor` varchar(45) DEFAULT '#FFFFFF', `menuOrder` int(2) DEFAULT NULL, `menuId` int(11) NOT NULL, `dashboardId` int(11) NOT NULL, PRIMARY KEY (`id`), KEY `DashboardLinkMenuSubmenus_idfk` (`dashboardId`), KEY `DashboardLinkMenuSubmenus_menuidfk` (`menuId`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+ALTER TABLE `Dashboard`.`Config_dashboard` CHANGE COLUMN `subtitle_header` `subtitle_header` VARCHAR(300) CHARACTER SET utf8 COLLATE utf8_general_ci;
+ALTER TABLE `Dashboard`.`Config_widget_dashboard` CHANGE COLUMN `title_w` `title_w` VARCHAR(600) CHARACTER SET utf8 COLLATE utf8_general_ci;
