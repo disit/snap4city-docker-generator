@@ -135,7 +135,7 @@
             <div class="row g-2">
             <div class="col-md-6"><label for="$#lat-ib-{{i}}#$" class="form-label">Latitude broker-{{i}}</label><input type="text" name="$#lat-ib-{{i}}#$" id="$#lat-ib-{{i}}#$" class="form-control" required></div>
             <div class="col-md-6"><label for="$#lng-ib-{{i}}#$" class="form-label">Longitude broker-{{i}}</label><input type="text" name="$#lng-ib-{{i}}#$" id="$#lng-ib-{{i}}#$" class="form-control" required></div>
-            <div class="col-md-6"><input type="text" name="$#zoom-{{i}}#$" id="$#zoom-{{i}}#$" class="form-control" hidden></div>
+            <div class="col-md-6"><input type="text" name="$#zoom-{{i}}#$" id="$#zoom-{{i}}#$" class="form-control" value="10" hidden></div>
             </div><hr><br>
             {%endfor%}
           {%elif element == '# of ServiceMaps'%}
