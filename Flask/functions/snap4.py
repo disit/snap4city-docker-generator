@@ -963,7 +963,7 @@ def make_nifi_conf(path, iotbrokers, placeholders):
             placeholders['$#servicemap-000#$'] = placeholders['$#base-hostname#$']
         if '$#servicemap-001#$' not in placeholders:
             placeholders['$#servicemap-001#$'] = placeholders['$#base-hostname#$']
-        with open('./Modules/nifi/conf/flow.xml', 'r') as f_2:
+        with open('./Modules/nifi/conf/flow.json', 'r') as f_2:
             data=f_2.read()
             for i in range(int(iotbrokers)):
                 data=data.replace('$#port-'+str(i+1)+'#$',str(1030+i))
@@ -1618,13 +1618,13 @@ def docker_to_kubernetes(location, hostname, namespace, final_path='/mnt/data/ge
     yaml.dump(ldapyaml, open(location+"/kubernetes/ldap-server-deployment.yaml", "w"))
     
     builderyaml = yaml.load(open(location+"/kubernetes/dashboard-builder-deployment.yaml"), Loader=yaml.FullLoader)
-    builderyaml["spec"]["template"]["spec"]["initContainers"] = [{"securityContext":{"runAsUser":33},"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"], "image": "disitlab/dashboard-builder:v9.4.4", "name": "copy-dashboard-builder", "volumeMounts": [{"mountPath": "/snap4volumes/dashboard-img", "name":"dashboard-builder-claim006"}]}]
+    builderyaml["spec"]["template"]["spec"]["initContainers"] = [{"securityContext":{"runAsUser":33},"command": ["/bin/sh", "-c", "[ -z \"$(ls -A /snap4volumes/dashboard-img)\" ] && { echo \"empty. do copy\"; cp -R /var/www/html/dashboardSmartCity/img/* /snap4volumes/dashboard-img;  true; } || { echo \"not empty. no copy\"; ls -l /snap4volumes/dashboard-img; true;}"], "image": "disitlab/dashboard-builder:v9.6", "name": "copy-dashboard-builder", "volumeMounts": [{"mountPath": "/snap4volumes/dashboard-img", "name":"dashboard-builder-claim006"}]}]
     builderyaml["spec"]["template"]["spec"]["containers"][0]["args"]=[]
     builderyaml["spec"]["template"]["spec"]["containers"][0]["volumeMounts"][2]["mountPath"] = "/protecteduploads"
     yaml.dump(builderyaml, open(location+"/kubernetes/dashboard-builder-deployment.yaml", "w"))
     
     opensearchyaml = yaml.load(open(location+"/kubernetes/opensearch-n001-deployment.yaml"), Loader=yaml.FullLoader)
-    opensearchyaml["spec"]["template"]["spec"]["initContainers"] = [{"command":["/bin/bash" , "-c", "hashadmin=$(/usr/share/opensearch/plugins/opensearch-security/tools/hash.sh -p "+placeholders['$#opensearch-admin-pwd#$']+"); hashuser=$(/usr/share/opensearch/plugins/opensearch-security/tools/hash.sh -p " +placeholders['$#kibanauser-password#$']+ "); sed \"s|admin_replacing|$hashadmin|\" /internal_users.yml | sed \"s|kibanaserver_replacing|$hashuser|\" > /internal_users.yml.tmp; cp /internal_users.yml.tmp /internal_users.yml; rm /internal_users.yml.tmp"], "image": "opensearchproject/opensearch:1.2.3", "name": "setup-opensearch", "securityContext": { "runAsUser": 0 }, "volumeMounts": [{"mountPath": "/internal_users.yml", "name": "opensearch-n001-claim009"}]}]
+    opensearchyaml["spec"]["template"]["spec"]["initContainers"] = [{"command":["/bin/bash" , "-c", "hashadmin=$(/usr/share/opensearch/plugins/opensearch-security/tools/hash.sh -p "+placeholders['$#opensearch-admin-pwd#$']+"); hashuser=$(/usr/share/opensearch/plugins/opensearch-security/tools/hash.sh -p " +placeholders['$#kibanauser-password#$']+ "); sed \"s|admin_replacing|$hashadmin|\" /internal_users.yml | sed \"s|kibanaserver_replacing|$hashuser|\" > /internal_users.yml.tmp; cp /internal_users.yml.tmp /internal_users.yml; rm /internal_users.yml.tmp"], "image": "opensearchproject/opensearch:2.19.3", "name": "setup-opensearch", "securityContext": { "runAsUser": 0 }, "volumeMounts": [{"mountPath": "/internal_users.yml", "name": "opensearch-n001-claim009"}]}]
     yaml.dump(opensearchyaml, open(location+"/kubernetes/opensearch-n001-deployment.yaml", "w"))
     
     proxyyaml = yaml.load(open(location+"/kubernetes/proxy-service.yaml"), Loader=yaml.FullLoader)

@@ -1,54 +1,76 @@
 #!/bin/bash
-# Root CA
-C=IT
-ST=Toscana
-L=Florence
-O=SNAP4
-OU=
 
-echo generate CA cert
-openssl genrsa -out root-ca-key.pem 2048
-openssl req -new -x509 -sha256 -key root-ca-key.pem -subj "/C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=ROOT" -out root-ca.pem -days 3650
-# Admin cert
-echo
-echo generate admin cert
-openssl genrsa -out admin-key-temp.pem 2048
-openssl pkcs8 -inform PEM -outform PEM -in admin-key-temp.pem -topk8 -nocrypt -v1 PBE-SHA1-3DES -out admin-key.pem
-openssl req -new -key admin-key.pem -subj "/C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=ADMIN" -out admin.csr
-openssl x509 -req -in admin.csr -CA root-ca.pem -CAkey root-ca-key.pem -CAcreateserial -sha256 -out admin.pem -days 3650
-# Node cert 1
-echo
-echo generate node cert
-openssl genrsa -out node1-key-temp.pem 2048
-openssl pkcs8 -inform PEM -outform PEM -in node1-key-temp.pem -topk8 -nocrypt -v1 PBE-SHA1-3DES -out node1-key.pem
-openssl req -new -key node1-key.pem -subj "/C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=opensearch-n1" -out node1.csr
-openssl x509 -req -in node1.csr -CA root-ca.pem -CAkey root-ca-key.pem -CAcreateserial -sha256 -extfile <(printf "subjectAltName=DNS:opensearch-n1") -out node1.pem -days 3650
-# Client cert
-echo
-echo generate client cert
-openssl genrsa -out client-key-temp.pem 2048
-openssl pkcs8 -inform PEM -outform PEM -in client-key-temp.pem -topk8 -nocrypt -v1 PBE-SHA1-3DES -out client-key.pem
-openssl req -new -key client-key.pem -subj "/C=$C/ST=$ST/L=$L/O=$O/OU=$OU/CN=CLIENT" -out client.csr
-openssl x509 -req -in client.csr -CA root-ca.pem -CAkey root-ca-key.pem -CAcreateserial -sha256 -out client.pem -days 3650
-chmod a+r *-key.pem
+cd "$(dirname "$0")"
 
-# Cleanup
-rm admin-key-temp.pem
-rm admin.csr
-rm node1-key-temp.pem
-rm node1.csr
-rm client-key-temp.pem
-rm client.csr
-#docker compose exec opensearch-n1 bash -lic "plugins/opensearch-security/tools/hash.sh"
-echo "generate truststore"
-rm -f trust-store.p12
-docker run --rm -v $PWD:/conf/ disitlab/personaldata:v3.1 keytool -import -file /conf/root-ca.pem -alias snap4ca -storepass $#truststore-password#$ -storetype pkcs12 -noprompt -keystore /conf/trust-store.p12
-# p12 made with openssl does not work with java
-#openssl pkcs12 -export -nokeys -in root-ca.pem -out root-ca.p12 -passout pass:snap4ca
-#chmod a+r root-ca.p12
-cp trust-store.p12 ../nifi/conf/trust-store.p12
-cp trust-store.p12 ../datamanager-conf/trust-store.p12
-cp cacerts.orig cacerts
-# do NOT change the storepass, it's changeit, leave it like that
-docker run --rm -v $PWD:/conf/ disitlab/personaldata:v3.1 keytool -importcert -keystore /conf/cacerts -file /conf/root-ca.pem -alias snap4ca -storepass changeit -noprompt
-cp cacerts ../servicemap-conf
+# Start the setup container
+docker run --rm --name nifi-setup -d eclipse-temurin:21 tail -f /dev/null
+
+# Generate passwords   # using placeholders generated elsewhere
+SENSITIVE_PROPS_KEY=$#nifi-enc-key#$
+KEYSTORE_PASSWD=$#keystore-password#$
+TRUSTSTORE_PASSWD=$#truststore-password#$
+SINGLE_USER_PASSWD=$#nifi-password#$
+
+echo "Sensitive props key = ${SENSITIVE_PROPS_KEY}"
+echo "Keystore password = ${KEYSTORE_PASSWD}"
+echo "Truststore password = ${TRUSTSTORE_PASSWD}"
+
+# Generate certificates
+# ROOT CA
+docker exec nifi-setup openssl genrsa -out root-ca-key.pem 2048
+docker exec nifi-setup openssl req -new -x509 -sha256 -key root-ca-key.pem \
+    -subj "/C=CC/ST=State/L=Location/O=Organiztion/OU=org-unit/CN=nifi-root-ca" \
+    -days 18250 -out root-ca.pem
+
+# NODE CERTIFICATE
+docker exec nifi-setup openssl genrsa -out nifi-node-key-temp.pem 2048
+docker exec nifi-setup openssl pkcs8 -inform PEM -in nifi-node-key-temp.pem \
+    -topk8 -nocrypt -v1 PBE-SHA1-3DES -out nifi-node-key.pem
+
+docker exec nifi-setup openssl req -new -key nifi-node-key.pem \
+    -subj "/C=CC/ST=State/L=Location/O=Organiztion/OU=org-unit/CN=nifi-node" \
+    -out nifi-node.csr
+
+docker exec nifi-setup bash -c 'openssl x509 -req -in nifi-node.csr \
+    -CA root-ca.pem -CAkey root-ca-key.pem -CAcreateserial -sha256 -days 18250 \
+    -out nifi-node.pem \
+    -extfile <(printf "subjectAltName=IP:127.0.0.1,DNS:localhost,DNS:dashboard")'
+
+# KEYSTORE / TRUSTSTORE
+docker exec -e PASS="$TRUSTSTORE_PASSWD" nifi-setup bash -c 'keytool -import -file root-ca.pem -keystore nifi-node-truststore.jks \
+    -deststoretype JKS -deststorepass "$PASS" -alias nifi-root-ca -noprompt'
+
+docker exec -e PASS="$KEYSTORE_PASSWD" nifi-setup bash -c 'openssl pkcs12 -export -in nifi-node.pem -inkey nifi-node-key.pem \
+    -name nifi-node -out nifi-node-keystore.pkcs12 -password pass:"$PASS"'
+docker exec -e PASS="$KEYSTORE_PASSWD" nifi-setup bash -c 'keytool -importkeystore -srckeystore nifi-node-keystore.pkcs12 \
+    -srcstoretype PKCS12 -destkeystore nifi-node-keystore.jks -deststoretype JKS \
+    -srcstorepass "$PASS" -deststorepass "$PASS"'
+
+# Substitute passwords in nifi.properties
+sed -i \
+    -e "s/^nifi.sensitive.props.key=.*/nifi.sensitive.props.key=${SENSITIVE_PROPS_KEY}/" \
+    -e "s/^nifi.security.keystorePasswd=.*/nifi.security.keystorePasswd=${KEYSTORE_PASSWD}/" \
+    -e "s/^nifi.security.keyPasswd=.*/nifi.security.keyPasswd=${KEYSTORE_PASSWD}/" \
+    -e "s/^nifi.security.truststorePasswd=.*/nifi.security.truststorePasswd=${TRUSTSTORE_PASSWD}/" \
+    ../nifi/conf/nifi.properties
+
+# Copy certificates to host
+mkdir certs
+docker cp nifi-setup:/root-ca-key.pem ./certs/root-ca-key.pem
+docker cp nifi-setup:/root-ca.pem ./certs/root-ca.pem
+
+docker cp nifi-setup:/nifi-node-key.pem ./certs/nifi-node-key.pem
+docker cp nifi-setup:/nifi-node.pem ./certs/nifi-node.pem
+
+docker cp nifi-setup:/nifi-node-truststore.jks ./certs/nifi-node-truststore.jks
+docker cp nifi-setup:/nifi-node-keystore.jks ./certs/nifi-node-keystore.jks
+
+# TODO: copy the admin certificate to host
+
+# Stop nifi-setup container and clean-up 
+docker stop nifi-setup
+
+## Copy certs to the conf folder
+cp certs/nifi-node-truststore.jks ../nifi/conf/truststore.jks
+cp certs/nifi-node-keystore.jks ../nifi/conf/keystore.jks
+

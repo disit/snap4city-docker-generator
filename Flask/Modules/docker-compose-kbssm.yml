@@ -3,7 +3,7 @@ services:
   $#servicemap-id#$:
     container_name: $#servicemap-id#$
     restart: unless-stopped
-    image: disitlab/servicemap:v5.12.2
+    image: disitlab/servicemap:v5.12.5
 
     logging:
       driver: "json-file"
@@ -17,10 +17,11 @@ services:
       - ./$#servicemap-id#$-iot-conf:/root/iot-api-config:rw
       - ./$#servicemap-id#$-conf/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml
       - ./$#servicemap-id#$-superservicemap-conf/settings.xml:/usr/local/tomcat/settings.xml
-      - ./$#servicemap-id#$-conf/cacerts:/usr/local/openjdk-8/jre/lib/security/cacerts
+#      - ./$#servicemap-id#$-conf/cacerts:/usr/local/openjdk-8/jre/lib/security/cacerts
       - ./$#servicemap-id#$-whatif-router/gh-data:/usr/local/tomcat/gh-data
       - ./$#servicemap-id#$-trafficflowmanager:/home/debian/TrafficFlowManager
-#    environment:
+    environment:
+      CATALINA_OPTS: "-Djavax.net.ssl.trustStore=/certs/external/nifi-node-truststore.jks -Djavax.net.ssl.trustStorePassword=$#truststore-password#$"
     ports:
       - 8090:8080
     depends_on:

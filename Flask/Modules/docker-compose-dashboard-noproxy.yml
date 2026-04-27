@@ -114,7 +114,7 @@ services:
     container_name: iot-discovery
     ports:
       - 3003:3001
-    image: disitlab/iot-directory-discover-api:v1
+    image: disitlab/iot-directory-discover-api:v2
     volumes:
       - ./iot-discovery-conf/:/usr/src/snap4IotServer/snap4cityBroker/conf
     restart: unless-stopped
@@ -127,7 +127,7 @@ services:
   personaldata:
     container_name: personaldata
     restart: unless-stopped
-    image: disitlab/personaldata:v5.2
+    image: disitlab/personaldata:v6.1
     #build: ./build/personaldata.1
 
     logging:
