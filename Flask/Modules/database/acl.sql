@@ -26,3 +26,60 @@ CREATE TABLE IF NOT EXISTS `Dashboard`.`DashboardLinkMenuSubmenus` (`id` int(11)
 
 ALTER TABLE `Dashboard`.`Config_dashboard` CHANGE COLUMN `subtitle_header` `subtitle_header` VARCHAR(300) CHARACTER SET utf8 COLLATE utf8_general_ci;
 ALTER TABLE `Dashboard`.`Config_widget_dashboard` CHANGE COLUMN `title_w` `title_w` VARCHAR(600) CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+
+
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('Python');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('Rstudio');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('UserStats');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('DataIngestionTable');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('SnapAdvisor');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('3DLoader');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('TPLEditor');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('BIMLoader');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('ColorMapEditor');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('ODMLoader');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('VectorFieldLoader');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('HeatmapProducer');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('SynopticLoader');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('CSBLEditor');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('DashboardExport');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('DashboardImport');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('GTFSEditor');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('POILoader');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('PythonJupiterHub');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('RouterTool');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('ScenarioEditor');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('SimulationManager');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('SynopticTemplating');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('TLPEditor');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('WidgetExport');
+INSERT INTO `Dashboard`.`ACNames` (`name`) VALUES ('WidgetImport');
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('Python', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('Rstudio', 'NULL', 1066);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('UserStats', '*', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('DataIngestionTable', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('SnapAdvisor', '*', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('3DLoader', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('TPLEditor', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('BIMLoader', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('ColorMapEditor', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('ODMLoader', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('VectorFieldLoader', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('HeatmapProducer', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('SynopticLoader', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('CSBLEditor', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('DashboardExport', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('DashboardImport', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('GTFSEditor', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('POILoader', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('PythonJupiterHub', '*', 10134);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('RouterTool', '*', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('ScenarioEditor', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('SimulationManager', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('SynopticTemplating', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('TLPEditor', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('WidgetExport', 'NULL', NULL);
+INSERT INTO `Dashboard`.`AccessDefinitions` (`authname`, `org`, `menuID`) VALUES ('WidgetImport', 'NULL', NULL);
+
+INSERT INTO `Dashboard`.`MainMenuSubmenus` (`id`, `menu`, `linkUrl`, `linkId`, `icon`, `text`, `privileges`, `userType`, `externalApp`, `openMode`, `iconColor`, `pageTitle`, `menuOrder`, `organizations`) VALUES ('901', '1090', '../management/microApplications.php', 'microApplicationsLink', 'fa fa-dashboard', 'Micro Applications', '[\'RootAdmin\',\'ToolAdmin\', \'AreaManager\', \'Manager\', \'Public\']', 'any', 'no', 'samePage', '#ee41f4', 'Micro Applications', '0', '*');
