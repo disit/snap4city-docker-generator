@@ -25,6 +25,7 @@ services:
       - ./database/superservicemap.sql:/docker-entrypoint-initdb.d/8_init.sql
       - ./database/processloader.sql:/docker-entrypoint-initdb.d/9_init.sql
       - ./database/preconfig.sql:/docker-entrypoint-initdb.d/z_init.sql
+      - ./database/acl.sql:/docker-entrypoint-initdb.d/zz_init.sql
       - ./database/heatmap.sql:/docker-entrypoint-initdb.d/a_init.sql
       - ./database/datatable.sql:/docker-entrypoint-initdb.d/b_init.sql
 

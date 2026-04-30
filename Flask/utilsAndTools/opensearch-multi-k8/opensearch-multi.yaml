@@ -78,22 +78,22 @@ spec:
         - mountPath: /usr/share/opensearch/config/root-ca.pem
           name: opensearch-n001-claim005
           subPath: root-ca.pem
-        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/action_groups.yml
+        - mountPath: /usr/share/opensearch/config/opensearch-security/action_groups.yml
           name: opensearch-n001-claim007
           subPath: action_groups.yml
-        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/config.yml
+        - mountPath: /usr/share/opensearch/config/opensearch-security/config.yml
           name: opensearch-n001-claim008
           subPath: config.yml
-        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml
+        - mountPath: /usr/share/opensearch/config/opensearch-security/internal_users.yml
           name: opensearch-n001-claim009
           subPath: internal_users.yml
-        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/roles.yml
+        - mountPath: /usr/share/opensearch/config/opensearch-security/roles.yml
           name: opensearch-n001-claim010
           subPath: roles.yml
-        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/roles_mapping.yml
+        - mountPath: /usr/share/opensearch/config/opensearch-security/roles_mapping.yml
           name: opensearch-n001-claim011
           subPath: roles_mapping.yml
-        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/tenants.yml
+        - mountPath: /usr/share/opensearch/config/opensearch-security/tenants.yml
           name: opensearch-n001-claim012
           subPath: tenants.yml
       initContainers:
@@ -110,7 +110,7 @@ spec:
         securityContext:
           runAsUser: 0
         volumeMounts:
-        - mountPath: /usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml
+        - mountPath: /usr/share/opensearch/config/opensearch-security/internal_users.yml
           name: opensearch-n001-claim009
           subPath: internal_users.yml
       volumes:

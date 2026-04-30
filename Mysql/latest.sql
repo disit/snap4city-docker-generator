@@ -1880,7 +1880,15 @@ INSERT INTO `files` VALUES (149,'Micro','dashboard-backend-conf','/dashboard-bac
 (1539, 'DataCitySmall', 'dashboard-builder-conf', '/dashboard-builder-conf/', 'ssl_expose.php', 3),
 (1540, 'DataCityMedium', 'dashboard-builder-conf', '/dashboard-builder-conf/', 'ssl_expose.php', 3),
 (1541, 'DataCityLarge', 'dashboard-builder-conf', '/dashboard-builder-conf/', 'ssl_expose.php', 3),
-(1542, 'Kubernetes', 'dashboard-builder-conf', '/dashboard-builder-conf/', 'ssl_expose.php', 3);
+(1542, 'Kubernetes', 'dashboard-builder-conf', '/dashboard-builder-conf/', 'ssl_expose.php', 3),
+(1543, 'Micro', 'database', '/database/', 'acl.sql', '3'),
+(1544, 'Normal', 'database', '/database/', 'acl.sql', '3'),
+(1545, 'DataCitySmall', 'database', '/database/', 'acl.sql', '3'),
+(1546, 'Small', 'database', '/database/', 'acl.sql', '3'),
+(1547, 'Kubernetes', 'database', '/database/', 'acl.sql', '3'),
+(1548, 'DataCityLarge', 'database', '/database/', 'acl.sql', '3'),
+(1549, 'DataCityMedium', 'database', '/database/', 'acl.sql', '3');
+
 
 /*!40000 ALTER TABLE `files` ENABLE KEYS */;
 UNLOCK TABLES;

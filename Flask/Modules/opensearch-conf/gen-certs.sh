@@ -46,15 +46,6 @@ docker exec -e PASS="$KEYSTORE_PASSWD" nifi-setup bash -c 'keytool -importkeysto
     -srcstoretype PKCS12 -destkeystore nifi-node-keystore.jks -deststoretype JKS \
     -srcstorepass "$PASS" -deststorepass "$PASS"'
 
-# Substitute passwords in nifi.properties
-sed -i \
-    -e "s/^nifi.sensitive.props.key=.*/nifi.sensitive.props.key=${SENSITIVE_PROPS_KEY}/" \
-    -e "s/^nifi.security.keystorePasswd=.*/nifi.security.keystorePasswd=${KEYSTORE_PASSWD}/" \
-    -e "s/^nifi.security.keyPasswd=.*/nifi.security.keyPasswd=${KEYSTORE_PASSWD}/" \
-    -e "s/^nifi.security.truststorePasswd=.*/nifi.security.truststorePasswd=${TRUSTSTORE_PASSWD}/" \
-    ../nifi/conf/nifi.properties
-
-# Copy certificates to host
 mkdir certs
 docker cp nifi-setup:/root-ca-key.pem ./certs/root-ca-key.pem
 docker cp nifi-setup:/root-ca.pem ./certs/root-ca.pem
@@ -70,7 +61,34 @@ docker cp nifi-setup:/nifi-node-keystore.jks ./certs/nifi-node-keystore.jks
 # Stop nifi-setup container and clean-up 
 docker stop nifi-setup
 
+
+docker run --rm --name nifi-setup -d apache/nifi:2.2.0
+
+docker exec -ti nifi-setup bash /opt/nifi/scripts/start.sh  # this will make the files in the temporary container
+
+rm -r ../nifi/conf  # delete old fonder because, for some reason, it doesn't work
+
+docker cp nifi-setup:/opt/nifi/nifi-current/conf/ ../nifi
+
 ## Copy certs to the conf folder
 cp certs/nifi-node-truststore.jks ../nifi/conf/truststore.jks
 cp certs/nifi-node-keystore.jks ../nifi/conf/keystore.jks
+
+
+sed -i \
+    -e "s/^nifi.web.proxy.host=.*/nifi.web.proxy.host=$#base-hostname#$, localhost, $#base-hostname#$:9090/" \
+    -e "s/^nifi.web.https.host=.*/nifi.web.https.host=0.0.0.0/" \
+    -e "s/^nifi.remote.input.host=.*/nifi.remote.input.host=0.0.0.0/" \
+    -e "s/^nifi.sensitive.props.key=.*/nifi.sensitive.props.key=$#nifi-enc-key#$/" \
+    -e "s/^nifi.security.keystoreType=.*/nifi.security.keystoreType=JKS/" \
+    -e "s/^nifi.security.truststoreType=.*/nifi.security.truststoreType=JKS/" \
+    -e "s@^nifi.security.keystore=.*@nifi.security.keystore=./conf/keystore.jks@" \
+    -e "s@^nifi.security.truststore=.*@nifi.security.truststore=./conf/keystore.jks@" \
+    -e "s/^nifi.security.keystorePasswd=.*/nifi.security.keystorePasswd=$#keystore-password#$/" \
+    -e "s/^nifi.security.keyPasswd=.*/nifi.security.keyPasswd=$#keystore-password#$/" \
+    -e "s/^nifi.security.truststorePasswd=.*/nifi.security.truststorePasswd=$#truststore-password#$/" \
+    ../nifi/conf/nifi.properties
+
+docker stop nifi-setup
+#docker compose exec nifi ./bin/nifi.sh set-single-user-credentials admin V5SFXfCsIPKAu4NN
 

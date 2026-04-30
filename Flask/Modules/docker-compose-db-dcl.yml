@@ -28,6 +28,7 @@ services:
       - ./database/heatmap.sql:/docker-entrypoint-initdb.d/a_init.sql
       - ./database/datatable.sql:/docker-entrypoint-initdb.d/b_init.sql
       - ./database/preconfig.sql:/docker-entrypoint-initdb.d/z_init.sql
+      - ./database/acl.sql:/docker-entrypoint-initdb.d/zz_init.sql
       - ./database:/database
     environment:
       TZ: "Europe/Rome"

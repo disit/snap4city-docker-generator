@@ -460,12 +460,12 @@ services:
       - ./opensearch-conf/admin.pem:/usr/share/opensearch/config/admin.pem
       - ./opensearch-conf/admin-key.pem:/usr/share/opensearch/config/admin-key.pem
       - ./opensearch-conf/opensearch.yml:/usr/share/opensearch/config/opensearch.yml
-      - ./opensearch-conf/security-config.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/config.yml
-      - ./opensearch-conf/internal_users.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/internal_users.yml
-      - ./opensearch-conf/roles_mapping.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/roles_mapping.yml
-      - ./opensearch-conf/tenants.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/tenants.yml
-      - ./opensearch-conf/roles.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/roles.yml
-      - ./opensearch-conf/action_groups.yml:/usr/share/opensearch/plugins/opensearch-security/securityconfig/action_groups.yml
+      - ./opensearch-conf/security-config.yml:/usr/share/opensearch/config/opensearch-security/config.yml
+      - ./opensearch-conf/internal_users.yml:/usr/share/opensearch/config/opensearch-security/internal_users.yml
+      - ./opensearch-conf/roles_mapping.yml:/usr/share/opensearch/config/opensearch-security/roles_mapping.yml
+      - ./opensearch-conf/tenants.yml:/usr/share/opensearch/config/opensearch-security/tenants.yml
+      - ./opensearch-conf/roles.yml:/usr/share/opensearch/config/opensearch-security/roles.yml
+      - ./opensearch-conf/action_groups.yml:/usr/share/opensearch/config/opensearch-security/action_groups.yml
     restart: unless-stopped
     logging:
       driver: "json-file"
