@@ -1,6 +1,6 @@
 #!/bin/bash
 chmod a+w nifi/conf
-chmod a+w nifi/conf/flow.xml.gz
+chmod a+w nifi/conf/flow.json.gz
 chmod u+x opensearch-conf/gen-certs.sh
 #chmod a+w ckan-conf
 sysctl -w vm.max_map_count=262144

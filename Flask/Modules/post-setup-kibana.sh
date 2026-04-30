@@ -110,5 +110,5 @@ curl -u admin:$#postgre-geo-password#$ -XPOST -H "Content-type: application/vnd.
 # do NOT touch the nifi configuration or else the revisions will no longer be what
 # the curls expect
 # if you need to reset the configuration to the original state, you need to replace
-# flow.xml.gz with the one in the zip file, alternatively, use the history folder at
+# flow.json.gz with the one in the zip file, alternatively, use the history folder at
 # path/to/data/nifi/conf/archive
