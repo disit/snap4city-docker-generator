@@ -47,8 +47,9 @@ docker exec -e PASS="$KEYSTORE_PASSWD" nifi-setup bash -c 'keytool -importkeysto
     -srcstorepass "$PASS" -deststorepass "$PASS"'
 
 mkdir certs
-docker cp nifi-setup:/root-ca-key.pem ./certs/root-ca-key.pem
-docker cp nifi-setup:/root-ca.pem ./certs/root-ca.pem
+
+docker cp nifi-setup:/root-ca-key.pem ./certs/root-ca-key.pem   # maybe useless?
+docker cp nifi-setup:/root-ca.pem ./certs/root-ca.pem           # maybe useless?
 
 docker cp nifi-setup:/nifi-node-key.pem ./certs/nifi-node-key.pem
 docker cp nifi-setup:/nifi-node.pem ./certs/nifi-node.pem
@@ -61,12 +62,13 @@ docker cp nifi-setup:/nifi-node-keystore.jks ./certs/nifi-node-keystore.jks
 # Stop nifi-setup container and clean-up 
 docker stop nifi-setup
 
+chown -R 1000:1000 certs/*.*
 
 docker run --rm --name nifi-setup -d apache/nifi:2.2.0
 
 docker exec -ti nifi-setup bash /opt/nifi/scripts/start.sh  # this will make the files in the temporary container
 
-rm -r ../nifi/conf  # delete old fonder because, for some reason, it doesn't work
+rm -r ../nifi/conf  # delete old folder because, for some reason, it doesn't work
 
 docker cp nifi-setup:/opt/nifi/nifi-current/conf/ ../nifi
 
@@ -83,7 +85,7 @@ sed -i \
     -e "s/^nifi.security.keystoreType=.*/nifi.security.keystoreType=JKS/" \
     -e "s/^nifi.security.truststoreType=.*/nifi.security.truststoreType=JKS/" \
     -e "s@^nifi.security.keystore=.*@nifi.security.keystore=./conf/keystore.jks@" \
-    -e "s@^nifi.security.truststore=.*@nifi.security.truststore=./conf/keystore.jks@" \
+    -e "s@^nifi.security.truststore=.*@nifi.security.truststore=./conf/truststore.jks@" \
     -e "s/^nifi.security.keystorePasswd=.*/nifi.security.keystorePasswd=$#keystore-password#$/" \
     -e "s/^nifi.security.keyPasswd=.*/nifi.security.keyPasswd=$#keystore-password#$/" \
     -e "s/^nifi.security.truststorePasswd=.*/nifi.security.truststorePasswd=$#truststore-password#$/" \
