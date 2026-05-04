@@ -1,8 +1,23 @@
-vcl 4.1;
+#
+# This a VCL file for Varnish.
+#
+# See the VCL chapters in the Users Guide at https://www.varnish-cache.org/docs/
+# and https://www.varnish-cache.org/trac/wiki/VCLExamples for more examples.
 
+# Marker to tell the VCL compiler that this VCL has been adapted to the
+# new 4.0 format.
+vcl 4.0;
+
+# Default backend definition. Set this to point to your content server.
 backend default {
     .host = "$#ip-proxy#$";
     .port = "$#varnish-port#$";
+}
+
+# Allow purge only from the Nifi cluster nodes
+acl purge_acl {
+    "localhost";
+    "servicemap";
 }
 
 sub vcl_recv {
@@ -14,6 +29,33 @@ sub vcl_recv {
     if (!req.http.host && req.esi_level == 0 && req.proto ~ "^(?i)HTTP/1.1") {
         /* In HTTP/1.1, Host is required. */
         return (synth(400));
+    }
+
+    if (req.method == "PURGE" || req.method == "BAN" ){
+        if(client.ip !~ purge_acl ){
+            return( synth(405, "Method Not Allowed!") );
+        }
+
+        set req.http.X-Ban-Path = regsub( req.url , "\?.*$" , "" );
+        set req.http.X-Ban-serviceUri = regsub(
+            req.url,
+            "(.*[?&]serviceUri=)([^&]*)(&.*)?",
+            "\2"
+        );
+
+        if( req.http.X-Ban-serviceUri == req.url ){
+            return( synth( 400 , "No ban performed. No serviceUri in the query string." ) );
+        }
+
+        set req.http.X-Ban-Path-Escaped = regsuball( req.http.X-Ban-Path , "([]{}()|^$.*+?\\/])" , "\\\1" );
+        set req.http.X-Ban-serviceUri-Escaped = regsuball( req.http.X-Ban-serviceUri , "([]{}()|^$.*+?\\/])" , "\\\1" );
+
+        set req.http.X-Ban-VQL = "req.url ~ ^" + req.http.X-Ban-Path-Escaped +
+                                 "\?.*serviceUri=" + req.http.X-Ban-serviceUri-Escaped +
+                                 ".*$";
+        ban( req.http.X-Ban-VQL );
+
+        return( synth( 200 , "Ban issued for serviceUri=" + req.http.X-Ban-serviceUri ) );
     }
 
     if (req.method != "GET" && req.method != "HEAD" &&
@@ -29,13 +71,20 @@ sub vcl_recv {
         return (pass);
     }
 
-    if (req.http.Cookie) {
-        /* Not cacheable by default */
-        return (pass);
-    }
+    # if (req.http.Cookie) {
+    #   /* Not cacheable by default */
+    #   return (pass);
+    # }
+
+    # if (req.url ~ "^/ownership-api") {
+    #   set req.backend_hint = ownership;
+    # } else {
+    #   set req.backend_hint = default;
+    # }
 
     return (hash);
 }
+
 
 sub vcl_backend_response {
     # Happens after we have read the response headers from the backend.
@@ -56,7 +105,7 @@ sub vcl_backend_response {
         unset beresp.http.Expires;
     }
 
-    if( beresp.status >= 400 && beresp.status <= 500 ){
+    if( beresp.status == 400 || beresp.status == 401 || beresp.status == 404 || beresp.status == 500 ){
         # Do not cache bad responses from the backend
         set beresp.uncacheable = true;
     }else{
@@ -64,4 +113,11 @@ sub vcl_backend_response {
         unset beresp.http.set-cookie;
         set beresp.ttl = 1800s;
     }
+}
+
+sub vcl_deliver {
+    # Happens when we have all the pieces we need, and are about to send the
+    # response to the client.
+    #
+    # You can do accounting or modifying the final object here.
 }

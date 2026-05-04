@@ -68,9 +68,13 @@ docker run --rm --name nifi-setup -d apache/nifi:2.2.0
 
 docker exec -ti nifi-setup bash /opt/nifi/scripts/start.sh  # this will make the files in the temporary container
 
+cp ../nifi/conf/flow.json.gz flow.json.gz # copy the og flow someplacelse
+
 rm -r ../nifi/conf  # delete old folder because, for some reason, it doesn't work
 
 docker cp nifi-setup:/opt/nifi/nifi-current/conf/ ../nifi
+
+cp -f flow.json.gz ../nifi/conf/flow.json.gz # paste it after the new files are there
 
 ## Copy certs to the conf folder
 cp certs/nifi-node-truststore.jks ../nifi/conf/truststore.jks
@@ -90,6 +94,10 @@ sed -i \
     -e "s/^nifi.security.keyPasswd=.*/nifi.security.keyPasswd=$#keystore-password#$/" \
     -e "s/^nifi.security.truststorePasswd=.*/nifi.security.truststorePasswd=$#truststore-password#$/" \
     ../nifi/conf/nifi.properties
+
+chown 1000:1000 ../nifi/conf/*.*
+chown 1000:1000 ../nifi/conf
+chown 1000:1000 ../nifi/logs
 
 docker stop nifi-setup
 #docker compose exec nifi ./bin/nifi.sh set-single-user-credentials admin V5SFXfCsIPKAu4NN
