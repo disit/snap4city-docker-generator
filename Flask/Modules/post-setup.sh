@@ -126,8 +126,39 @@ EOF
 echo
 
 echo add dashboard
-curl --insecure -u admin:$#opensearch-admin-pwd#$ -XPOST "http://localhost:5601/api/saved_objects/_import?overwrite=true" -H "osd-xsrf: true" -H "securitytenant: global" --form file=@osd-dashboard.ndjson
+#curl --insecure -u admin:$#opensearch-admin-pwd#$ -XPOST "http://localhost:5601/api/saved_objects/_import?overwrite=true" -H "osd-xsrf: true" -H "securitytenant: global" --form file=@osd-dashboard.ndjson
 echo
+
+
+RETRIES = 3
+RETRIES_TIMEOUT = 5
+SUCCESS = 0
+for ((i=1; i<=RETRIES; i++)); do
+    OUTPUT=$(curl --insecure -u admin:$#opensearch-admin-pwd#$ -XPOST "http://localhost:5601/api/saved_objects/_import?overwrite=true" -H "osd-xsrf: true" -H "securitytenant: global" --form file=@osd-dashboard.ndjson)
+    EXIT_STATUS=$?
+
+    if [ $EXIT_STATUS -eq 0 ]; then
+        if [ "$OUTPUT" == "000" ]; then
+            echo "curl to opensearch-dashboards failed"
+        elif [ "$OUTPUT" -eq "$EXPECTED_CODE" ]; then
+            echo "ok"
+            SUCCESS=1
+            break
+        else
+            echo "curl to opensearch-dashboards failed"
+        fi
+    fi
+
+    if [ "$i" -lt "$RETRIES" ]; then
+        echo "curl to opensearch-dashboards failed"
+        sleep $RETRIES_TIMEOUT
+    fi
+done
+
+if [$EXIT_STATUS -eq 0]; then
+    echo "Adding the dashboard for opensearch failed, you should investigate this issue"
+fi
+
 
 docker compose exec dashboard-builder bash -c "cd /var/www/html/dashboardSmartCity/sql; php updateDb.php"
 docker compose exec dashboard-builder bash -c "cd /var/www/html/iot-directory/sql; php updateDb.php"
