@@ -1,11 +1,12 @@
 
 
--- CREATE USER '$#dashboard-db-user#$'@'%' IDENTIFIED BY '$#dashboard-db-pwd#$';  --this use is created on container boot
+-- CREATE USER '$#dashboard-db-user#$'@'%' IDENTIFIED BY '$#dashboard-db-pwd#$';  --this user is created on container boot
 GRANT ALL ON Dashboard.* TO '$#dashboard-db-user#$'@'%';
 GRANT ALL ON filemanagerdb.* TO '$#dashboard-db-user#$'@'%';
 GRANT ALL ON datatable.* TO '$#dashboard-db-user#$'@'%';
 GRANT ALL ON processloader_db.* TO '$#dashboard-db-user#$'@'%';
 GRANT ALL ON iotdb.* TO '$#dashboard-db-user#$'@'%';
+GRANT ALL ON profiledb.* TO '$#dashboard-db-user#$'@'%';
 
 CREATE USER '$#heatmap-db-user#$'@'%' IDENTIFIED BY '$#heatmap-db-pwd#$';
 GRANT ALL ON heatmap.* TO '$#heatmap-db-user#$'@'%';
