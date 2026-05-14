@@ -18,6 +18,7 @@ services:
       - ./$#servicemap-id#$-conf/tomcat-users.xml:/usr/local/tomcat/conf/tomcat-users.xml
       - ./$#servicemap-id#$-superservicemap-conf/settings.xml:/usr/local/tomcat/settings.xml
 #      - ./$#servicemap-id#$-conf/cacerts:/usr/local/openjdk-8/jre/lib/security/cacerts
+      - ./$#servicemap-id#$-conf/certs/truststore.jks:/certs/external/nifi-node-truststore.jks
       - ./$#servicemap-id#$-whatif-router/gh-data:/usr/local/tomcat/gh-data
       - ./$#servicemap-id#$-trafficflowmanager:/home/debian/TrafficFlowManager
     environment:

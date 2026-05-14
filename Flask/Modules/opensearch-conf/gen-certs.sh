@@ -34,7 +34,7 @@ docker exec nifi-setup openssl req -new -key nifi-node-key.pem \
 docker exec nifi-setup bash -c 'openssl x509 -req -in nifi-node.csr \
     -CA root-ca.pem -CAkey root-ca-key.pem -CAcreateserial -sha256 -days 18250 \
     -out nifi-node.pem \
-    -extfile <(printf "subjectAltName=IP:127.0.0.1,DNS:localhost,DNS:dashboard")'
+    -extfile <(printf "subjectAltName=IP:127.0.0.1,DNS:localhost,DNS:dashboard,DNS:opensearch-n1")'
 
 # KEYSTORE / TRUSTSTORE
 docker exec -e PASS="$TRUSTSTORE_PASSWD" nifi-setup bash -c 'keytool -import -file root-ca.pem -keystore nifi-node-truststore.jks \
@@ -76,8 +76,9 @@ docker cp nifi-setup:/opt/nifi/nifi-current/conf/ ../nifi
 
 cp -f flow.json.gz ../nifi/conf/flow.json.gz # paste it after the new files are there
 
-## Copy certs to the conf folder
+## Copy certs to the conf folders
 cp certs/nifi-node-truststore.jks ../nifi/conf/truststore.jks
+cp certs/nifi-node-truststore.jks ../servicenap-conf/truststore.jks
 cp certs/nifi-node-keystore.jks ../nifi/conf/keystore.jks
 
 
