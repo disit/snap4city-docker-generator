@@ -128,7 +128,7 @@ services:
       "kafka.bootstrapAddress": "kafka:9092"
       "kafka.prefixTopic": "kpi-"
       "kafka.sendMessages": "true"
-      "elasticsearch.truststorefile": "/datamanager-conf/trust-store.p12"
+      "elasticsearch.truststorefile": "/datamanager-conf/truststore.jks"
       "elasticsearch.truststorepass": "snap4ca"
       "elasticsearch.username": "admin"
       "elasticsearch.password": "admin"

@@ -49,7 +49,7 @@ docker run --rm -v $PWD:/conf/ disitlab/personaldata:v3.1 keytool -import -file 
 #chmod a+r root-ca.p12
 echo copy the trust-store.p12 file from the opensearch folder to all of the nifi/conf/ folders
 #cp trust-store.p12 ../nifi/conf/trust-store.p12
-cp trust-store.p12 ../datamanager-conf/trust-store.p12
+cp trust-store.p12 ../datamanager-conf/truststore.jks
 cp cacerts.orig cacerts
 docker run --rm -v $PWD:/conf/ disitlab/personaldata:v3.1 keytool -importcert -keystore /conf/cacerts -file /conf/root-ca.pem -alias snap4ca -storepass changeit -noprompt
 cp cacerts ../servicemap-conf

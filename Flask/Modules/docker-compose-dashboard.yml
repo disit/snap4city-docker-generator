@@ -202,7 +202,7 @@ services:
       "kafka.sendMessages": "true"
       logFileFolder: ""
       "config.kpi.defaultsaveon": "ElasticSearch"
-      "elasticsearch.truststorefile": "/datamanager-conf/trust-store.p12"
+      "elasticsearch.truststorefile": "/datamanager-conf/truststore.jks"
       "elasticsearch.truststorepass": "$#truststore-password#$"
       "elasticsearch.username": "admin"
       "elasticsearch.password": "$#opensearch-admin-pwd#$"

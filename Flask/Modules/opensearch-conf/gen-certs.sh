@@ -78,7 +78,8 @@ cp -f flow.json.gz ../nifi/conf/flow.json.gz # paste it after the new files are 
 
 ## Copy certs to the conf folders
 cp certs/nifi-node-truststore.jks ../nifi/conf/truststore.jks
-cp certs/nifi-node-truststore.jks ../servicenap-conf/truststore.jks
+cp certs/nifi-node-truststore.jks ../servicemap-conf/truststore.jks
+cp certs/nifi-node-truststore.jks ../datamanager-conf/truststore.jks
 cp certs/nifi-node-keystore.jks ../nifi/conf/keystore.jks
 
 
@@ -100,6 +101,5 @@ chown 1000:1000 ../nifi/conf/*.*
 chown 1000:1000 ../nifi/conf
 chown 1000:1000 ../nifi/logs
 
-docker stop nifi-setup
 #docker compose exec nifi ./bin/nifi.sh set-single-user-credentials admin V5SFXfCsIPKAu4NN
 

@@ -24,7 +24,7 @@ try:
 except Exception as E:
     print("Proceeding with default parameters due to",E)
     username = "userareamanager"
-    password = "$#areamanager-pwd#$"
+    password = "$#areamanager-pwd#$" # sometimes it doesn't work
 
 root_path = os.getcwd()
 params_path = root_path + "/data/conf.json"

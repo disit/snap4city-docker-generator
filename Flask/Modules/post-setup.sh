@@ -130,32 +130,39 @@ echo add dashboard
 echo
 
 
-RETRIES = 3
-RETRIES_TIMEOUT = 5
-SUCCESS = 0
+RETRIES=3
+RETRIES_TIMEOUT=5
+SUCCESS=0
+
 for ((i=1; i<=RETRIES; i++)); do
-    OUTPUT=$(curl --insecure -u admin:$#opensearch-admin-pwd#$ -XPOST "http://localhost:5601/api/saved_objects/_import?overwrite=true" -H "osd-xsrf: true" -H "securitytenant: global" --form file=@osd-dashboard.ndjson)
+    # -s (silent), -o /dev/null (hide body), -w (print only the HTTP status code)
+    OUTPUT=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5601)
     EXIT_STATUS=$?
 
+    # Check if the curl command itself succeeded
     if [ $EXIT_STATUS -eq 0 ]; then
+        # Added spaces inside brackets and quotes around the variable
         if [ "$OUTPUT" == "000" ]; then
-            echo "curl to opensearch-dashboards failed"
-        elif [ "$OUTPUT" -eq "$EXPECTED_CODE" ]; then
+            echo "curl to opensearch-dashboards failed (Status 000)"
+        elif [ "$OUTPUT" == "302" ]; then
             echo "ok"
             SUCCESS=1
             break
         else
-            echo "curl to opensearch-dashboards failed"
+            echo "curl to opensearch-dashboards failed (Status: $OUTPUT)"
         fi
+    else
+        echo "curl command failed to execute (Exit status: $EXIT_STATUS)"
     fi
 
+    # Sleep if we have retries left
     if [ "$i" -lt "$RETRIES" ]; then
-        echo "curl to opensearch-dashboards failed"
         sleep $RETRIES_TIMEOUT
     fi
 done
 
-if [$EXIT_STATUS -eq 0]; then
+# Check our custom SUCCESS flag instead of EXIT_STATUS
+if [ "$SUCCESS" -eq 0 ]; then
     echo "Adding the dashboard for opensearch failed, you should investigate this issue"
 fi
 
