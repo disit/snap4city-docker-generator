@@ -184,7 +184,7 @@ services:
       "profiledb.datasource.username": "$#datamanager-db-user#$"
       "profiledb.datasource.password": "$#datamanager-db-pwd#$"
       "spring.openidconnect.userinfo_endpoint": "$#base-url#$/auth/"
-      "spring.openidconnect.userinfo_endpoint_test": ""
+      "spring.openidconnect.userinfo_endpoint_test": "$#base-url#$/auth/"
       "spring.ldap.url": "ldap://$#ldap-server#$:389"
       "spring.ldap.basicdn": "$#ldap-base-dn#$"
       "spring.ldap.managerdn": "$#ldap-admin-dn#$"
